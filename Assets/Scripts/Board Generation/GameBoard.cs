@@ -1,10 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameBoard : MonoBehaviour {
 
 	public static GameBoard inst;
+
+	public GameObject intersectionPrefab;
+	public GameObject edgePrefab;
 
 	//Map settings
 	public MapShape mapShape = MapShape.Rectangle;
@@ -21,8 +25,24 @@ public class GameBoard : MonoBehaviour {
 	public bool drawOutlines = true;
 	public Material lineMaterial;
 
+	public Text textPrefab;
+
 	//Internal variables
-	private Dictionary<string, GameTile> grid = new Dictionary<string, GameTile>();
+	//ID variables
+	private int tileID;
+	private int intersectionID;
+	private int edgeID;
+
+	//Dictionaries for each component
+	private Dictionary<string, GameTile> tilesDictionary = new Dictionary<string, GameTile>();
+	private Dictionary<int, GameTile> tilesByIdDictionary = new Dictionary<int, GameTile>();
+
+	private Dictionary<string, Intersection> intersectionsDictionary = new Dictionary<string, Intersection> ();
+	private Dictionary<int, Intersection> intersectionsByIdDictionary = new Dictionary<int, Intersection>();
+
+	private Dictionary<SymmetricTupleInt, Edge> edgesDictionary = new Dictionary<SymmetricTupleInt, Edge> ();
+	private Dictionary<int, Edge> edgesByIdDictionary = new Dictionary<int, Edge> ();
+
 	private Mesh hexMesh = null;
 	private CubeIndex[] directions = 
 		new CubeIndex[] {
@@ -34,19 +54,27 @@ public class GameBoard : MonoBehaviour {
 		new CubeIndex(0, -1, 1)
 	}; 
 
+	private Canvas canvas;
+
 	#region Getters and Setters
 	public Dictionary<string, GameTile> GameTiles {
-		get {return grid;}
+		get {return tilesDictionary;}
+	}
+
+	public Dictionary<string, Intersection> Intersections {
+		get {return intersectionsDictionary;}
 	}
 	#endregion
 
 	#region Public Methods
-	public void GenerateGrid() {
-		//Generating a new grid, clear any remants and initialise values
+	public void GenerateTiles() {
+		//Generating a new tilesDictionary, clear any remants and initialise values
 		ClearGrid();
 		GetMesh();
 
-		//Generate the grid shape
+		canvas = FindObjectOfType<Canvas> ();
+
+		//Generate the tilesDictionary shape
 		switch(mapShape) {
 		case MapShape.Hexagon:
 			GenHexShape();
@@ -69,17 +97,109 @@ public class GameBoard : MonoBehaviour {
 		}
 	}
 
-	public void ClearGrid() {
-		//Debug.Log ("Clearing grid...");
-		foreach(var tile in grid)
-			DestroyImmediate(tile.Value.gameObject, false);
+	public void GenerateEdges() {
+		GameObject parentObject = GameObject.FindGameObjectWithTag ("Edges");
+		//Vector3 cornerPosition;
+		Edge currentEdge;
+		Intersection i1, i2;
 
-		grid.Clear();
+		foreach (var tile in tilesDictionary) {
+			List<Intersection> intersectionsOfTile = IntersectionsOfTile (tile.Value);
+			//print (intersectionsOfTile.Count);
+
+			for (int i = 1; i <= intersectionsOfTile.Count; i++) {
+				i1 = IntersectionOfTileAtCorner (tile.Value, i % intersectionsOfTile.Count);
+				i2 = IntersectionOfTileAtCorner (tile.Value, (i-1) % intersectionsOfTile.Count);
+
+				SymmetricTupleInt tuple = new SymmetricTupleInt (i1.id, i2.id);
+				SymmetricTupleInt reverseTuple = new SymmetricTupleInt (i2.id, i1.id);
+
+				if (!edgesDictionary.ContainsKey (tuple) && !edgesDictionary.ContainsKey (reverseTuple)) {
+					Vector3 midPoint = (i1.transform.position + i2.transform.position) / 2;
+					Vector3 direction = midPoint / midPoint.magnitude;
+					GameObject instantiation = (GameObject) Instantiate(edgePrefab, midPoint, Quaternion.Euler(direction * 180 / Mathf.PI), this.transform);
+					instantiation.name = "Edge " + edgeID;
+					currentEdge = instantiation.GetComponent<Edge> ();
+					currentEdge.transform.parent = parentObject.transform;
+					currentEdge.setID (edgeID++);
+
+					edgesDictionary.Add(tuple, currentEdge);
+					edgesByIdDictionary.Add (currentEdge.getID (), currentEdge);
+
+					List<GameTile> neighbors = getCommonTilesOfTwoIntersections(i1, i2);
+					foreach(GameTile gameTile in neighbors) {
+						currentEdge.addTile(gameTile);
+						gameTile.addEdge (currentEdge);
+					}
+				}
+				// still want to draw even if key is seen but they are corner edges
+
+			}
+		}
+	}
+
+	public void GenerateIntersections() {
+		GameObject parentObject = GameObject.FindGameObjectWithTag ("Intersections");
+		Vector3 cornerPosition;
+		Intersection currentIntersection;
+		GameTile gameTile;
+
+		foreach(var tile in tilesDictionary) {
+			gameTile = tile.Value;
+
+			for(int vert = 0; vert < 6; vert++) {
+				cornerPosition = GameTile.Corner(gameTile.transform.position, hexRadius, vert, hexOrientation);
+
+				if (intersectionsDictionary.ContainsKey (cornerPosition.ToString())) {
+					currentIntersection = intersectionsDictionary [cornerPosition.ToString()];
+				} else {
+					GameObject instantiation = (GameObject) Instantiate(intersectionPrefab, cornerPosition, Quaternion.identity, this.transform);
+					instantiation.name = "Intersection " + intersectionID;
+					currentIntersection = instantiation.GetComponent<Intersection> ();
+					currentIntersection.transform.parent = parentObject.transform;
+					currentIntersection.setID (intersectionID++);
+
+					intersectionsDictionary.Add(cornerPosition.ToString(), currentIntersection);
+					intersectionsByIdDictionary.Add (currentIntersection.getID (), currentIntersection);
+				}
+
+				currentIntersection.addTile (gameTile);
+				gameTile.addIntersection (currentIntersection);
+			}
+		}
+	}
+
+	public void ClearGrid() {
+		//Debug.Log ("Clearing tilesDictionary...");
+		foreach (var tile in tilesDictionary) {
+			DestroyImmediate (tile.Value.gameObject, false);
+		}
+		foreach (var tile in tilesByIdDictionary) {
+			if(tile.Value != null)
+				DestroyImmediate (tile.Value.gameObject, false);
+		}
+		
+		foreach (var intersection in intersectionsDictionary) {
+			DestroyImmediate (intersection.Value.gameObject, false);
+		}
+		foreach (var intersection in intersectionsByIdDictionary) {
+			if(intersection.Value != null)
+				DestroyImmediate (intersection.Value.gameObject, false);
+		}
+
+		tilesDictionary.Clear();
+		tilesByIdDictionary.Clear ();
+
+		intersectionsDictionary.Clear ();
+		intersectionsByIdDictionary.Clear ();
+
+		tileID = 0;
+		intersectionID = 0;
 	}
 
 	public GameTile GameTileAt(CubeIndex index){
-		if(grid.ContainsKey(index.ToString()))
-			return grid[index.ToString()];
+		if(tilesDictionary.ContainsKey(index.ToString()))
+			return tilesDictionary[index.ToString()];
 		return null;
 	}
 
@@ -91,14 +211,72 @@ public class GameBoard : MonoBehaviour {
 		return GameTileAt(new CubeIndex(x,z));
 	}
 
+	public int IdOfGameTileAt(CubeIndex index){
+		if(tilesDictionary.ContainsKey(index.ToString()))
+			return tilesDictionary[index.ToString()].id;
+		return -1;
+	}
+
+	public int IdOfGameTileAt(int x, int y, int z){
+		return GameTileAt(new CubeIndex(x,y,z)).id;
+	}
+
+	public int IdOfGameTileAt(int x, int z){
+		return GameTileAt(new CubeIndex(x,z)).id;
+	}
+
+	public Intersection IntersectionOfTileAtCorner (GameTile tile, int cornerNumber) {
+		Vector3 cornerPosition = GameTile.Corner(tile.transform.position, hexRadius, cornerNumber, hexOrientation);
+		if (intersectionsDictionary.ContainsKey (cornerPosition.ToString())) {
+			return intersectionsDictionary [cornerPosition.ToString()];
+		}
+		return null;
+	}
+
+	public List<Intersection> IntersectionsOfTile(GameTile tile) {
+		List<Intersection> intersections = new List<Intersection> ();
+		Vector3 cornerPosition;
+
+		for (int vert = 0; vert < 6; vert++) {
+			cornerPosition = GameTile.Corner(tile.transform.position, hexRadius, vert, hexOrientation);
+			if (intersectionsDictionary.ContainsKey (cornerPosition.ToString())) {
+				intersections.Add (intersectionsDictionary [cornerPosition.ToString()]);
+			}
+		}
+
+		return intersections;
+	}
+
+	public bool isNeighbors(GameTile tile1, GameTile tile2) {
+		List<GameTile> neighbors = Neighbours (tile1);
+
+		if (neighbors.Contains (tile2)) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public List<GameTile> getCommonTilesOfTwoIntersections(Intersection i1, Intersection i2) {
+		List<GameTile> commonTiles = new List<GameTile> ();
+
+		foreach (var tile in i1.adjacentTiles) {
+			if(i2.adjacentTiles.Contains(tile)) {
+				commonTiles.Add(tile);
+			}
+		}
+
+		return commonTiles;
+	}
+
 	public List<GameTile> Neighbours(GameTile tile) {
 		List<GameTile> ret = new List<GameTile>();
 		CubeIndex o;
 
 		for(int i = 0; i < 6; i++) {
 			o = tile.index + directions[i];
-			if(grid.ContainsKey(o.ToString()))
-				ret.Add(grid[o.ToString()]);
+			if(tilesDictionary.ContainsKey(o.ToString()))
+				ret.Add(tilesDictionary[o.ToString()]);
 		}
 		return ret;
 	}
@@ -116,15 +294,15 @@ public class GameBoard : MonoBehaviour {
 	}
 
 	public List<GameTile> GameTilesInRange(GameTile center, int range){
-		//Return tiles rnage steps from center, http://www.redblobgames.com/grids/hexagons/#range
+		//Return tiles rnage steps from center, http://www.redblobgames.com/tilesDictionarys/hexagons/#range
 		List<GameTile> ret = new List<GameTile>();
 		CubeIndex o;
 
 		for(int dx = -range; dx <= range; dx++){
 			for(int dy = Mathf.Max(-range, -dx-range); dy <= Mathf.Min(range, -dx+range); dy++){
 				o = new CubeIndex(dx, dy, -dx-dy) + center.index;
-				if(grid.ContainsKey(o.ToString()))
-					ret.Add(grid[o.ToString()]);
+				if(tilesDictionary.ContainsKey(o.ToString()))
+					ret.Add(tilesDictionary[o.ToString()]);
 			}
 		}
 		return ret;
@@ -156,7 +334,7 @@ public class GameBoard : MonoBehaviour {
 		if(!inst)
 			inst = this;
 
-		GenerateGrid();
+		GenerateTiles();
 	}
 
 	private void GetMesh() {
@@ -165,7 +343,7 @@ public class GameBoard : MonoBehaviour {
 	}
 
 	private void GenHexShape() {
-		//Debug.Log ("Generating hexagonal shaped grid...");
+		//Debug.Log ("Generating hexagonal shaped tilesDictionary...");
 
 		GameTile tile;
 		Vector3 pos = Vector3.zero;
@@ -190,13 +368,20 @@ public class GameBoard : MonoBehaviour {
 
 				tile = CreateHexGO(pos,("GameTile[" + q + "," + r + "," + (-q-r).ToString() + "]"));
 				tile.index = new CubeIndex(q,r,-q-r);
-				grid.Add(tile.index.ToString(), tile);
+				tile.id = tileID++;
+				displayTextForTile (pos, tile);
+
+				GameObject parentObject = GameObject.FindGameObjectWithTag ("GameTiles");
+				tile.transform.parent = parentObject.transform;
+
+				tilesDictionary.Add(tile.index.ToString(), tile);
+				tilesByIdDictionary.Add (tile.id, tile);
 			}
 		}
 	}
 
 	private void GenRectShape() {
-		//Debug.Log ("Generating rectangular shaped grid...");
+		//Debug.Log ("Generating rectangular shaped tilesDictionary...");
 
 		GameTile tile;
 		Vector3 pos = Vector3.zero;
@@ -209,9 +394,16 @@ public class GameBoard : MonoBehaviour {
 					pos.x = hexRadius * 3.0f/2.0f * q;
 					pos.z = hexRadius * Mathf.Sqrt(3.0f) * (r + q/2.0f);
 
-					tile = CreateHexGO(pos,("Hex[" + q + "," + r + "," + (-q-r).ToString() + "]"));
+					tile = CreateHexGO(pos,("GameTile[" + q + "," + r + "," + (-q-r).ToString() + "]"));
 					tile.index = new CubeIndex(q,r,-q-r);
-					grid.Add(tile.index.ToString(), tile);
+					tile.id = tileID++;
+					displayTextForTile (pos, tile);
+
+					GameObject parentObject = GameObject.FindGameObjectWithTag ("GameTiles");
+					tile.transform.parent = parentObject.transform;
+
+					tilesDictionary.Add(tile.index.ToString(), tile);
+					tilesByIdDictionary.Add (tile.id, tile);
 				}
 			}
 			break;
@@ -223,9 +415,16 @@ public class GameBoard : MonoBehaviour {
 					pos.x = hexRadius * Mathf.Sqrt(3.0f) * (q + r/2.0f);
 					pos.z = hexRadius * 3.0f/2.0f * r;
 
-					tile = CreateHexGO(pos,("Hex[" + q + "," + r + "," + (-q-r).ToString() + "]"));
+					tile = CreateHexGO(pos,("GameTile[" + q + "," + r + "," + (-q-r).ToString() + "]"));
 					tile.index = new CubeIndex(q,r,-q-r);
-					grid.Add(tile.index.ToString(), tile);
+					tile.id = tileID++;
+					displayTextForTile (pos, tile);
+
+					GameObject parentObject = GameObject.FindGameObjectWithTag ("GameTiles");
+					tile.transform.parent = parentObject.transform;
+
+					tilesDictionary.Add(tile.index.ToString(), tile);
+					tilesByIdDictionary.Add (tile.id, tile);
 				}
 			}
 			break;
@@ -233,7 +432,7 @@ public class GameBoard : MonoBehaviour {
 	}
 
 	private void GenParrallShape() {
-		//Debug.Log ("Generating parrellelogram shaped grid...");
+		//Debug.Log ("Generating parrellelogram shaped tilesDictionary...");
 
 		GameTile tile;
 		Vector3 pos = Vector3.zero;
@@ -252,15 +451,22 @@ public class GameBoard : MonoBehaviour {
 					break;
 				}
 
-				tile = CreateHexGO(pos,("Hex[" + q + "," + r + "," + (-q-r).ToString() + "]"));
+				tile = CreateHexGO(pos,("GameTile[" + q + "," + r + "," + (-q-r).ToString() + "]"));
 				tile.index = new CubeIndex(q,r,-q-r);
-				grid.Add(tile.index.ToString(), tile);
+				tile.id = tileID++;
+				displayTextForTile (pos, tile);
+
+				GameObject parentObject = GameObject.FindGameObjectWithTag ("GameTiles");
+				tile.transform.parent = parentObject.transform;
+
+				tilesDictionary.Add(tile.index.ToString(), tile);
+				tilesByIdDictionary.Add (tile.id, tile);
 			}
 		}
 	}
 
 	private void GenTriShape() {
-		//Debug.Log ("Generating triangular shaped grid...");
+		//Debug.Log ("Generating triangular shaped tilesDictionary...");
 
 		GameTile tile;
 		Vector3 pos = Vector3.zero;
@@ -281,40 +487,47 @@ public class GameBoard : MonoBehaviour {
 					break;
 				}
 
-				tile = CreateHexGO(pos,("Hex[" + q + "," + r + "," + (-q-r).ToString() + "]"));
+				tile = CreateHexGO(pos,("GameTile[" + q + "," + r + "," + (-q-r).ToString() + "]"));
 				tile.index = new CubeIndex(q,r,-q-r);
-				grid.Add(tile.index.ToString(), tile);
+				tile.id = tileID++;
+				displayTextForTile (pos, tile);
+
+				GameObject parentObject = GameObject.FindGameObjectWithTag ("GameTiles");
+				tile.transform.parent = parentObject.transform;
+
+				tilesDictionary.Add(tile.index.ToString(), tile);
+				tilesByIdDictionary.Add (tile.id, tile);
 			}
 		}
 	}
 
 	private GameTile CreateHexGO(Vector3 postion, string name) {
-		GameObject go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(GameTile));
+		GameObject gameObject = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(GameTile));
 
 		if(addColliders)
-			go.AddComponent<MeshCollider>();
+			gameObject.AddComponent<MeshCollider>();
 
-		if(drawOutlines)
-			go.AddComponent<LineRenderer>();
+		//if(drawOutlines)
+		//	gameObject.AddComponent<LineRenderer>();
 
-		go.transform.position = postion;
-		go.transform.parent = this.transform;
+		gameObject.transform.position = postion;
+		gameObject.transform.parent = this.transform;
 
-		GameTile tile = go.GetComponent<GameTile>();
-		MeshFilter fil = go.GetComponent<MeshFilter>();
-		MeshRenderer ren = go.GetComponent<MeshRenderer>();
+		GameTile tile = gameObject.GetComponent<GameTile>();
+		MeshFilter fil = gameObject.GetComponent<MeshFilter>();
+		MeshRenderer ren = gameObject.GetComponent<MeshRenderer>();
 
 		fil.sharedMesh = hexMesh;
 
 		ren.material = (hexMaterial)? hexMaterial : UnityEditor.AssetDatabase.GetBuiltinExtraResource<Material>("Default-Diffuse.mat");
 
 		if(addColliders){
-			MeshCollider col = go.GetComponent<MeshCollider>();
+			MeshCollider col = gameObject.GetComponent<MeshCollider>();
 			col.sharedMesh = hexMesh;
 		}
 
-		if(drawOutlines) {
-			LineRenderer lines = go.GetComponent<LineRenderer>();
+		/*if(drawOutlines) {
+			LineRenderer lines = gameObject.GetComponent<LineRenderer>();
 			lines.useLightProbes = false;
 			lines.receiveShadows = false;
 
@@ -326,10 +539,45 @@ public class GameBoard : MonoBehaviour {
 
 			for(int vert = 0; vert <= 6; vert++)
 				lines.SetPosition(vert, GameTile.Corner(tile.transform.position, hexRadius, vert, hexOrientation));
-		}
+		}*/
 
 		return tile;
 	}
+
+	private Intersection CreateIntersectionGO(Vector3 postion, string name) {
+		GameObject gameObject = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(GameTile));
+
+		if(addColliders)
+			gameObject.AddComponent<MeshCollider>();
+
+		gameObject.transform.position = postion;
+		gameObject.transform.parent = this.transform;
+
+		Intersection intersection = gameObject.GetComponent<Intersection>();
+//		MeshFilter fil = gameObject.GetComponent<MeshFilter>();
+//		MeshRenderer ren = gameObject.GetComponent<MeshRenderer>();
+
+		return intersection;
+	}
+
+	private void displayTextForTile(Vector3 position, GameTile tile) {
+		Text tileLabel = Instantiate<Text> (textPrefab);
+		tileLabel.rectTransform.SetParent (canvas.transform, false);
+		tileLabel.rectTransform.anchoredPosition = new Vector2 (position.x, position.z);
+		tileLabel.text = "[" + tile.index.x + ", " + tile.index.y + ", " + tile.index.z + "]\nID:" + tile.id;
+		//print (tileLabel.text);
+	}
+
+	private class Vector3Comparer : IEqualityComparer<Vector3> {
+		public bool Equals(Vector3 v1, Vector3 v2) {
+			return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z;
+		}
+
+		public int GetHashCode(Vector3 v) {
+			return v.GetHashCode ();
+		}
+	}
+
 	#endregion
 }
 

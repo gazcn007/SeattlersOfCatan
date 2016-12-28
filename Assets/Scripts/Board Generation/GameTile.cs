@@ -5,17 +5,14 @@ using UnityEngine;
 public class GameTile : Tile {
 	
 	public int diceValue;
+	public TileType tileType;
+	public int id;
 
-	private TileType tileType;
-	private int id;
-
-	private List<Edge> edges;
-	private List<Intersection> intersections;
+	private List<Edge> edges  = new List<Edge> ();
+	private List<Intersection> intersections = new List<Intersection> ();
 
 	// Use this for initialization
 	void Start () {
-		edges = new List<Edge> ();
-		intersections = new List<Intersection> ();
 	}
 	
 	// Update is called once per frame

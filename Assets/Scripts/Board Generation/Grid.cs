@@ -294,8 +294,8 @@ public class Grid : MonoBehaviour {
 		if(addColliders)
 			go.AddComponent<MeshCollider>();
 
-		if(drawOutlines)
-			go.AddComponent<LineRenderer>();
+		//if(drawOutlines)
+		//	go.AddComponent<LineRenderer>();
 
 		go.transform.position = postion;
 		go.transform.parent = this.transform;
@@ -313,6 +313,7 @@ public class Grid : MonoBehaviour {
 			col.sharedMesh = hexMesh;
 		}
 
+		/*
 		if(drawOutlines) {
 			LineRenderer lines = go.GetComponent<LineRenderer>();
 			lines.useLightProbes = false;
@@ -326,7 +327,7 @@ public class Grid : MonoBehaviour {
 
 			for(int vert = 0; vert <= 6; vert++)
 				lines.SetPosition(vert, Tile.Corner(tile.transform.position, hexRadius, vert, hexOrientation));
-		}
+		}*/
 
 		return tile;
 	}

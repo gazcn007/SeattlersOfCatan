@@ -4,14 +4,39 @@ using UnityEngine;
 
 public class Intersection : MonoBehaviour {
 
-	public List<GameObject> adjacentHexes;
+	public HashSet<GameTile> adjacentTiles;
+	public int id;
+
 	// Use this for initialization
+
+	public Intersection() {
+		adjacentTiles = new HashSet<GameTile>();
+	}
+
 	void Start () {
-		adjacentHexes = new List<GameObject>(3);
+		
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		
+	}
+
+	public void addTile(GameTile tile) {
+		adjacentTiles.Add (tile);
+	}
+
+	public HashSet<GameTile> getAdjacentTiles() {
+		return adjacentTiles;
+	}
+
+	public void setID(int id) {
+		if (id >= 0) {
+			this.id = id;
+		}
+	}
+
+	public int getID() {
+		return id;
 	}
 }

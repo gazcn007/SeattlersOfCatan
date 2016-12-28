@@ -121,8 +121,8 @@ public class Tile : MonoBehaviour {
 		ret.index = one.index + two.index;
 		return ret;
 	}
-
-	public void LineColour(Color colour) {
+		
+	/*public void LineColour(Color colour) {
 		LineRenderer lines = GetComponent<LineRenderer>();
 		if(lines)
 			lines.SetColors(colour, colour);
@@ -144,7 +144,7 @@ public class Tile : MonoBehaviour {
 		LineRenderer lines = GetComponent<LineRenderer>();
 		if(lines)
 			lines.SetWidth(start, end);
-	}
+	}*/
 	#endregion
 
 	#region A* Herustic Variables

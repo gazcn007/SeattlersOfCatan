@@ -4,14 +4,35 @@ using UnityEngine;
 
 public class Edge : MonoBehaviour {
 
-	public List<GameObject> adjacentHexes;
+	private List<GameTile> adjacentTiles;
+	public int id;
+
 	// Use this for initialization
-	void Start () {
-		adjacentHexes = new List<GameObject>(2);
+	public Edge () {
+		adjacentTiles = new List<GameTile>(2);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		
 	}
+
+	public void addTile(GameTile tile) {
+		adjacentTiles.Add (tile);
+	}
+
+	public List<GameTile> getAdjacentTiles() {
+		return adjacentTiles;
+	}
+
+	public void setID(int id) {
+		if (id >= 0) {
+			this.id = id;
+		}
+	}
+
+	public int getID() {
+		return id;
+	}
+
 }
