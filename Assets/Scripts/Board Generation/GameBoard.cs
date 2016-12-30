@@ -18,7 +18,8 @@ public class GameBoard : MonoBehaviour {
 	//Hex Settings
 	public HexOrientation hexOrientation = HexOrientation.Flat;
 	public float hexRadius = 1;
-	public Material hexMaterial;
+	//public Material[] hexMaterials = new Material[7];
+	//private TileTypeSettings hexSettings;
 
 	//Generation Options
 	public bool addColliders = true;
@@ -40,7 +41,7 @@ public class GameBoard : MonoBehaviour {
 	private Dictionary<string, Intersection> intersectionsDictionary = new Dictionary<string, Intersection> ();
 	private Dictionary<int, Intersection> intersectionsByIdDictionary = new Dictionary<int, Intersection>();
 
-	private Dictionary<SymmetricTupleInt, Edge> edgesDictionary = new Dictionary<SymmetricTupleInt, Edge> ();
+	private Dictionary<TupleInt, Edge> edgesDictionary = new Dictionary<TupleInt, Edge> ();
 	private Dictionary<int, Edge> edgesByIdDictionary = new Dictionary<int, Edge> ();
 
 	private Mesh hexMesh = null;
@@ -53,6 +54,8 @@ public class GameBoard : MonoBehaviour {
 		new CubeIndex(-1, 0, 1), 
 		new CubeIndex(0, -1, 1)
 	}; 
+
+	private List<GameTile> tilesList;
 
 	private Canvas canvas;
 
@@ -97,28 +100,39 @@ public class GameBoard : MonoBehaviour {
 		}
 	}
 
+	public void paintTiles(TileTypeSettings hexSettings) {
+		tilesList = getTilesList ();
+		hexSettings.setTilesForNumberOnBoard (tilesList.Count);
+		//hexSettings.assignRandomTileTypes (tilesList);
+
+		for (int i = 0; i < tilesList.Count; i++) {
+			hexSettings.paintTile (tilesList [i]);
+		}
+	}
+
 	public void GenerateEdges() {
 		GameObject parentObject = GameObject.FindGameObjectWithTag ("Edges");
-		//Vector3 cornerPosition;
 		Edge currentEdge;
 		Intersection i1, i2;
 
 		foreach (var tile in tilesDictionary) {
 			List<Intersection> intersectionsOfTile = IntersectionsOfTile (tile.Value);
-			//print (intersectionsOfTile.Count);
 
 			for (int i = 1; i <= intersectionsOfTile.Count; i++) {
 				i1 = IntersectionOfTileAtCorner (tile.Value, i % intersectionsOfTile.Count);
 				i2 = IntersectionOfTileAtCorner (tile.Value, (i-1) % intersectionsOfTile.Count);
 
-				SymmetricTupleInt tuple = new SymmetricTupleInt (i1.id, i2.id);
-				SymmetricTupleInt reverseTuple = new SymmetricTupleInt (i2.id, i1.id);
+				TupleInt tuple = new TupleInt (i1.id, i2.id);
+				TupleInt reverseTuple = new TupleInt (i2.id, i1.id);
 
 				if (!edgesDictionary.ContainsKey (tuple) && !edgesDictionary.ContainsKey (reverseTuple)) {
 					Vector3 midPoint = (i1.transform.position + i2.transform.position) / 2;
-					Vector3 direction = midPoint / midPoint.magnitude;
-					GameObject instantiation = (GameObject) Instantiate(edgePrefab, midPoint, Quaternion.Euler(direction * 180 / Mathf.PI), this.transform);
+					float angle = Intersection.AngleOfCorner((i-1) % intersectionsOfTile.Count, hexOrientation);
+
+					GameObject instantiation = (GameObject) Instantiate(edgePrefab, midPoint, Quaternion.Euler(new Vector3(0.0f, angle, 0.0f)), this.transform);
+					instantiation.transform.localScale = new Vector3 (instantiation.transform.localScale.x * hexRadius, instantiation.transform.localScale.y, instantiation.transform.localScale.z);
 					instantiation.name = "Edge " + edgeID;
+
 					currentEdge = instantiation.GetComponent<Edge> ();
 					currentEdge.transform.parent = parentObject.transform;
 					currentEdge.setID (edgeID++);
@@ -187,14 +201,26 @@ public class GameBoard : MonoBehaviour {
 				DestroyImmediate (intersection.Value.gameObject, false);
 		}
 
+		foreach (var edge in edgesDictionary) {
+			DestroyImmediate (edge.Value.gameObject, false);
+		}
+		foreach (var edge in edgesByIdDictionary) {
+			if(edge.Value != null)
+				DestroyImmediate (edge.Value.gameObject, false);
+		}
+
 		tilesDictionary.Clear();
 		tilesByIdDictionary.Clear ();
 
 		intersectionsDictionary.Clear ();
 		intersectionsByIdDictionary.Clear ();
 
+		edgesDictionary.Clear ();
+		edgesByIdDictionary.Clear ();
+
 		tileID = 0;
 		intersectionID = 0;
+		edgeID = 0;
 	}
 
 	public GameTile GameTileAt(CubeIndex index){
@@ -294,7 +320,7 @@ public class GameBoard : MonoBehaviour {
 	}
 
 	public List<GameTile> GameTilesInRange(GameTile center, int range){
-		//Return tiles rnage steps from center, http://www.redblobgames.com/tilesDictionarys/hexagons/#range
+		//Return tiles range steps from center, http://www.redblobgames.com/tilesDictionarys/hexagons/#range
 		List<GameTile> ret = new List<GameTile>();
 		CubeIndex o;
 
@@ -519,30 +545,40 @@ public class GameBoard : MonoBehaviour {
 
 		fil.sharedMesh = hexMesh;
 
-		ren.material = (hexMaterial)? hexMaterial : UnityEditor.AssetDatabase.GetBuiltinExtraResource<Material>("Default-Diffuse.mat");
+		//ren.material = (hexMaterials[0])? hexMaterials[0] : UnityEditor.AssetDatabase.GetBuiltinExtraResource<Material>("Default-Diffuse.mat");
+		//ren.material = getRandomTileMaterial();
+		//print (ren.material.ToString ());
+		ren.material = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Material>("Default-Diffuse.mat");
 
 		if(addColliders){
 			MeshCollider col = gameObject.GetComponent<MeshCollider>();
 			col.sharedMesh = hexMesh;
 		}
 
-		/*if(drawOutlines) {
-			LineRenderer lines = gameObject.GetComponent<LineRenderer>();
-			lines.useLightProbes = false;
-			lines.receiveShadows = false;
-
-			lines.SetWidth(0.1f, 0.1f);
-			lines.SetColors(Color.black, Color.black);
-			lines.material = lineMaterial;
-
-			lines.SetVertexCount(7);
-
-			for(int vert = 0; vert <= 6; vert++)
-				lines.SetPosition(vert, GameTile.Corner(tile.transform.position, hexRadius, vert, hexOrientation));
-		}*/
-
 		return tile;
 	}
+
+	/*private Material getRandomTileMaterial() {
+		int randomNum;
+		TileType tileType;
+
+		if (!hexSettings.hasLandPieceLeft()) {
+			return hexSettings.getOceanTile ();
+		}
+
+		do {
+			randomNum = Random.Range (0, hexSettings.numLandTileTypes ());
+			tileType = hexSettings.getTileAtIndex (randomNum);
+			print("Random found = " +  randomNum);
+		} while(!hexSettings.hasAvailableLandPiece(tileType));
+		print ("Tile found: " + tileType.ToString ());
+
+		Material foundMaterial = hexSettings.getLandPieceMaterial (tileType);
+		//print ("Found material: " + foundMaterial.ToString ());
+
+		return foundMaterial;
+
+	}*/
 
 	private Intersection CreateIntersectionGO(Vector3 postion, string name) {
 		GameObject gameObject = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(GameTile));
@@ -568,26 +604,24 @@ public class GameBoard : MonoBehaviour {
 		//print (tileLabel.text);
 	}
 
-	private class Vector3Comparer : IEqualityComparer<Vector3> {
-		public bool Equals(Vector3 v1, Vector3 v2) {
-			return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z;
+	private List<GameTile> getTilesList() {
+		List<GameTile> tiles = new List<GameTile> ();
+		foreach (var tile in tilesDictionary) {
+			tiles.Add (tile.Value);
 		}
 
-		public int GetHashCode(Vector3 v) {
-			return v.GetHashCode ();
+		return tiles;
+	}
+
+	private class TupleIntComparer : IEqualityComparer<TupleInt> {
+		public bool Equals(TupleInt t1, TupleInt t2) {
+			return (t1.first == t2.first && t1.second == t2.second) || (t1.first == t2.second && t1.second == t1.first);
+		}
+
+		public int GetHashCode(TupleInt tuple) {
+			return tuple.GetHashCode ();
 		}
 	}
 
 	#endregion
-}
-
-public enum TileType {
-	Brick = 0,
-	Grain,
-	Lumber,
-	Ore,
-	Wool,
-	Gold,
-	Desert,
-	Ocean
 }

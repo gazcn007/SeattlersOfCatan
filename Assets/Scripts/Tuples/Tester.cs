@@ -6,7 +6,7 @@ public class Tester : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		SymmetricTupleInt one = new SymmetricTupleInt (5, 7);
+/*		SymmetricTupleInt one = new SymmetricTupleInt (5, 7);
 		SymmetricTupleInt two = new SymmetricTupleInt (5, 7);
 		SymmetricTupleInt three = new SymmetricTupleInt (7, 5);
 
@@ -19,6 +19,7 @@ public class Tester : MonoBehaviour {
 
 		print ("Two == Four: " + (two == four).ToString());
 		print ("Two == Five: " + (two == five).ToString());
+		*/
 
 	}
 	

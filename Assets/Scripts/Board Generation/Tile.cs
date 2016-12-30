@@ -201,3 +201,13 @@ public struct CubeIndex {
 		return string.Format("[" + x + "," + y + "," + z + "]");
 	}
 }
+
+public enum TileType {
+	Brick = 0,
+	Grain,
+	Lumber,
+	Ore,
+	Wool,
+	Desert,
+	Ocean
+}

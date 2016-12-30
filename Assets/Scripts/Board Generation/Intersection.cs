@@ -9,6 +9,13 @@ public class Intersection : MonoBehaviour {
 
 	// Use this for initialization
 
+	public static float AngleOfCorner(int corner, HexOrientation orientation){
+		float angle = 210 - 60 * corner;
+		if(orientation == HexOrientation.Flat)
+			angle += 30;
+		return angle;
+	}
+
 	public Intersection() {
 		adjacentTiles = new HashSet<GameTile>();
 	}

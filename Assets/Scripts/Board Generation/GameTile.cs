@@ -8,8 +8,8 @@ public class GameTile : Tile {
 	public TileType tileType;
 	public int id;
 
-	private List<Edge> edges  = new List<Edge> ();
-	private List<Intersection> intersections = new List<Intersection> ();
+	public List<Edge> edges  = new List<Edge> ();
+	public List<Intersection> intersections = new List<Intersection> ();
 
 	// Use this for initialization
 	void Start () {
