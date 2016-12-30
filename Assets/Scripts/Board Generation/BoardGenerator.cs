@@ -13,23 +13,15 @@ public class BoardGenerator : MonoBehaviour {
 	public HexOrientation hexOrientation = HexOrientation.Pointy;
 	public float hexRadius = 1;
 
-	//Generation Options
-	public bool addColliders = true;
-	public bool drawOutlines = false;
-
-	//public Material[] hexMaterials = new Material[7];
-	public Material lineMaterial; //Assigned in inspector
 	private TileTypeSettings hexSettings;
-
 	private GameBoard board;
-	private int numTiles;
+
+	private BoardDecorator boardDecorator;
 
 	private void Start() {
 		board = GetComponentInChildren<GameBoard> ();
 		hexSettings = GetComponent<TileTypeSettings> ();
-		hexSettings.setMapWidthHeight (mapWidth, mapHeight);
-
-		//hexSettings.debugPrintDict ();
+		//hexSettings.setMapWidthHeight (mapWidth, mapHeight);
 
 		//Set grid settings
 		board.mapShape = mapShape;
@@ -37,19 +29,16 @@ public class BoardGenerator : MonoBehaviour {
 		board.mapHeight = mapHeight;
 		board.hexOrientation = hexOrientation;
 		board.hexRadius = hexRadius;
-		//board.hexMaterials = hexMaterials;
-		//board.setHexSettings(hexSettings);
-		board.addColliders = addColliders;
-		board.drawOutlines = drawOutlines;
-		board.lineMaterial = lineMaterial;
 
-		//Gen Grid
+		//Generate Grid
 		board.GenerateTiles();
-		board.paintTiles (hexSettings);
 		board.GenerateIntersections ();
 		board.GenerateEdges ();
 
-		//hexSettings.debugPrintDict ();
+		//Set grid properties
+		//board.setTileTypesAndValues (hexSettings);
+		boardDecorator = new BoardDecorator(board, hexSettings);
+
 	}
 
 }

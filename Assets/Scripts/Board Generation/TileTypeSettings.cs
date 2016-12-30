@@ -3,13 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class TileTypeSettings : MonoBehaviour {
-	//public int numberOfBrickHexes = 	3;
-	//public int numberOfGrainHexes = 	4;
-	//public int numberOfLumberHexes = 	4;
-	//public int numberOfOreHexes = 		3;
-	//public int numberOfWoolHexes =		4;
-	//public int numberOfDesertHexes = 	1;
-
 	[Range(5.0f, 15.0f)]
 	public float brickTilesPercentage = 15.0f;
 
@@ -43,6 +36,8 @@ public class TileTypeSettings : MonoBehaviour {
 	private Dictionary<TileType, Material> materialsDictionary = new Dictionary<TileType, Material>();
 	private List<TileType> landTileTypesList = new List<TileType>();
 
+	private Dictionary<int, int> diceProbabilities = new Dictionary<int, int>();
+
 	private int mapWidth = 3;
 	private int mapHeight = 3;
 
@@ -51,7 +46,7 @@ public class TileTypeSettings : MonoBehaviour {
 		StoreLandTileTypesInList ();
 	}
 
-	private bool IsOceanTile(GameTile tile) {
+	public bool IsOceanTileBySettings(GameTile tile) {
 		CubeIndex index = tile.index;
 		int maxMapDimension = Mathf.Max (mapWidth, mapHeight);
 		int coordsSum = Mathf.Abs (index.x) + Mathf.Abs (index.y) + Mathf.Abs (index.z);
@@ -66,14 +61,10 @@ public class TileTypeSettings : MonoBehaviour {
 			}
 		}
 
-		//if (oceanLayers == 0) {
-		//	return coordsSum == maxMapDimension * 2;
-		//}
-
 		return false;
 	}
 
-	private bool IsDesertTile(GameTile tile) {
+	public bool IsDesertTileBySettings(GameTile tile) {
 		if (tile.index.x == 0 && tile.index.y == 0 && tile.index.z == 0) {
 			return true;
 		} else {
@@ -81,23 +72,14 @@ public class TileTypeSettings : MonoBehaviour {
 		}
 	}
 
-	public void paintTile(GameTile tile) {
-		if (IsOceanTile (tile)) {
-			assignTileTypeToHex (tile, TileType.Ocean);
-		} else {
-			TileType randomType = getRandomTileType ();
-			assignTileTypeToHex (tile, randomType);
-		}
-	}
-
-	private void assignTileTypeToHex(GameTile tile, TileType tileType) {
+	public void assignTileTypeToHex(GameTile tile, TileType tileType) {
 		Renderer hexRenderer = tile.GetComponent<Renderer> ();
 		hexRenderer.material = materialsDictionary [tileType];
 
 		tile.tileType = tileType;
 	}
 
-	private TileType getRandomTileType() {
+	public TileType getRandomTileType() {
 		int randomNumber;
 		randomNumber = Random.Range (0, landTileTypesList.Count);
 
@@ -109,31 +91,48 @@ public class TileTypeSettings : MonoBehaviour {
 		return (TileType)randomNumber;
 	}
 
+	public Dictionary<int, int> getDiceProbabilities() {
+		return diceProbabilities;
+	}
+
+	public Dictionary<TileType, int> getAvailableLandPiecesDictionary() {
+		return availableLandPiecesDictionary;
+	}
+
+	public Dictionary<TileType, Material> getMaterialsDictionary() {
+		return materialsDictionary;
+	}
+
 	public void setMapWidthHeight(int width, int height) {
 		mapWidth = width;
 		mapHeight = height;
 	}
 
-	public void setTilesForNumberOnBoard(int numTiles) {
-		int numberOfBrickHexes = (Mathf.FloorToInt (numTiles * brickTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * brickTilesPercentage / 100) : 1;
-		int numberOfGrainHexes = (Mathf.FloorToInt (numTiles * grainTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * grainTilesPercentage / 100) : 1;
-		int numberOfLumberHexes = (Mathf.FloorToInt (numTiles * lumberTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * lumberTilesPercentage / 100) : 1;
-		int numberOfOreHexes = (Mathf.FloorToInt (numTiles * oreTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * oreTilesPercentage / 100) : 1;
-		int numberOfWoolHexes = (Mathf.FloorToInt (numTiles * woolTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * woolTilesPercentage / 100) : 1;
+	public void setSettingAccordingToNumTiles(int allTiles, int landTiles) {
+		setTileTypeNumbersByTotalNumberOfHexes (allTiles);
+		setDiceProbabilitiesByTotalNumberOfHexes (landTiles);
+	}
+
+	#region Private Methods
+
+	public void setTileTypeNumbersByTotalNumberOfHexes(int numTiles) {
+		int numberOfBrickHexes = (Mathf.CeilToInt (numTiles * brickTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * brickTilesPercentage / 100) : 1;
+		int numberOfGrainHexes = (Mathf.CeilToInt (numTiles * grainTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * grainTilesPercentage / 100) : 1;
+		int numberOfLumberHexes = (Mathf.CeilToInt (numTiles * lumberTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * lumberTilesPercentage / 100) : 1;
+		int numberOfOreHexes = (Mathf.CeilToInt (numTiles * oreTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * oreTilesPercentage / 100) : 1;
+		int numberOfWoolHexes = (Mathf.CeilToInt (numTiles * woolTilesPercentage / 100) > 0f)? Mathf.FloorToInt (numTiles * woolTilesPercentage / 100) : 1;
 		int numberOfDesertHexes = desertTiles;
 
 		int landTiles = numberOfBrickHexes + numberOfGrainHexes + numberOfLumberHexes + numberOfOreHexes + numberOfWoolHexes + numberOfDesertHexes;
 
-		if (oceanLayers == 0) {
-			while (landTiles < numTiles) {
-				numberOfBrickHexes++;
-				numberOfGrainHexes++;
-				numberOfLumberHexes++;
-				numberOfOreHexes++;
-				numberOfWoolHexes++;
+		while (landTiles < numTiles) {
+			numberOfBrickHexes++;
+			numberOfGrainHexes++;
+			numberOfLumberHexes++;
+			numberOfOreHexes++;
+			numberOfWoolHexes++;
 
-				landTiles += 5;
-			}
+			landTiles += 5;
 		}
 
 		//int oceanTiles = numTiles - landTiles;
@@ -144,6 +143,28 @@ public class TileTypeSettings : MonoBehaviour {
 		availableLandPiecesDictionary.Add (TileType.Ore, numberOfOreHexes);
 		availableLandPiecesDictionary.Add (TileType.Wool, numberOfWoolHexes);
 		availableLandPiecesDictionary.Add (TileType.Desert, numberOfDesertHexes);
+	}
+
+	public void setDiceProbabilitiesByTotalNumberOfHexes(int landTiles) {
+		int twoTwelve = (Mathf.CeilToInt (landTiles * 1f / 18f) > 0f)? Mathf.FloorToInt (landTiles * 1f / 18f) : 1;
+		int rest = (Mathf.CeilToInt (landTiles * 2f / 18f) > 0f)? Mathf.FloorToInt (landTiles * 2f / 18f) : 1;
+			
+		while (twoTwelve * 2 + rest * 8 < landTiles - desertTiles) {
+			twoTwelve++;
+			rest++;
+		}
+
+		diceProbabilities.Add (2, twoTwelve);
+		for (int i = 3; i < 12; i++) {
+			if (i == 7) {
+				continue;
+			}
+			diceProbabilities.Add (i, rest);
+		}
+		diceProbabilities.Add (12, twoTwelve);
+
+		//print ("twoTwelve = " + twoTwelve);
+		//print ("rest = " + rest);
 	}
 
 	private void StoreMaterialsInDictionary() {
@@ -157,9 +178,6 @@ public class TileTypeSettings : MonoBehaviour {
 	}
 
 	private void StoreLandTileTypesInList() {
-		//for (int i = 0; i < 5; i++) {
-		//	landTileTypesList.Add ((TileType)i);
-		//}
 		landTileTypesList.Add (TileType.Brick);
 		landTileTypesList.Add (TileType.Grain);
 		landTileTypesList.Add (TileType.Lumber);
@@ -167,4 +185,6 @@ public class TileTypeSettings : MonoBehaviour {
 		landTileTypesList.Add (TileType.Wool);
 		landTileTypesList.Add (TileType.Desert);
 	}
+
+	#endregion
 }

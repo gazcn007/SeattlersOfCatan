@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GameTile : Tile {
 	
-	public int diceValue;
+	public int diceValue = -1;
 	public TileType tileType;
 	public int id;
 
