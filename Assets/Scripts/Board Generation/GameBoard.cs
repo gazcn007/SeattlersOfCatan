@@ -18,7 +18,7 @@ public class GameBoard : MonoBehaviour {
 
 	//Hex Settings
 	public HexOrientation hexOrientation = HexOrientation.Flat;
-	public float hexRadius = 1;
+	public static float hexRadius = 1;
 
 	//Internal variables
 	//ID variables
@@ -28,13 +28,13 @@ public class GameBoard : MonoBehaviour {
 
 	//Dictionaries for each component
 	private Dictionary<string, GameTile> tilesDictionary = new Dictionary<string, GameTile>();
-	private Dictionary<int, GameTile> tilesByIdDictionary = new Dictionary<int, GameTile>();
+	private static Dictionary<int, GameTile> tilesByIdDictionary = new Dictionary<int, GameTile>();
 
 	private Dictionary<string, Intersection> intersectionsDictionary = new Dictionary<string, Intersection> ();
-	private Dictionary<int, Intersection> intersectionsByIdDictionary = new Dictionary<int, Intersection>();
+	private static Dictionary<int, Intersection> intersectionsByIdDictionary = new Dictionary<int, Intersection>();
 
 	private Dictionary<TupleInt, Edge> edgesDictionary = new Dictionary<TupleInt, Edge> ();
-	private Dictionary<int, Edge> edgesByIdDictionary = new Dictionary<int, Edge> ();
+	private static Dictionary<int, Edge> edgesByIdDictionary = new Dictionary<int, Edge> ();
 
 	private CubeIndex[] directions = 
 		new CubeIndex[] {
@@ -46,7 +46,9 @@ public class GameBoard : MonoBehaviour {
 		new CubeIndex(0, -1, 1)
 	}; 
 
-	private List<GameTile> tilesList = new List<GameTile>();
+	private static List<GameTile> tilesList = new List<GameTile>();
+	private static List<Intersection> intersectionsList = new List<Intersection>();
+	private static List<Edge> edgesList = new List<Edge>();
 
 	#region Getters and Setters
 	public Dictionary<string, GameTile> GameTiles {
@@ -88,47 +90,6 @@ public class GameBoard : MonoBehaviour {
 		storeTileInformation ();
 	}
 
-	public void GenerateEdges() {
-		GameObject parentObject = GameObject.FindGameObjectWithTag ("Edges");
-		Edge currentEdge;
-		Intersection i1, i2;
-
-		foreach (var tile in tilesDictionary) {
-			List<Intersection> intersectionsOfTile = IntersectionsOfTile (tile.Value);
-
-			for (int i = 1; i <= intersectionsOfTile.Count; i++) {
-				i1 = IntersectionOfTileAtCorner (tile.Value, i % intersectionsOfTile.Count);
-				i2 = IntersectionOfTileAtCorner (tile.Value, (i-1) % intersectionsOfTile.Count);
-
-				TupleInt tuple = new TupleInt (i1.id, i2.id);
-				TupleInt reverseTuple = new TupleInt (i2.id, i1.id);
-
-				if (!edgesDictionary.ContainsKey (tuple) && !edgesDictionary.ContainsKey (reverseTuple)) {
-					Vector3 midPoint = (i1.transform.position + i2.transform.position) / 2;
-					float angle = Intersection.AngleOfCorner((i-1) % intersectionsOfTile.Count, hexOrientation);
-
-					GameObject instantiation = (GameObject) Instantiate(edgePrefab, midPoint, Quaternion.Euler(new Vector3(0.0f, angle, 0.0f)), this.transform);
-					instantiation.transform.localScale = new Vector3 (instantiation.transform.localScale.x * hexRadius, instantiation.transform.localScale.y, instantiation.transform.localScale.z);
-					instantiation.name = "Edge " + edgeID;
-
-					currentEdge = instantiation.GetComponent<Edge> ();
-					currentEdge.transform.parent = parentObject.transform;
-					currentEdge.setID (edgeID++);
-
-					edgesDictionary.Add(tuple, currentEdge);
-					edgesByIdDictionary.Add (currentEdge.getID (), currentEdge);
-
-					List<GameTile> neighbors = getCommonTilesOfTwoIntersections(i1, i2);
-					foreach(GameTile gameTile in neighbors) {
-						currentEdge.addTile(gameTile);
-						gameTile.addEdge (currentEdge);
-					}
-				}
-
-			}
-		}
-	}
-
 	public void GenerateIntersections() {
 		GameObject parentObject = GameObject.FindGameObjectWithTag ("Intersections");
 		Vector3 cornerPosition;
@@ -152,6 +113,7 @@ public class GameBoard : MonoBehaviour {
 
 					intersectionsDictionary.Add(cornerPosition.ToString(), currentIntersection);
 					intersectionsByIdDictionary.Add (currentIntersection.getID (), currentIntersection);
+					intersectionsList.Add (currentIntersection);
 				}
 
 				currentIntersection.addTile (gameTile);
@@ -160,12 +122,88 @@ public class GameBoard : MonoBehaviour {
 		}
 	}
 
-	public List<GameTile> getTiles() {
-		return tilesList;
+	public void GenerateEdges() {
+		GameObject parentObject = GameObject.FindGameObjectWithTag ("Edges");
+		Edge currentEdge;
+		Intersection i1, i2;
+
+		foreach (var tile in tilesDictionary) {
+			List<Intersection> intersectionsOfTile = IntersectionsOfTile (tile.Value);
+
+			for (int i = 1; i <= intersectionsOfTile.Count; i++) {
+				i1 = IntersectionOfTileAtCorner (tile.Value, i % intersectionsOfTile.Count);
+				i2 = IntersectionOfTileAtCorner (tile.Value, (i-1) % intersectionsOfTile.Count);
+
+				TupleInt tuple = new TupleInt (i1.id, i2.id);
+				TupleInt reverseTuple = new TupleInt (i2.id, i1.id);
+
+				if (!edgesDictionary.ContainsKey (tuple) && !edgesDictionary.ContainsKey (reverseTuple)) {
+					Vector3 midPoint = (i1.transform.position + i2.transform.position) / 2;
+					float angle = Intersection.AngleOfCorner ((i - 1) % intersectionsOfTile.Count, hexOrientation);
+
+					GameObject instantiation = (GameObject)Instantiate (edgePrefab, midPoint, Quaternion.Euler (new Vector3 (0.0f, angle, 0.0f)), this.transform);
+					instantiation.transform.localScale = new Vector3 (instantiation.transform.localScale.x * hexRadius, instantiation.transform.localScale.y, instantiation.transform.localScale.z);
+					instantiation.name = "Edge " + edgeID;
+
+					currentEdge = instantiation.GetComponent<Edge> ();
+					currentEdge.transform.parent = parentObject.transform;
+					currentEdge.setID (edgeID++);
+
+					edgesDictionary.Add (tuple, currentEdge);
+					edgesByIdDictionary.Add (currentEdge.getID (), currentEdge);
+					edgesList.Add (currentEdge);
+
+					List<GameTile> neighbors = getCommonTilesOfTwoIntersections (i1, i2);
+					foreach (GameTile gameTile in neighbors) {
+						currentEdge.addTile (gameTile);
+						gameTile.addEdge (currentEdge);
+					}
+
+					currentEdge.addIntersection (i1);
+					currentEdge.addIntersection (i2);
+					i1.addLinkedEdge (currentEdge);
+					i2.addLinkedEdge (currentEdge);
+
+					i1.addNeighborIntersection (i2);
+					i2.addNeighborIntersection (i1);
+				}
+			}
+		}
+	}
+
+	public static List<GameTile> getTiles() {
+		List<GameTile> clone = new List<GameTile> (tilesList);
+		return clone;
+	}
+
+	public static List<Intersection> getIntersections() {
+		List<Intersection> clone = new List<Intersection> (intersectionsList);
+		return clone;
+	}
+
+	public static List<Edge> getEdges() {
+		List<Edge> clone = new List<Edge> (edgesList);
+		return clone;
+	}
+
+	public static Intersection getIntersectionWithID(int id) {
+		return intersectionsByIdDictionary [id];
+	}
+
+	public static Edge getEdgeWithID(int id) {
+		return edgesByIdDictionary [id];
 	}
 
 	public int getNumTiles() {
 		return tilesList.Count;
+	}
+
+	public int getNumIntersections() {
+		return intersectionsList.Count;
+	}
+
+	public int getNumEdges() {
+		return edgesList.Count;
 	}
 
 	public int getMapWidth() {
@@ -512,6 +550,18 @@ public class GameBoard : MonoBehaviour {
 	private void storeTileInformation() {
 		foreach (var tile in tilesDictionary) {
 			tilesList.Add (tile.Value);
+		}
+	}
+
+	private void storeIntersectionInformation() {
+		foreach (var intersection in intersectionsDictionary) {
+			intersectionsList.Add (intersection.Value);
+		}
+	}
+
+	private void storeEdgeInformation() {
+		foreach (var edge in edgesDictionary) {
+			edgesList.Add (edge.Value);
 		}
 	}
 

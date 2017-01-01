@@ -137,11 +137,11 @@ public class TileTypeSettings : MonoBehaviour {
 
 		//int oceanTiles = numTiles - landTiles;
 
-		availableLandPiecesDictionary.Add (TileType.Brick, numberOfBrickHexes);
-		availableLandPiecesDictionary.Add (TileType.Grain, numberOfGrainHexes);
-		availableLandPiecesDictionary.Add (TileType.Lumber, numberOfLumberHexes);
-		availableLandPiecesDictionary.Add (TileType.Ore, numberOfOreHexes);
-		availableLandPiecesDictionary.Add (TileType.Wool, numberOfWoolHexes);
+		availableLandPiecesDictionary.Add (TileType.Hills, numberOfBrickHexes);
+		availableLandPiecesDictionary.Add (TileType.Fields, numberOfGrainHexes);
+		availableLandPiecesDictionary.Add (TileType.Forests, numberOfLumberHexes);
+		availableLandPiecesDictionary.Add (TileType.Mountains, numberOfOreHexes);
+		availableLandPiecesDictionary.Add (TileType.Pastures, numberOfWoolHexes);
 		availableLandPiecesDictionary.Add (TileType.Desert, numberOfDesertHexes);
 	}
 
@@ -168,21 +168,21 @@ public class TileTypeSettings : MonoBehaviour {
 	}
 
 	private void StoreMaterialsInDictionary() {
-		materialsDictionary.Add (TileType.Brick, brickMaterial);
-		materialsDictionary.Add (TileType.Grain, grainMaterial);
-		materialsDictionary.Add (TileType.Lumber, lumberMaterial);
-		materialsDictionary.Add (TileType.Ore, oreMaterial);
-		materialsDictionary.Add (TileType.Wool, woolMaterial);
+		materialsDictionary.Add (TileType.Hills, brickMaterial);
+		materialsDictionary.Add (TileType.Fields, grainMaterial);
+		materialsDictionary.Add (TileType.Forests, lumberMaterial);
+		materialsDictionary.Add (TileType.Mountains, oreMaterial);
+		materialsDictionary.Add (TileType.Pastures, woolMaterial);
 		materialsDictionary.Add (TileType.Desert, desertMaterial);
 		materialsDictionary.Add (TileType.Ocean, oceanMaterial);
 	}
 
 	private void StoreLandTileTypesInList() {
-		landTileTypesList.Add (TileType.Brick);
-		landTileTypesList.Add (TileType.Grain);
-		landTileTypesList.Add (TileType.Lumber);
-		landTileTypesList.Add (TileType.Ore);
-		landTileTypesList.Add (TileType.Wool);
+		landTileTypesList.Add (TileType.Hills);
+		landTileTypesList.Add (TileType.Fields);
+		landTileTypesList.Add (TileType.Forests);
+		landTileTypesList.Add (TileType.Mountains);
+		landTileTypesList.Add (TileType.Pastures);
 		landTileTypesList.Add (TileType.Desert);
 	}
 

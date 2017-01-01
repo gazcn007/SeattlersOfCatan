@@ -203,11 +203,11 @@ public struct CubeIndex {
 }
 
 public enum TileType {
-	Brick = 0,
-	Grain,
-	Lumber,
-	Ore,
-	Wool,
+	Hills = 0,
+	Fields,
+	Forests,
+	Mountains,
+	Pastures,
 	Desert,
 	Ocean
 }

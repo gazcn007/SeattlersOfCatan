@@ -22,9 +22,9 @@ public class BoardDecorator {
 		mapHeight = gameBoard.getMapHeight ();
 		hexSettings.setMapWidthHeight (mapWidth, mapHeight);
 
-		allTiles = gameBoard.getTiles ();
+		allTiles = GameBoard.getTiles ();
 		//hexSettings.setSettingAccordingToNumTiles (allTiles.Count, landTiles.Count);
-		int numOceanTiles = paintOceanTiles (allTiles, settings);
+		paintOceanTiles (allTiles, settings);
 		landTiles = findLandTiles (allTiles);
 		hexSettings.setTileTypeNumbersByTotalNumberOfHexes (landTiles.Count);
 		paintLandTilesBySettings (allTiles, hexSettings);
@@ -33,7 +33,7 @@ public class BoardDecorator {
 		setTileIDsBySettings (landTiles, hexSettings);
 	}
 
-	private List<GameTile> findLandTiles(List<GameTile> allTiles) {
+	public List<GameTile> findLandTiles(List<GameTile> allTiles) {
 		List<GameTile> landTiles = new List<GameTile>();
 
 		for(int i = 0; i < allTiles.Count; i++) {
@@ -49,7 +49,7 @@ public class BoardDecorator {
 		setTileIDsBySettings (tiles, settings);
 	}
 
-	private void paintLandTilesBySettings(List<GameTile> tiles, TileTypeSettings settings) {
+	public void paintLandTilesBySettings(List<GameTile> tiles, TileTypeSettings settings) {
 		Dictionary<TileType, int> availableLandPieces = settings.getAvailableLandPiecesDictionary ();
 		Dictionary<TileType, Material> materials = settings.getMaterialsDictionary ();
 		List<GameTile> gameTiles = new List<GameTile> (landTiles);
@@ -63,9 +63,16 @@ public class BoardDecorator {
 
 				gameTiles[randomNum].tileType = pair.Key;
 				if (pair.Key == TileType.Desert) {
-					MonoBehaviour.Destroy (gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject);
+					//MonoBehaviour.Destroy (gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject);
+					gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (false);
+				} else {
+					gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (true);
 				}
 				gameTiles.RemoveAt (randomNum);
+
+				if (gameTiles.Count == 0) {
+					return;
+				}
 			}
 		}
 	}
@@ -75,7 +82,8 @@ public class BoardDecorator {
 		for (int i = 0; i < tiles.Count; i++) {
 			if (settings.IsOceanTileBySettings (tiles [i])) {
 				hexSettings.assignTileTypeToHex (tiles[i], TileType.Ocean);
-				MonoBehaviour.Destroy (tiles[i].transform.FindChild ("Dice Value").gameObject);
+				//MonoBehaviour.Destroy (tiles[i].transform.FindChild ("Dice Value").gameObject);
+				tiles[i].transform.FindChild ("Dice Value").gameObject.SetActive(false);
 				numOceanTiles++;
 			}
 		}
@@ -83,7 +91,7 @@ public class BoardDecorator {
 		return numOceanTiles;
 	}
 
-	private void setTileIDsBySettings(List<GameTile> tiles, TileTypeSettings settings) {
+	public void setTileIDsBySettings(List<GameTile> tiles, TileTypeSettings settings) {
 		Dictionary<int, int> diceProbabilities = settings.getDiceProbabilities ();
 		List<GameTile> gameTiles = new List<GameTile> (tiles);
 		int randomNum;
@@ -110,9 +118,15 @@ public class BoardDecorator {
 
 				if (pair.Key == 6 || pair.Key == 8) {
 					randomDiceValue.color = Color.red;
+				} else {
+					randomDiceValue.color = Color.black;
 				}
 
 				gameTiles.RemoveAt (randomNum);
+
+				if (gameTiles.Count == 0) {
+					return;
+				}
 			}
 		}
 	}
