@@ -201,13 +201,3 @@ public struct CubeIndex {
 		return string.Format("[" + x + "," + y + "," + z + "]");
 	}
 }
-
-public enum TileType {
-	Hills = 0,
-	Fields,
-	Forests,
-	Mountains,
-	Pastures,
-	Desert,
-	Ocean
-}

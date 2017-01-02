@@ -18,9 +18,5 @@ public class ProgressCard : GameAsset {
 }
 
 public enum ProgressCardType {
-	Brick = 0,
-	Grain,
-	Lumber,
-	Ore,
-	Wool
+
 }

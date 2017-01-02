@@ -28,3 +28,13 @@ public class GameTile : Tile {
 		intersections.Add (intersection);
 	}
 }
+
+public enum TileType {
+	Hills = 0,
+	Fields,
+	Forests,
+	Mountains,
+	Pastures,
+	Desert,
+	Ocean
+}

@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ResourceCard : GameAsset {
-
-	public ResourceType type;
+public class Face : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
@@ -16,13 +14,3 @@ public class ResourceCard : GameAsset {
 		
 	}
 }
-
-public enum ResourceType {
-	Brick = 0,
-	Grain,
-	Lumber,
-	Ore,
-	Wool,
-	Null
-}
-

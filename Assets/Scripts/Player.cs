@@ -12,13 +12,14 @@ public class Player : MonoBehaviour {
 	public int victoryPoints;
 
 	private List<Unit> ownedUnits;
-	private GameAsset[] resources;
+	public ResourceTuple resources;
+	public CommodityTuple commodities;
 
 	// Use this for initialization
 	void Start () {
 		//playerColor = Color.black;
 		ownedUnits = new List<Unit> ();
-		resources = new GameAsset[5];
+		resources = new ResourceTuple ();
 	}
 	
 	// Update is called once per frame
@@ -28,6 +29,53 @@ public class Player : MonoBehaviour {
 		if (victoryPoints >= GameManager.victoryPointsToWinGame) {
 			winGame ();
 		}
+	}
+
+	public void receiveResources(ResourceTuple resourceToAdd) {
+		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+
+		for (int i = 0; i < resourceKeys.Count; i++) {
+			if (resourceToAdd.resourceTuple [resourceKeys [i]] >= 0) {
+				resources.resourceTuple [resourceKeys [i]] += resourceToAdd.resourceTuple [resourceKeys [i]];
+			}
+		}
+	}
+
+	public void spendResources(ResourceTuple resourceToSpend) {
+		print ("In spendresources");
+		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+
+		for (int i = 0; i < resourceKeys.Count; i++) {
+			print ("Loop index: " + i.ToString ());
+			if (resources.resourceTuple [resourceKeys [i]] >= resourceToSpend.resourceTuple [resourceKeys [i]]) {
+				print ("Subtracted " + resourceToSpend.resourceTuple [resourceKeys [i]].ToString () + " " + resourceKeys [i].ToString () + " from " + this.playerName);
+				resources.resourceTuple [resourceKeys [i]] -= resourceToSpend.resourceTuple [resourceKeys [i]];
+			}
+		}
+	}
+
+	public bool hasAvailableResources(ResourceTuple resourcesNeeded) {
+		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+
+		for (int i = 0; i < resourceKeys.Count; i++) {
+			if (resources.resourceTuple [resourceKeys [i]] < resourcesNeeded.resourceTuple [resourceKeys [i]]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public void receiveResource(ResourceType resource, int amount) {
+		if (amount < 0) {
+			//Error
+		} else {
+			resources.resourceTuple [resource] += amount;
+		}
+	}
+
+	public ResourceTuple getCurrentResources() {
+		return resources;
 	}
 
 	public void playTurn() {
@@ -122,7 +170,7 @@ public class Player : MonoBehaviour {
 
 					selectedIntersection = hitInfo.transform.gameObject.GetComponent<Intersection>();
 
-					if (selectedIntersection.occupier == null && possibleIntersections.Contains(selectedIntersection)) {//selectedIntersection.isSettleable()) {
+					if (selectedIntersection != null && selectedIntersection.occupier == null && possibleIntersections.Contains(selectedIntersection)) {//selectedIntersection.isSettleable()) {
 						selectedIntersection.occupier = unitToBuild;
 						unitToBuild.locationIntersection = selectedIntersection;
 						this.ownedUnits.Add (unitToBuild);
