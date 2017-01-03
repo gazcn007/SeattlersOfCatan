@@ -18,6 +18,34 @@ public class ResourceCostManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Awake () {
+		/*settlementCost.printResourceTuple ();
+		cityCost.printResourceTuple ();
+		cityWallsCost.printResourceTuple ();
+		roadCost.printResourceTuple ();
+		shipCost.printResourceTuple ();
+		knightCost.printResourceTuple ();
+		*/
+		/*settlementCost = new ResourceTuple();
+		cityCost = new ResourceTuple();
+		cityWallsCost = new ResourceTuple();
+
+		roadCost = new ResourceTuple();
+		shipCost = new ResourceTuple();
+
+		knightCost = new ResourceTuple();*/
+
+		costsChart.Add (typeof(Settlement), new ResourceTuple(settlementCost.numBricks, settlementCost.numGrains, settlementCost.numLumbers, settlementCost.numOres, settlementCost.numWools));
+		costsChart.Add (typeof(City), new ResourceTuple(cityCost.numBricks, cityCost.numGrains, cityCost.numLumbers, cityCost.numOres, cityCost.numWools));
+		//costsChart.Add (metropolis.GetType ().ToString (), metropolisCost);
+		costsChart.Add (typeof(CityWall), new ResourceTuple(cityWallsCost.numBricks, cityWallsCost.numGrains, cityWallsCost.numLumbers, cityWallsCost.numOres, cityWallsCost.numWools));
+
+		costsChart.Add (typeof(Road), new ResourceTuple(roadCost.numBricks, roadCost.numGrains, roadCost.numLumbers, roadCost.numOres, roadCost.numWools));
+		costsChart.Add (typeof(Ship), new ResourceTuple(shipCost.numBricks, shipCost.numGrains, shipCost.numLumbers, shipCost.numOres, shipCost.numWools));
+
+		costsChart.Add (typeof(Knight), new ResourceTuple(knightCost.numBricks, knightCost.numGrains, knightCost.numLumbers, knightCost.numOres, knightCost.numWools));
+	}
+
+	public void populateResourceCostManager() {
 		costsChart.Add (typeof(Settlement), settlementCost);
 		costsChart.Add (typeof(City), cityCost);
 		//costsChart.Add (metropolis.GetType ().ToString (), metropolisCost);
@@ -34,5 +62,14 @@ public class ResourceCostManager : MonoBehaviour {
 			return null;
 		}
 		return costsChart [unitType];
+	}
+
+	void Update() {
+		//settlementCost.printResourceTuple ();
+		//cityCost.printResourceTuple ();
+		//cityWallsCost.printResourceTuple ();
+		//roadCost.printResourceTuple ();
+		//shipCost.printResourceTuple ();
+		//knightCost.printResourceTuple ();
 	}
 }

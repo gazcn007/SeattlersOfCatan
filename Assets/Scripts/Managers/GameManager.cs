@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour {
 	private int currentPlayerTurn = 0;
 	private bool waitingForPlayer;
 	private static bool setupPhase;
+	private bool cancelled;
 
 	private int unitID = 0;
 
@@ -72,6 +73,8 @@ public class GameManager : MonoBehaviour {
 		uiButtons[1].onClick.AddListener (buildSettlementEvent);
 		uiButtons[2].onClick.AddListener (buildRoadEvent);
 		uiButtons[3].onClick.AddListener (diceRollEvent);
+		uiButtons[4].onClick.AddListener (upgradeSettlementEvent);
+		uiButtons[5].onClick.AddListener (buildShipEvent);
 	}
 
 	#endregion
@@ -156,35 +159,81 @@ public class GameManager : MonoBehaviour {
 	void buildRoadEvent() {
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
-				//print ("Changing button to 'Cancel'");
-				//uiButtons [2].GetComponentInChildren<Text> ().text = "Cancel";
+				uiButtons [2].GetComponentInChildren<Text> ().text = "Cancel";
+
+				cancelled = false;
+
 				StartCoroutine (buildRoad ());
-				//uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
-				//print ("Changing button to 'Build Road' again");
 			} else {
-				StopCoroutine (buildRoad ());
+				StopAllCoroutines();
+
 				highlightAllEdges(false);
 				waitingForPlayer = false;
+				cancelled = true;
+
 				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
-				//print ("Changing button to 'Build Road' again");
+			}
+		}
+	}
+
+	void buildShipEvent() {
+		if (!setupPhase) {
+			if (!waitingForPlayer) {
+				uiButtons [5].GetComponentInChildren<Text> ().text = "Cancel";
+
+				cancelled = false;
+
+				StartCoroutine (buildShip ());
+			} else {
+				StopAllCoroutines();
+
+				highlightAllEdges(false);
+				waitingForPlayer = false;
+				cancelled = true;
+
+				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 			}
 		}
 	}
 
 	void buildSettlementEvent() {
 		if (!setupPhase) {
+			//GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
 			if (!waitingForPlayer) {
-				//print ("Changing button to 'Cancel'");
-				//uiButtons [1].GetComponentInChildren<Text> ().text = "Cancel";
-				StartCoroutine (buildSettlement ());
-				//uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
-				//print ("Changing button to 'Build Settlement' again");
+				uiButtons [1].GetComponentInChildren<Text> ().text = "Cancel";
+
+				cancelled = false;
+
+				StartCoroutine (buildSettlement ());//intersectionUnitGameObject));
 			} else {
-				StopCoroutine (buildSettlement ());
+				StopAllCoroutines();
+
 				highlightAllIntersections(false);
 				waitingForPlayer = false;
+				//Destroy (intersectionUnitGameObject);
+
 				uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
-				print ("Changing button to 'Build Settlement' again");
+			}
+		}
+	}
+
+	void upgradeSettlementEvent() {
+		if (!setupPhase) {
+			//GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
+			if (!waitingForPlayer) {
+				uiButtons [4].GetComponentInChildren<Text> ().text = "Cancel";
+
+				cancelled = false;
+
+				StartCoroutine (buildSettlement ());//intersectionUnitGameObject));
+			} else {
+				StopAllCoroutines ();
+
+				highlightAllIntersections (false);
+				waitingForPlayer = false;
+				//Destroy (intersectionUnitGameObject);
+
+				uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 			}
 		}
 	}
@@ -222,14 +271,14 @@ public class GameManager : MonoBehaviour {
 	#region Build Methods for Specific Units
 
 	IEnumerator buildSettlement() {
-		GameObject intersectionUnit = (GameObject)Instantiate (prefabManager.settlementPrefab);
-		Settlement settlement = intersectionUnit.GetComponent<Settlement> ();
+		GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
+		Settlement settlement = intersectionUnitGameObject.GetComponent<Settlement> ();
 		yield return StartCoroutine (buildIntersectionUnit (settlement, typeof(Settlement)));
 	}
 
 	IEnumerator buildCity() {
-		GameObject intersectionUnit = (GameObject)Instantiate (prefabManager.cityPrefab);
-		City city = intersectionUnit.GetComponent<City> ();
+		GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.cityPrefab);
+		City city = intersectionUnitGameObject.GetComponent<City> ();
 		yield return StartCoroutine (buildIntersectionUnit (city, typeof(City)));
 	}
 
@@ -237,6 +286,7 @@ public class GameManager : MonoBehaviour {
 		GameObject tradeUnitGameObject = (GameObject)Instantiate (prefabManager.roadPrefab);
 		Road road = tradeUnitGameObject.GetComponent<Road> ();
 		yield return StartCoroutine (buildTradeUnit (road, typeof(Road)));
+
 	}
 
 	IEnumerator buildShip() {
@@ -251,28 +301,35 @@ public class GameManager : MonoBehaviour {
 
 	IEnumerator buildTradeUnit(TradeUnit tradeUnit, System.Type unitType) {
 		waitingForPlayer = true;
-		List<Edge> validEdgesToBuild = getValidEdgesForPlayer (players[currentPlayerTurn]);
+		List<Edge> validEdgesToBuild = getValidEdgesForPlayer (players[currentPlayerTurn], unitType == typeof(Road));
 		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (unitType);
 
 		if (costOfUnit == null) {
 			print ("costofunit is null, returning.");
 			waitingForPlayer = false;
+			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+			Destroy (tradeUnit.gameObject);
 			yield break;
 		}
 
 		if (!setupPhase) {
-			uiButtons [2].GetComponentInChildren<Text> ().text = "Cancel";
 			if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
 				print ("Insufficient Resources to build a road!");
 				waitingForPlayer = false;
+				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+				Destroy (tradeUnit.gameObject);
 				yield break;
 			}
 		}
 
 		if (validEdgesToBuild.Count == 0) {
 			print ("No possible location to build a road!");
-			Destroy (tradeUnit);
+			Destroy (tradeUnit.gameObject);
 			waitingForPlayer = false;
+			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 			yield break;
 		}
 
@@ -281,14 +338,34 @@ public class GameManager : MonoBehaviour {
 		tradeUnit.id = unitID++;
 		tradeUnit.gameObject.SetActive (false);
 
-		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (tradeUnit));//new Road(unitID++)));
+		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuild, tradeUnit));//new Road(unitID++)));
+
+		if (setupPhase && !(players [currentPlayerTurn].lastEdgeSelection.isLandEdge() || players [currentPlayerTurn].lastEdgeSelection.isShoreEdge())) {
+			GameObject tradeUnitGameObject = (GameObject)Instantiate (prefabManager.shipPrefab);
+			Ship replacedShip = tradeUnitGameObject.GetComponent<Ship> ();
+			replacedShip.id = tradeUnit.id;
+			Destroy (tradeUnit.gameObject);
+			tradeUnit = replacedShip;
+		}
+
+		players [currentPlayerTurn].lastEdgeSelection.occupier = tradeUnit;
+		tradeUnit.locationEdge = players [currentPlayerTurn].lastEdgeSelection;
+		players [currentPlayerTurn].addOwnedUnit (tradeUnit);
+		tradeUnit.owner = players [currentPlayerTurn];
+
+		tradeUnit.transform.position = players [currentPlayerTurn].lastEdgeSelection.transform.position;
+		tradeUnit.transform.rotation = players [currentPlayerTurn].lastEdgeSelection.transform.rotation;
+		tradeUnit.transform.localScale = players [currentPlayerTurn].lastEdgeSelection.transform.localScale;
+		tradeUnit.transform.parent = players [currentPlayerTurn].lastEdgeSelection.transform;
 
 		tradeUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		tradeUnit.gameObject.SetActive (true);
 
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
+
 			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 		}
 		highlightAllEdges(false);
 
@@ -300,25 +377,29 @@ public class GameManager : MonoBehaviour {
 		List<Intersection> validIntersectionsToBuild = getValidIntersectionsForPlayer (players[currentPlayerTurn]);
 		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (unitType);
 
-		if (costOfUnit == null) {
+		if (!setupPhase && costOfUnit == null) {
 			print ("costofunit is null, returning.");
+			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
+			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
 			yield break;
 		}
 
 		if (!setupPhase) {
-			uiButtons [1].GetComponentInChildren<Text> ().text = "Cancel";
 			if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
 				print ("Insufficient Resources to build a road!");
+				Destroy (intersectionUnit.gameObject);
 				waitingForPlayer = false;
+				uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
 				yield break;
 			}
 		}
 
 		if (validIntersectionsToBuild.Count == 0) {
 			print ("No possible location to build a settlement!");
-			Destroy (intersectionUnit);
+			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
+			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
 			yield break;
 		}
 
@@ -329,11 +410,21 @@ public class GameManager : MonoBehaviour {
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (intersectionUnit));
 
+		players [currentPlayerTurn].lastIntersectionSelection.occupier = intersectionUnit;
+		intersectionUnit.locationIntersection = players [currentPlayerTurn].lastIntersectionSelection;
+		players [currentPlayerTurn].addOwnedUnit(intersectionUnit);
+		intersectionUnit.owner = players [currentPlayerTurn];
+
+		intersectionUnit.transform.position = players [currentPlayerTurn].lastIntersectionSelection.transform.position;
+		intersectionUnit.transform.parent = players [currentPlayerTurn].lastIntersectionSelection.transform;
+		intersectionUnit.transform.localScale = intersectionUnit.transform.localScale * GameBoard.hexRadius;
+
 		intersectionUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		intersectionUnit.gameObject.SetActive (true);
 
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
+
 			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
 		}
 
@@ -450,7 +541,8 @@ public class GameManager : MonoBehaviour {
 
 	#region Container Validators for Player
 
-	public static List<Edge> getValidEdgesForPlayer(Player player) {
+	public static List<Edge> getValidEdgesForPlayer(Player player, bool roadBuilt) {
+		//print ("roadBuilt == " + roadBuilt.ToString ());
 		List<Edge> validEdges = new List<Edge> ();
 		List<Unit> ownedUnits = player.getOwnedUnits ();
 
@@ -487,7 +579,7 @@ public class GameManager : MonoBehaviour {
 						List<Edge> connectedEdges = connectedIntersections [j].getLinkedEdges ();
 
 						for (int k = 0; k < connectedEdges.Count; k++) {
-							if (connectedEdges [k].occupier == null) {
+							if (connectedEdges [k].occupier == null && (roadBuilt == connectedEdges [k].isLandEdge() || connectedEdges [k].isShoreEdge())) {
 								validEdges.Add (connectedEdges [k]);
 							}
 						}
@@ -545,73 +637,99 @@ public class GameManager : MonoBehaviour {
 
 	#region Old Methods
 
-	private IEnumerator buildSettlmnt() {
+	IEnumerator buildTradeUnit2(TradeUnit tradeUnit, System.Type unitType) {
 		waitingForPlayer = true;
+		List<Edge> validEdgesToBuild = getValidEdgesForPlayer (players[currentPlayerTurn], true);
+		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (unitType);
+
+		if (costOfUnit == null) {
+			print ("costofunit is null, returning.");
+			waitingForPlayer = false;
+			yield break;
+		}
 
 		if (!setupPhase) {
-			/*if (!players [currentPlayerTurn].hasAvailableResources (ResourceCost.getResourceValueOf (intersectionUnit.GetType ()))) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
+			if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
 				print ("Insufficient Resources to build a road!");
 				waitingForPlayer = false;
 				yield break;
-			}*/
+			}
 		}
 
-		//if (!highlightIntersectionsWithColor (true, players [currentPlayerTurn].playerColor)) {
-		//	print ("No possible location to build a settlement!");
-		//	waitingForPlayer = false;
-		//	yield break;
-		//}
+		if (validEdgesToBuild.Count == 0) {
+			print ("No possible location to build a road!");
+			Destroy (tradeUnit);
+			waitingForPlayer = false;
+			yield break;
+		}
 
-		GameObject settlementGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
-		Settlement settlement = settlementGameObject.GetComponent<Settlement> ();
-		settlement.id = unitID++;
-		settlement.gameObject.SetActive (false);
+		highlightEdgesWithColor (validEdgesToBuild, true, players [currentPlayerTurn].playerColor);
 
-		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (settlement));
+		tradeUnit.id = unitID++;
+		tradeUnit.gameObject.SetActive (false);
 
-		settlement.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
-		settlement.gameObject.SetActive (true);
+		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuild, tradeUnit));//new Road(unitID++)));
 
-		//if (!setupPhase) {
-		//	players [currentPlayerTurn].decreaseResources (Road.ResourceValue);
-		//}
+		tradeUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
+		tradeUnit.gameObject.SetActive (true);
+
+		if (!setupPhase) {
+			players [currentPlayerTurn].spendResources (costOfUnit);
+
+			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+		}
+		highlightAllEdges(false);
+
+		waitingForPlayer = false;
+	}
+
+	IEnumerator buildIntersectionUnit2(IntersectionUnit intersectionUnit, System.Type unitType) {
+		waitingForPlayer = true;
+		List<Intersection> validIntersectionsToBuild = getValidIntersectionsForPlayer (players[currentPlayerTurn]);
+		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (unitType);
+
+		if (costOfUnit == null) {
+			print ("costofunit is null, returning.");
+			waitingForPlayer = false;
+			yield break;
+		}
+
+		if (!setupPhase) {
+			if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
+				print ("Insufficient Resources to build a road!");
+				waitingForPlayer = false;
+				yield break;
+			}
+		}
+
+		if (validIntersectionsToBuild.Count == 0) {
+			print ("No possible location to build a settlement!");
+			Destroy (intersectionUnit);
+			waitingForPlayer = false;
+			yield break;
+		}
+
+		highlightIntersectionsWithColor (validIntersectionsToBuild, true, players [currentPlayerTurn].playerColor);
+
+		intersectionUnit.id = unitID++;
+		intersectionUnit.gameObject.SetActive (false);
+
+		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (intersectionUnit));
+
+		intersectionUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
+		intersectionUnit.gameObject.SetActive (true);
+
+		if (!setupPhase) {
+			players [currentPlayerTurn].spendResources (costOfUnit);
+
+			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+		}
+
 		highlightAllIntersections(false);
 
 		waitingForPlayer = false;
 	}
 
-	IEnumerator buildRd() {
-		waitingForPlayer = true;
-		//if (!setupPhase) {
-		//	print("Insufficient Resources to build a road!");
-		//	players [currentPlayerTurn].checkResources (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue)
-		//	waitingForPlayer = false;
-		//	yield break;
-		//}
-
-		/*if (!highlightEdgesWithColor (true, players [currentPlayerTurn].playerColor)) {
-			print ("No possible location to build a road!");
-			waitingForPlayer = false;
-			yield break;
-		}*/
-
-		GameObject roadGameObject = (GameObject)Instantiate (prefabManager.roadPrefab);
-		Road road = roadGameObject.GetComponent<Road> ();
-		road.id = unitID++;
-		road.gameObject.SetActive (false);
-
-		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (road));//new Road(unitID++)));
-
-		road.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
-		road.gameObject.SetActive (true);
-
-		//if (!setupPhase) {
-		//	players [currentPlayerTurn].decreaseResources (Road.ResourceValue);
-		//}
-		highlightAllEdges(false);
-
-		waitingForPlayer = false;
-	}
 
 	#endregion
 }

@@ -49,10 +49,10 @@ public class Edge : MonoBehaviour {
 	}
 
 	public bool isSeaEdge() {
-		if (!isShoreEdge() && !isLandEdge()) {
+		if (landTilesCount () < 1) {
 			return true;
 		} else {
-			return true;
+			return false;
 		}
 	}
 

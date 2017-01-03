@@ -17,6 +17,7 @@ public class ResourceCard : GameAsset {
 	}
 }
 
+[System.Serializable]
 public enum ResourceType {
 	Brick = 0,
 	Grain,

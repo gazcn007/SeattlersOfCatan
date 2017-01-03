@@ -11,15 +11,18 @@ public class Player : MonoBehaviour {
 	public int goldCoins;
 	public int victoryPoints;
 
+	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	private List<Unit> ownedUnits;
 	public ResourceTuple resources;
 	public CommodityTuple commodities;
+
+	public Edge lastEdgeSelection;
+	public Intersection lastIntersectionSelection;
 
 	// Use this for initialization
 	void Start () {
 		//playerColor = Color.black;
 		ownedUnits = new List<Unit> ();
-		resources = new ResourceTuple ();
 	}
 	
 	// Update is called once per frame
@@ -99,13 +102,17 @@ public class Player : MonoBehaviour {
 		return clone;
 	}
 
+	public void addOwnedUnit(Unit unit) {
+		ownedUnits.Add (unit);
+	}
+
 	public int getNumUnits() {
 		return ownedUnits.Count;
 	}
 
-	public IEnumerator makeEdgeSelection(TradeUnit unitToBuild) {
+	public IEnumerator makeEdgeSelection(List<Edge> possibleEdges, TradeUnit unitToBuild) {
 		bool selectionMade = false;
-		List<Edge> possibleEdges = GameManager.getValidEdgesForPlayer (this);
+		//List<Edge> possibleEdges = GameManager.getValidEdgesForPlayer (this);
 		Edge selectedEdge;
 
 		while (!selectionMade) {
@@ -126,7 +133,7 @@ public class Player : MonoBehaviour {
 					selectedEdge = hitInfo.transform.gameObject.GetComponent<Edge>();
 
 					if (selectedEdge != null && selectedEdge.occupier == null && possibleEdges.Contains(selectedEdge)) {//(selectedEdge.isLandEdge() || selectedEdge.isShoreEdge())) {
-						selectedEdge.occupier = unitToBuild;
+						/*selectedEdge.occupier = unitToBuild;
 						unitToBuild.locationEdge = selectedEdge;
 						this.ownedUnits.Add (unitToBuild);
 						unitToBuild.owner = this;
@@ -135,7 +142,9 @@ public class Player : MonoBehaviour {
 						unitToBuild.transform.position = selectedEdge.transform.position;
 						unitToBuild.transform.rotation = selectedEdge.transform.rotation;
 						unitToBuild.transform.localScale = selectedEdge.transform.localScale;
-						unitToBuild.transform.parent = selectedEdge.transform;
+						unitToBuild.transform.parent = selectedEdge.transform;*/
+						selectionMade = true;
+						lastEdgeSelection = selectedEdge;
 
 						print (this.playerName + " builds a road on edge #" + selectedEdge.id);
 					}
@@ -171,7 +180,7 @@ public class Player : MonoBehaviour {
 					selectedIntersection = hitInfo.transform.gameObject.GetComponent<Intersection>();
 
 					if (selectedIntersection != null && selectedIntersection.occupier == null && possibleIntersections.Contains(selectedIntersection)) {//selectedIntersection.isSettleable()) {
-						selectedIntersection.occupier = unitToBuild;
+						/*selectedIntersection.occupier = unitToBuild;
 						unitToBuild.locationIntersection = selectedIntersection;
 						this.ownedUnits.Add (unitToBuild);
 						unitToBuild.owner = this;
@@ -179,7 +188,9 @@ public class Player : MonoBehaviour {
 
 						unitToBuild.transform.position = selectedIntersection.transform.position;
 						unitToBuild.transform.parent = selectedIntersection.transform;
-						unitToBuild.transform.localScale = unitToBuild.transform.localScale * GameBoard.hexRadius;
+						unitToBuild.transform.localScale = unitToBuild.transform.localScale * GameBoard.hexRadius;*/
+						selectionMade = true;
+						lastIntersectionSelection = selectedIntersection;
 
 						print (this.playerName + " builds a settlement on intersection #" + selectedIntersection.id);
 					}

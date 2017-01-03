@@ -12,12 +12,13 @@ public class ResourceDistributionManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		resourceCostManager = GetComponent<ResourceCostManager> ();
 		GameObject redDieObj = (GameObject) Instantiate (numericDiePrefab);
 		redDie = redDieObj.GetComponent<NumericDie> ();
 
 		GameObject yellowDieObj = (GameObject) Instantiate (numericDiePrefab);
 		yellowDie = yellowDieObj.GetComponent<NumericDie> ();
+
+		resourceCostManager = GetComponent<ResourceCostManager> ();
 	}
 
 	public /*IEnumerator*/ int diceRollEvent() {
