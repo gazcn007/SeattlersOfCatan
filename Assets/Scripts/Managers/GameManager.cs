@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,11 +11,15 @@ public class GameManager : MonoBehaviour {
 	[Range(10, 25)]
 	public static int victoryPointsToWinGame = 12;
 
-	public List<Player> players = new List<Player>(4);
+	public List<Player> players;
 
 	private Canvas canvas;
 	private Text[] texts;
 	private Button[] uiButtons;
+	private Button[] panelButtons;
+	private Slider panelSlider;
+	private Text panelNumText;
+	private TradePanel tradePanel;
 
 	private GameBoard gameBoard;
 	private BoardGenerator boardGenerator;
@@ -26,9 +31,9 @@ public class GameManager : MonoBehaviour {
 	private int currentPlayerTurn = 0;
 	private bool waitingForPlayer;
 	private static bool setupPhase;
-	private bool cancelled;
 
 	private int unitID = 0;
+	private Dictionary<int, Unit> unitsInPlay;
 
 	// Use this for initialization
 	void Start () {
@@ -58,15 +63,21 @@ public class GameManager : MonoBehaviour {
 		boardGenerator.GenerateBoard ();
 
 		gameBoard = boardGenerator.GetComponentInChildren<GameBoard>();
+
+		players = new List<Player>(4);
+		unitsInPlay = new Dictionary<int, Unit> ();
 	}
 
 	void initializeUI() {
 		GameObject[] textObjects = GameObject.FindGameObjectsWithTag ("DebugUIText");
+		GameObject currentTurnTextObject = GameObject.FindGameObjectWithTag ("CurrentTurnText");
+		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
 
-		texts = new Text[textObjects.Length];
+		texts = new Text[textObjects.Length + 1];
 		for (int i = 0; i < textObjects.Length; i++) {
 			texts [i] = textObjects [textObjects.Length - 1 - i].GetComponent<Text> ();
 		}
+		texts [texts.Length - 1] = currentTurnTextObject.GetComponent<Text> ();
 
 		uiButtons = canvas.GetComponentsInChildren<Button> ();
 		uiButtons[0].onClick.AddListener (endTurn);
@@ -75,6 +86,10 @@ public class GameManager : MonoBehaviour {
 		uiButtons[3].onClick.AddListener (diceRollEvent);
 		uiButtons[4].onClick.AddListener (upgradeSettlementEvent);
 		uiButtons[5].onClick.AddListener (buildShipEvent);
+		uiButtons [6].onClick.AddListener (tradeWithBankEvent);
+
+		tradePanel.buttonsOnPanel[0].onClick.AddListener(tradeDone);
+		tradePanel.buttonsOnPanel[1].onClick.AddListener(tradeCancelled);
 	}
 
 	#endregion
@@ -150,6 +165,7 @@ public class GameManager : MonoBehaviour {
 			}
 			texts [i].text += ">";
 		}
+		texts [4].text = "Current Turn: " + players [currentPlayerTurn].playerName;
 	}
 
 	#endregion
@@ -161,15 +177,12 @@ public class GameManager : MonoBehaviour {
 			if (!waitingForPlayer) {
 				uiButtons [2].GetComponentInChildren<Text> ().text = "Cancel";
 
-				cancelled = false;
-
 				StartCoroutine (buildRoad ());
 			} else {
 				StopAllCoroutines();
 
 				highlightAllEdges(false);
 				waitingForPlayer = false;
-				cancelled = true;
 
 				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 			}
@@ -181,15 +194,12 @@ public class GameManager : MonoBehaviour {
 			if (!waitingForPlayer) {
 				uiButtons [5].GetComponentInChildren<Text> ().text = "Cancel";
 
-				cancelled = false;
-
 				StartCoroutine (buildShip ());
 			} else {
 				StopAllCoroutines();
 
 				highlightAllEdges(false);
 				waitingForPlayer = false;
-				cancelled = true;
 
 				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 			}
@@ -201,8 +211,6 @@ public class GameManager : MonoBehaviour {
 			//GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
 			if (!waitingForPlayer) {
 				uiButtons [1].GetComponentInChildren<Text> ().text = "Cancel";
-
-				cancelled = false;
 
 				StartCoroutine (buildSettlement ());//intersectionUnitGameObject));
 			} else {
@@ -223,19 +231,62 @@ public class GameManager : MonoBehaviour {
 			if (!waitingForPlayer) {
 				uiButtons [4].GetComponentInChildren<Text> ().text = "Cancel";
 
-				cancelled = false;
-
-				StartCoroutine (buildSettlement ());//intersectionUnitGameObject));
+				StartCoroutine (upgradeSettlement ());//intersectionUnitGameObject));
 			} else {
 				StopAllCoroutines ();
 
-				highlightAllIntersections (false);
+				highlightUnitsWithColor (players[currentPlayerTurn].getOwnedUnitsOfType(typeof(Settlement)), true, players[currentPlayerTurn].playerColor);
 				waitingForPlayer = false;
 				//Destroy (intersectionUnitGameObject);
 
 				uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 			}
 		}
+	}
+
+	void tradeWithBankEvent() {
+		if (!setupPhase) {
+			if (!waitingForPlayer) {
+				StartCoroutine (tradeXForOne (4));
+			}
+		}
+	}
+
+	void tradeDone() {
+		bool successful = false;
+		ResourceTuple unitsToGiveToBank = new ResourceTuple ();
+		unitsToGiveToBank.addResourceWithType (tradePanel.getTradeChoice(), 4);
+
+		if (players [currentPlayerTurn].hasAvailableResources (unitsToGiveToBank)) {
+			players [currentPlayerTurn].spendResources (unitsToGiveToBank);
+			ResourceTuple unitToReceive = new ResourceTuple ();
+			unitToReceive.addResourceWithType (tradePanel.getReceiveChoice (), 1);
+			players [currentPlayerTurn].receiveResources (unitToReceive);
+
+			print (players [currentPlayerTurn].playerName + " gives 4 " + tradePanel.getTradeChoice ().ToString () + " to the bank and receives 1 " + tradePanel.getReceiveChoice ());
+
+			tradePanel.gameObject.SetActive (false);
+			waitingForPlayer = false;
+		} else {
+			print ("Insufficient resources! Please try again...");
+		}
+
+		// get tuple from input
+		// check if possible to subtract from user
+		// if possible, do it, set succesful to true
+
+		if (successful) {
+			
+		} else {
+			// print errorText (add to UI) that this trade is not possible because user does not have enough resources
+		}
+	}
+
+	void tradeCancelled() {
+		StopAllCoroutines();
+
+		tradePanel.gameObject.SetActive (false);
+		waitingForPlayer = false;
 	}
 
 	void endTurn() {
@@ -297,12 +348,96 @@ public class GameManager : MonoBehaviour {
 
 	#endregion
 
+	#region Player Input Events
+
+	IEnumerator upgradeSettlement() {
+		waitingForPlayer = true;
+		List<Settlement> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
+		//List<Unit> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement));
+
+		if (ownedSettlements.Count == 0) {
+			print ("No settlements owned!");
+			uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			waitingForPlayer = false;
+			yield break;
+		}
+
+		if (!players [currentPlayerTurn].hasAvailableResources (ResourceCostManager.getCostOfUnit (typeof(City)))) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
+			print ("Insufficient Resources to upgrade a settlement to a city!");
+			uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			waitingForPlayer = false;
+			yield break;
+		}
+
+		highlightUnitsWithColor (ownedSettlements.Cast<Unit> ().ToList (), true, Color.black);
+
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedSettlements.Cast<Unit> ().ToList ()));//new Road(unitID++)));
+
+		Settlement settlementToUpgrade = (Settlement)unitsInPlay [players [currentPlayerTurn].lastUnitSelectionId];
+		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
+		print("Found settlement with id#: " + settlementToUpgrade.id + ". Residing on intersection id#: " + settlementToUpgrade.locationIntersection.id);
+
+		GameObject cityGameObject = (GameObject)Instantiate (prefabManager.cityPrefab);
+		City newCity = cityGameObject.GetComponent<City> ();
+		newCity.id = settlementToUpgrade.id;
+		unitsInPlay [settlementToUpgrade.id] = newCity;
+
+		settlementToUpgrade.locationIntersection.occupier = newCity;
+		newCity.locationIntersection = settlementToUpgrade.locationIntersection;
+
+		players [currentPlayerTurn].removeOwnedUnit (settlementToUpgrade, typeof(Settlement));
+		players [currentPlayerTurn].addOwnedUnit (newCity, typeof(City));
+		newCity.owner = players [currentPlayerTurn];
+
+		newCity.transform.position = settlementToUpgrade.transform.position;
+		newCity.transform.parent = settlementToUpgrade.transform.parent;
+		newCity.transform.localScale = settlementToUpgrade.transform.localScale;
+
+		newCity.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
+
+		Destroy (settlementToUpgrade.gameObject);
+
+		highlightUnitsWithColor (ownedSettlements.Cast<Unit>().ToList(), true, players[currentPlayerTurn].playerColor);
+		uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+
+		waitingForPlayer = false;
+	}
+
+	IEnumerator tradeXForOne(int resourceToGiveForOne) {
+		waitingForPlayer = true;
+
+		ResourceTuple currentResources = players [currentPlayerTurn].getCurrentResources ();
+		bool canTrade = false;
+
+		foreach (var pair in currentResources.resourceTuple) {
+			if (pair.Value >= resourceToGiveForOne) {
+				canTrade = true;
+			}
+		}
+
+		if (!canTrade) {
+			print (players [currentPlayerTurn].playerName + " can not trade with bank for " + resourceToGiveForOne + ":1! Insufficient resources!");
+			waitingForPlayer = false;
+			yield break;
+		}
+
+		tradePanel.gameObject.SetActive (true);
+
+		//TODO:
+		// Set which type is possible to be selected, map slider value to text, etc. (must also do this in update)
+		// Then in done, can check if it works for player's current number of resources. or can check this here too...
+
+	}
+
+	#endregion
+
 	#region Generic Build Methods
 
 	IEnumerator buildTradeUnit(TradeUnit tradeUnit, System.Type unitType) {
 		waitingForPlayer = true;
 		List<Edge> validEdgesToBuild = getValidEdgesForPlayer (players[currentPlayerTurn], unitType == typeof(Road));
 		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (unitType);
+		System.Type newType = unitType;
 
 		if (costOfUnit == null) {
 			print ("costofunit is null, returning.");
@@ -315,7 +450,7 @@ public class GameManager : MonoBehaviour {
 
 		if (!setupPhase) {
 			if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
-				print ("Insufficient Resources to build a road!");
+				print ("Insufficient Resources to build this trade unit!");
 				waitingForPlayer = false;
 				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
@@ -325,7 +460,7 @@ public class GameManager : MonoBehaviour {
 		}
 
 		if (validEdgesToBuild.Count == 0) {
-			print ("No possible location to build a road!");
+			print ("No possible location to build this trade unit!");
 			Destroy (tradeUnit.gameObject);
 			waitingForPlayer = false;
 			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
@@ -334,11 +469,14 @@ public class GameManager : MonoBehaviour {
 		}
 
 		highlightEdgesWithColor (validEdgesToBuild, true, players [currentPlayerTurn].playerColor);
+		//highlightEdges (validEdgesToBuild, true);
 
 		tradeUnit.id = unitID++;
 		tradeUnit.gameObject.SetActive (false);
 
-		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuild, tradeUnit));//new Road(unitID++)));
+		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuild));//, tradeUnit));//new Road(unitID++)));
+
+		print (players [currentPlayerTurn].playerName + " builds a " + unitType.ToString() + " on edge #" + players [currentPlayerTurn].lastEdgeSelection.id);
 
 		if (setupPhase && !(players [currentPlayerTurn].lastEdgeSelection.isLandEdge() || players [currentPlayerTurn].lastEdgeSelection.isShoreEdge())) {
 			GameObject tradeUnitGameObject = (GameObject)Instantiate (prefabManager.shipPrefab);
@@ -346,11 +484,12 @@ public class GameManager : MonoBehaviour {
 			replacedShip.id = tradeUnit.id;
 			Destroy (tradeUnit.gameObject);
 			tradeUnit = replacedShip;
+			newType = typeof(Ship);
 		}
 
 		players [currentPlayerTurn].lastEdgeSelection.occupier = tradeUnit;
 		tradeUnit.locationEdge = players [currentPlayerTurn].lastEdgeSelection;
-		players [currentPlayerTurn].addOwnedUnit (tradeUnit);
+		players [currentPlayerTurn].addOwnedUnit (tradeUnit, newType);
 		tradeUnit.owner = players [currentPlayerTurn];
 
 		tradeUnit.transform.position = players [currentPlayerTurn].lastEdgeSelection.transform.position;
@@ -360,6 +499,8 @@ public class GameManager : MonoBehaviour {
 
 		tradeUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		tradeUnit.gameObject.SetActive (true);
+
+		unitsInPlay.Add (tradeUnit.id, tradeUnit);
 
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
@@ -387,7 +528,7 @@ public class GameManager : MonoBehaviour {
 
 		if (!setupPhase) {
 			if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
-				print ("Insufficient Resources to build a road!");
+				print ("Insufficient Resources to build this intersection unit!");
 				Destroy (intersectionUnit.gameObject);
 				waitingForPlayer = false;
 				uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
@@ -396,7 +537,7 @@ public class GameManager : MonoBehaviour {
 		}
 
 		if (validIntersectionsToBuild.Count == 0) {
-			print ("No possible location to build a settlement!");
+			print ("No possible location to build this intersection unit!");
 			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
 			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
@@ -404,15 +545,17 @@ public class GameManager : MonoBehaviour {
 		}
 
 		highlightIntersectionsWithColor (validIntersectionsToBuild, true, players [currentPlayerTurn].playerColor);
+		//highlightIntersections (validIntersectionsToBuild, true);
 
 		intersectionUnit.id = unitID++;
 		intersectionUnit.gameObject.SetActive (false);
 
-		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (intersectionUnit));
+		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (validIntersectionsToBuild));//, intersectionUnit));
+		print (players [currentPlayerTurn].playerName + " builds a " + unitType.ToString() + " on intersection #" + players [currentPlayerTurn].lastIntersectionSelection.id);
 
 		players [currentPlayerTurn].lastIntersectionSelection.occupier = intersectionUnit;
 		intersectionUnit.locationIntersection = players [currentPlayerTurn].lastIntersectionSelection;
-		players [currentPlayerTurn].addOwnedUnit(intersectionUnit);
+		players [currentPlayerTurn].addOwnedUnit(intersectionUnit, unitType);
 		intersectionUnit.owner = players [currentPlayerTurn];
 
 		intersectionUnit.transform.position = players [currentPlayerTurn].lastIntersectionSelection.transform.position;
@@ -421,6 +564,8 @@ public class GameManager : MonoBehaviour {
 
 		intersectionUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		intersectionUnit.gameObject.SetActive (true);
+
+		unitsInPlay.Add (intersectionUnit.id, intersectionUnit);
 
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
@@ -445,10 +590,26 @@ public class GameManager : MonoBehaviour {
 		}
 	}
 
+	private void highlightUnitsWithColor(List<Unit> units, bool highlight, Color colorToHighlight) {
+		for (int i = 0; i < units.Count; i++) {
+			Renderer renderer = units [i].gameObject.GetComponentInChildren<Renderer> ();
+			renderer.material.color = colorToHighlight;
+		}
+
+	}
+
 	private void highlightIntersectionsWithColor(List<Intersection> intersections, bool highlight, Color playerColor) {
 		for (int i = 0; i < intersections.Count; i++) {
 			if (intersections [i].occupier == null && intersections[i].isSettleable()) {
 				intersections [i].highlightIntersectionWithColor (highlight, playerColor);
+			}
+		}
+	}
+
+	private void highlightIntersections(List<Intersection> intersections, bool highlight) {
+		for (int i = 0; i < intersections.Count; i++) {
+			if (intersections [i].occupier == null && intersections[i].isSettleable()) {
+				intersections [i].highlightIntersection (highlight);
 			}
 		}
 	}
@@ -463,6 +624,13 @@ public class GameManager : MonoBehaviour {
 	private void highlightEdgesWithColor(List<Edge> edges, bool highlight, Color playerColor) {
 		for (int i = 0; i < edges.Count; i++) {
 			edges [i].highlightEdgeWithColor (highlight, playerColor);
+		}
+
+	}
+
+	private void highlightEdges(List<Edge> edges, bool highlight) {
+		for (int i = 0; i < edges.Count; i++) {
+			edges [i].highlightEdge (highlight);
 		}
 
 	}
@@ -508,9 +676,9 @@ public class GameManager : MonoBehaviour {
 				IntersectionUnit intersectionUnit = (IntersectionUnit) ownedUnits [i];
 				Intersection relatedIntersection = intersectionUnit.locationIntersection;
 
-				HashSet<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+				List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
 				foreach(GameTile tile in adjacentTiles) {
-					if (tile.diceValue == valueRolled || setupPhase) {
+					if ((tile.diceValue == valueRolled || setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
 						eligibleTiles.Add (tile);
 					}
 				}
@@ -576,11 +744,13 @@ public class GameManager : MonoBehaviour {
 
 					List<Intersection> connectedIntersections = relatedEdge.getLinkedIntersections ();
 					for (int j = 0; j < connectedIntersections.Count; j++) {
-						List<Edge> connectedEdges = connectedIntersections [j].getLinkedEdges ();
+						if (connectedIntersections [j].occupier == null || connectedIntersections [j].occupier.owner == player) {
+							List<Edge> connectedEdges = connectedIntersections [j].getLinkedEdges ();
 
-						for (int k = 0; k < connectedEdges.Count; k++) {
-							if (connectedEdges [k].occupier == null && (roadBuilt == connectedEdges [k].isLandEdge() || connectedEdges [k].isShoreEdge())) {
-								validEdges.Add (connectedEdges [k]);
+							for (int k = 0; k < connectedEdges.Count; k++) {
+								if (connectedEdges [k].occupier == null && (roadBuilt == connectedEdges [k].isLandEdge () || connectedEdges [k].isShoreEdge ())) {
+									validEdges.Add (connectedEdges [k]);
+								}
 							}
 						}
 					}
@@ -622,7 +792,7 @@ public class GameManager : MonoBehaviour {
 					List<Intersection> neighborIntersections = relatedEdge.getLinkedIntersections ();
 
 					for (int j = 0; j < neighborIntersections.Count; j++) {
-						if (neighborIntersections [j].occupier == null) {
+						if (neighborIntersections [j].occupier == null && neighborIntersections [j].isSettleable()) {
 							validIntersections.Add (neighborIntersections [j]);
 						}
 					}
@@ -668,7 +838,7 @@ public class GameManager : MonoBehaviour {
 		tradeUnit.id = unitID++;
 		tradeUnit.gameObject.SetActive (false);
 
-		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuild, tradeUnit));//new Road(unitID++)));
+		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuild));//, tradeUnit));//new Road(unitID++)));
 
 		tradeUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		tradeUnit.gameObject.SetActive (true);
@@ -689,7 +859,7 @@ public class GameManager : MonoBehaviour {
 		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (unitType);
 
 		if (costOfUnit == null) {
-			print ("costofunit is null, returning.");
+			print ("Cost of unit is null, returning.");
 			waitingForPlayer = false;
 			yield break;
 		}
@@ -714,7 +884,7 @@ public class GameManager : MonoBehaviour {
 		intersectionUnit.id = unitID++;
 		intersectionUnit.gameObject.SetActive (false);
 
-		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (intersectionUnit));
+		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (validIntersectionsToBuild));//, intersectionUnit));
 
 		intersectionUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		intersectionUnit.gameObject.SetActive (true);

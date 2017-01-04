@@ -4,11 +4,12 @@ using UnityEngine;
 
 public class Intersection : MonoBehaviour {
 
-	public HashSet<GameTile> adjacentTiles;
+	public List<GameTile> adjacentTiles;
 	public List<Edge> linkedEdges;
 	public List<Intersection> neighborIntersections;
 	public int id;
 	public IntersectionUnit occupier;
+	public int issettleableint = 0;
 
 	// Use this for initialization
 
@@ -20,7 +21,7 @@ public class Intersection : MonoBehaviour {
 	}
 
 	public Intersection() {
-		adjacentTiles = new HashSet<GameTile>();
+		adjacentTiles = new List<GameTile>();
 		linkedEdges = new List<Edge> ();
 		neighborIntersections = new List<Intersection> ();
 	}
@@ -54,12 +55,12 @@ public class Intersection : MonoBehaviour {
 
 	private int landTilesCount() {
 		int landTiles = 0;
-		foreach (var tile in adjacentTiles) {
-			if (tile.tileType != TileType.Ocean) {
+		for (int i = 0; i < adjacentTiles.Count; i++) {
+			if (adjacentTiles [i].tileType != TileType.Ocean) {
 				landTiles++;
 			}
 		}
-
+		issettleableint = landTiles;
 		return landTiles;
 	}
 
@@ -89,7 +90,7 @@ public class Intersection : MonoBehaviour {
 		adjacentTiles.Add (tile);
 	}
 
-	public HashSet<GameTile> getAdjacentTiles() {
+	public List<GameTile> getAdjacentTiles() {
 		return adjacentTiles;
 	}
 

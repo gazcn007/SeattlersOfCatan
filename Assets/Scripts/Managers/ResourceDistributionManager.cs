@@ -8,7 +8,7 @@ public class ResourceDistributionManager : MonoBehaviour {
 	private Die redDie;
 	private Die yellowDie;
 	//Die eventDie;
-	ResourceCostManager resourceCostManager;
+	//ResourceCostManager resourceCostManager;
 
 	// Use this for initialization
 	void Start () {
@@ -18,7 +18,7 @@ public class ResourceDistributionManager : MonoBehaviour {
 		GameObject yellowDieObj = (GameObject) Instantiate (numericDiePrefab);
 		yellowDie = yellowDieObj.GetComponent<NumericDie> ();
 
-		resourceCostManager = GetComponent<ResourceCostManager> ();
+		//resourceCostManager = GetComponent<ResourceCostManager> ();
 	}
 
 	public /*IEnumerator*/ int diceRollEvent() {
