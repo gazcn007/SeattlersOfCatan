@@ -16,9 +16,6 @@ public class GameManager : MonoBehaviour {
 	private Canvas canvas;
 	private Text[] texts;
 	private Button[] uiButtons;
-	private Button[] panelButtons;
-	private Slider panelSlider;
-	private Text panelNumText;
 	private TradePanel tradePanel;
 
 	private GameBoard gameBoard;
@@ -29,6 +26,7 @@ public class GameManager : MonoBehaviour {
 	private NumericDie yellowDie;
 
 	private int currentPlayerTurn = 0;
+	private int currentActiveButton = -1;
 	private bool waitingForPlayer;
 	private static bool setupPhase;
 
@@ -48,6 +46,13 @@ public class GameManager : MonoBehaviour {
 		//Debug.Log (players [currentPlayerTurn].playerName + "'s turn.");
 		//players[currentPlayerTurn].playTurn();
 		updateCanvas ();
+
+		if (!setupPhase && currentActiveButton == -1) {
+			if (Input.GetKeyDown (KeyCode.Space)) {
+				//repaint board
+				boardGenerator.paintBoard();
+			}
+		}
 	}
 
 	#region Class Initializer Methods
@@ -173,80 +178,94 @@ public class GameManager : MonoBehaviour {
 	#region Game Events & Button Events
 
 	void buildRoadEvent() {
+		int buttonId = 1;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
 				uiButtons [2].GetComponentInChildren<Text> ().text = "Cancel";
+				currentActiveButton = buttonId;
 
 				StartCoroutine (buildRoad ());
 			} else {
-				StopAllCoroutines();
+				if (currentActiveButton == buttonId) {
+					StopAllCoroutines ();
 
-				highlightAllEdges(false);
-				waitingForPlayer = false;
+					highlightAllEdges (false);
+					waitingForPlayer = false;
 
-				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+					uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+				}
 			}
 		}
 	}
 
 	void buildShipEvent() {
+		int buttonId = 2;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
 				uiButtons [5].GetComponentInChildren<Text> ().text = "Cancel";
+				currentActiveButton = buttonId;
 
 				StartCoroutine (buildShip ());
 			} else {
-				StopAllCoroutines();
+				if (currentActiveButton == buttonId) {
+					StopAllCoroutines ();
 
-				highlightAllEdges(false);
-				waitingForPlayer = false;
+					highlightAllEdges (false);
+					waitingForPlayer = false;
 
-				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+					uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+				}
 			}
 		}
 	}
 
 	void buildSettlementEvent() {
+		int buttonId = 3;
 		if (!setupPhase) {
-			//GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
 			if (!waitingForPlayer) {
 				uiButtons [1].GetComponentInChildren<Text> ().text = "Cancel";
+				currentActiveButton = buttonId;
 
-				StartCoroutine (buildSettlement ());//intersectionUnitGameObject));
+				StartCoroutine (buildSettlement ());
 			} else {
-				StopAllCoroutines();
+				if (currentActiveButton == buttonId) {
+					StopAllCoroutines ();
 
-				highlightAllIntersections(false);
-				waitingForPlayer = false;
-				//Destroy (intersectionUnitGameObject);
+					highlightAllIntersections (false);
+					waitingForPlayer = false;
 
-				uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+					uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+				}
 			}
 		}
 	}
 
 	void upgradeSettlementEvent() {
+		int buttonId = 4;
 		if (!setupPhase) {
-			//GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
 			if (!waitingForPlayer) {
 				uiButtons [4].GetComponentInChildren<Text> ().text = "Cancel";
+				currentActiveButton = buttonId;
 
-				StartCoroutine (upgradeSettlement ());//intersectionUnitGameObject));
+				StartCoroutine (upgradeSettlement ());
 			} else {
-				StopAllCoroutines ();
+				if (currentActiveButton == buttonId) {
+					StopAllCoroutines ();
 
-				highlightUnitsWithColor (players[currentPlayerTurn].getOwnedUnitsOfType(typeof(Settlement)), true, players[currentPlayerTurn].playerColor);
-				waitingForPlayer = false;
-				//Destroy (intersectionUnitGameObject);
+					highlightUnitsWithColor (players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement)), true, players [currentPlayerTurn].playerColor);
+					waitingForPlayer = false;
 
-				uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+					uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+				}
 			}
 		}
 	}
 
 	void tradeWithBankEvent() {
+		int buttonId = 5;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
+				currentActiveButton = buttonId;
 				StartCoroutine (tradeXForOne (4));
 			}
 		}
@@ -254,6 +273,7 @@ public class GameManager : MonoBehaviour {
 
 	void tradeDone() {
 		bool successful = false;
+		int buttonId = 6;
 		ResourceTuple unitsToGiveToBank = new ResourceTuple ();
 		unitsToGiveToBank.addResourceWithType (tradePanel.getTradeChoice(), 4);
 
@@ -265,39 +285,36 @@ public class GameManager : MonoBehaviour {
 
 			print (players [currentPlayerTurn].playerName + " gives 4 " + tradePanel.getTradeChoice ().ToString () + " to the bank and receives 1 " + tradePanel.getReceiveChoice ());
 
+			tradePanel.hideErrorText ();
 			tradePanel.gameObject.SetActive (false);
 			waitingForPlayer = false;
 		} else {
 			print ("Insufficient resources! Please try again...");
-		}
-
-		// get tuple from input
-		// check if possible to subtract from user
-		// if possible, do it, set succesful to true
-
-		if (successful) {
-			
-		} else {
-			// print errorText (add to UI) that this trade is not possible because user does not have enough resources
+			tradePanel.showNotEnoughError (tradePanel.getTradeChoice ());
 		}
 	}
 
 	void tradeCancelled() {
+		int buttonId = 7;
 		StopAllCoroutines();
 
+		tradePanel.hideErrorText ();
 		tradePanel.gameObject.SetActive (false);
 		waitingForPlayer = false;
 	}
 
 	void endTurn() {
+		int buttonId = 8;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
 				currentPlayerTurn = (currentPlayerTurn + 1) % players.Count;
+				destroyCancelledUnits ();
 			}
 		}
 	}
 
 	void diceRollEvent() {
+		int buttonId = 9;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
 				//StartCoroutine (diceRollPhase ());
@@ -324,18 +341,33 @@ public class GameManager : MonoBehaviour {
 	IEnumerator buildSettlement() {
 		GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.settlementPrefab);
 		Settlement settlement = intersectionUnitGameObject.GetComponent<Settlement> ();
+
+		settlement.id = unitID++;
+		settlement.gameObject.SetActive (false);
+		unitsInPlay.Add (settlement.id, settlement);
+
 		yield return StartCoroutine (buildIntersectionUnit (settlement, typeof(Settlement)));
 	}
 
 	IEnumerator buildCity() {
 		GameObject intersectionUnitGameObject = (GameObject)Instantiate (prefabManager.cityPrefab);
 		City city = intersectionUnitGameObject.GetComponent<City> ();
+
+		city.id = unitID++;
+		city.gameObject.SetActive (false);
+		unitsInPlay.Add (city.id, city);
+
 		yield return StartCoroutine (buildIntersectionUnit (city, typeof(City)));
 	}
 
 	IEnumerator buildRoad() {
 		GameObject tradeUnitGameObject = (GameObject)Instantiate (prefabManager.roadPrefab);
 		Road road = tradeUnitGameObject.GetComponent<Road> ();
+
+		road.id = unitID++;
+		road.gameObject.SetActive (false);
+		unitsInPlay.Add (road.id, road);
+
 		yield return StartCoroutine (buildTradeUnit (road, typeof(Road)));
 
 	}
@@ -343,6 +375,11 @@ public class GameManager : MonoBehaviour {
 	IEnumerator buildShip() {
 		GameObject tradeUnitGameObject = (GameObject)Instantiate (prefabManager.shipPrefab);
 		Ship ship = tradeUnitGameObject.GetComponent<Ship> ();
+
+		ship.id = unitID++;
+		ship.gameObject.SetActive (false);
+		unitsInPlay.Add (ship.id, ship);
+
 		yield return StartCoroutine (buildTradeUnit (ship, typeof(Ship)));
 	}
 
@@ -380,6 +417,7 @@ public class GameManager : MonoBehaviour {
 		GameObject cityGameObject = (GameObject)Instantiate (prefabManager.cityPrefab);
 		City newCity = cityGameObject.GetComponent<City> ();
 		newCity.id = settlementToUpgrade.id;
+
 		unitsInPlay [settlementToUpgrade.id] = newCity;
 
 		settlementToUpgrade.locationIntersection.occupier = newCity;
@@ -445,6 +483,7 @@ public class GameManager : MonoBehaviour {
 			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 			Destroy (tradeUnit.gameObject);
+			removeUnitFromGame (tradeUnit);
 			yield break;
 		}
 
@@ -455,6 +494,7 @@ public class GameManager : MonoBehaviour {
 				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 				Destroy (tradeUnit.gameObject);
+				removeUnitFromGame (tradeUnit);
 				yield break;
 			}
 		}
@@ -465,14 +505,12 @@ public class GameManager : MonoBehaviour {
 			waitingForPlayer = false;
 			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+			removeUnitFromGame (tradeUnit);
 			yield break;
 		}
 
 		highlightEdgesWithColor (validEdgesToBuild, true, players [currentPlayerTurn].playerColor);
 		//highlightEdges (validEdgesToBuild, true);
-
-		tradeUnit.id = unitID++;
-		tradeUnit.gameObject.SetActive (false);
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuild));//, tradeUnit));//new Road(unitID++)));
 
@@ -482,8 +520,9 @@ public class GameManager : MonoBehaviour {
 			GameObject tradeUnitGameObject = (GameObject)Instantiate (prefabManager.shipPrefab);
 			Ship replacedShip = tradeUnitGameObject.GetComponent<Ship> ();
 			replacedShip.id = tradeUnit.id;
-			Destroy (tradeUnit.gameObject);
+			removeUnitFromGame (tradeUnit);
 			tradeUnit = replacedShip;
+			unitsInPlay.Add (tradeUnit.id, tradeUnit);
 			newType = typeof(Ship);
 		}
 
@@ -499,8 +538,6 @@ public class GameManager : MonoBehaviour {
 
 		tradeUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		tradeUnit.gameObject.SetActive (true);
-
-		unitsInPlay.Add (tradeUnit.id, tradeUnit);
 
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
@@ -523,6 +560,7 @@ public class GameManager : MonoBehaviour {
 			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
 			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+			removeUnitFromGame (intersectionUnit);
 			yield break;
 		}
 
@@ -532,6 +570,7 @@ public class GameManager : MonoBehaviour {
 				Destroy (intersectionUnit.gameObject);
 				waitingForPlayer = false;
 				uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+				removeUnitFromGame (intersectionUnit);
 				yield break;
 			}
 		}
@@ -541,14 +580,11 @@ public class GameManager : MonoBehaviour {
 			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
 			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+			removeUnitFromGame (intersectionUnit);
 			yield break;
 		}
 
 		highlightIntersectionsWithColor (validIntersectionsToBuild, true, players [currentPlayerTurn].playerColor);
-		//highlightIntersections (validIntersectionsToBuild, true);
-
-		intersectionUnit.id = unitID++;
-		intersectionUnit.gameObject.SetActive (false);
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (validIntersectionsToBuild));//, intersectionUnit));
 		print (players [currentPlayerTurn].playerName + " builds a " + unitType.ToString() + " on intersection #" + players [currentPlayerTurn].lastIntersectionSelection.id);
@@ -565,7 +601,7 @@ public class GameManager : MonoBehaviour {
 		intersectionUnit.GetComponentInChildren<Renderer> ().material.color = players[currentPlayerTurn].playerColor;
 		intersectionUnit.gameObject.SetActive (true);
 
-		unitsInPlay.Add (intersectionUnit.id, intersectionUnit);
+		//unitsInPlay.Add (intersectionUnit.id, intersectionUnit);
 
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
@@ -579,6 +615,22 @@ public class GameManager : MonoBehaviour {
 	}
 
 	#endregion
+
+	private void destroyCancelledUnits() {
+		List<int> keys = new List<int>(unitsInPlay.Keys);
+
+		for (int i = 0; i < keys.Count; i++) {
+			if (unitsInPlay [keys [i]].owner == null) {
+				Destroy (unitsInPlay [keys [i]].gameObject);
+				unitsInPlay.Remove (keys [i]);
+			}
+		}
+	}
+
+	private void removeUnitFromGame(Unit unit) {
+		Destroy (unitsInPlay [unit.id].gameObject);
+		unitsInPlay.Remove (unit.id);
+	}
 
 	#region Highlighter Methods
 
@@ -749,7 +801,9 @@ public class GameManager : MonoBehaviour {
 
 							for (int k = 0; k < connectedEdges.Count; k++) {
 								if (connectedEdges [k].occupier == null && (roadBuilt == connectedEdges [k].isLandEdge () || connectedEdges [k].isShoreEdge ())) {
-									validEdges.Add (connectedEdges [k]);
+									if (relatedEdge.occupier.isRoad () == roadBuilt || (connectedIntersections [j].occupier != null && connectedIntersections [j].occupier.owner == player)) {
+										validEdges.Add (connectedEdges [k]);
+									}
 								}
 							}
 						}

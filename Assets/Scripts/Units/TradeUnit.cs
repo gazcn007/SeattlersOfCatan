@@ -15,4 +15,6 @@ public abstract class TradeUnit : Unit {
 	void Update () {
 		
 	}
+
+	public abstract bool isRoad ();
 }

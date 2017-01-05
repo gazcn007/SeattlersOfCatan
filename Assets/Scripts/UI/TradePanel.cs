@@ -11,6 +11,7 @@ public class TradePanel : MonoBehaviour {
 	public Dropdown resourceDropdown;
 	public Slider slider;
 	private Text numText;
+	private Text errorText;
 
 	// Use this for initialization
 	void Start () {
@@ -20,6 +21,8 @@ public class TradePanel : MonoBehaviour {
 		resourceDropdown = GetComponentInChildren<Dropdown> ();
 		slider = GetComponentInChildren<Slider> ();
 		numText = slider.GetComponentInChildren<Text> ();
+		GameObject errorTextObject = ComponentFinderExtension.FindChildByName (this.gameObject, "ErrorText");
+		errorText = errorTextObject.GetComponent<Text> ();
 	}
 	
 	// Update is called once per frame
@@ -46,5 +49,14 @@ public class TradePanel : MonoBehaviour {
 		} else {
 			return (ResourceType)activeNumber;
 		}
+	}
+
+	public void showNotEnoughError(ResourceType resourceType) {
+		errorText.gameObject.SetActive (true);
+		errorText.text = "Error! Not Enough " + resourceType.ToString () + "s!";
+	}
+
+	public void hideErrorText() {
+		errorText.gameObject.SetActive (false);
 	}
 }

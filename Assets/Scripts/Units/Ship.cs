@@ -19,4 +19,8 @@ public class Ship : TradeUnit {
 	void moveShip() {
 
 	}
+
+	public override bool isRoad() {
+		return false;
+	}
 }

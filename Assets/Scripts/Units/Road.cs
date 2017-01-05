@@ -16,4 +16,8 @@ public class Road : TradeUnit {
 	void OnMouseDown() {
 		//distance = Camera.main.WorldToScreenPoint (this.transform.position);
 	}
+
+	public override bool isRoad() {
+		return true;
+	}
 }

@@ -47,7 +47,7 @@ public class BoardGenerator : MonoBehaviour {
 		boardDecorator = new BoardDecorator(board, hexSettings);
 	}
 
-	private void paintBoard() {
+	public void paintBoard() {
 		List<GameTile> allTiles;
 		List<GameTile> landTiles;
 		allTiles = GameBoard.getTiles();
