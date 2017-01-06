@@ -17,8 +17,10 @@ public class CommodityCard : GameAsset {
 	}
 }
 
+[System.Serializable]
 public enum CommodityType {
 	Cloth = 0,
 	Coin,
-	Paper
+	Paper,
+	Null
 }

@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour {
 		updateCanvas ();
 
 		if (!setupPhase && currentActiveButton == -1) {
-			if (Input.GetKeyDown (KeyCode.Space)) {
+			if (Input.GetKeyDown (KeyCode.Mouse1)) {
 				//repaint board
 				boardGenerator.paintBoard();
 			}
@@ -147,7 +147,8 @@ public class GameManager : MonoBehaviour {
 			print (players [currentPlayerTurn].playerName + "'s turn.");
 			print (players [currentPlayerTurn].playerName + " must build a city on an intersection.");
 			yield return StartCoroutine (buildCity ());
-			resourceCollectionEvent ();
+			//resourceCollectionEvent ();
+			diceRollResolveEvent();
 			print (players [currentPlayerTurn].playerName + " must build a road on an edge.");
 			yield return StartCoroutine (buildRoad ());
 		}
@@ -192,6 +193,7 @@ public class GameManager : MonoBehaviour {
 					highlightAllEdges (false);
 					waitingForPlayer = false;
 
+					currentActiveButton = -1;
 					uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 				}
 			}
@@ -213,6 +215,7 @@ public class GameManager : MonoBehaviour {
 					highlightAllEdges (false);
 					waitingForPlayer = false;
 
+					currentActiveButton = -1;
 					uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 				}
 			}
@@ -234,6 +237,7 @@ public class GameManager : MonoBehaviour {
 					highlightAllIntersections (false);
 					waitingForPlayer = false;
 
+					currentActiveButton = -1;
 					uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
 				}
 			}
@@ -255,6 +259,7 @@ public class GameManager : MonoBehaviour {
 					highlightUnitsWithColor (players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement)), true, players [currentPlayerTurn].playerColor);
 					waitingForPlayer = false;
 
+					currentActiveButton = -1;
 					uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 				}
 			}
@@ -273,38 +278,58 @@ public class GameManager : MonoBehaviour {
 
 	void tradeDone() {
 		bool successful = false;
-		int buttonId = 6;
-		ResourceTuple unitsToGiveToBank = new ResourceTuple ();
-		unitsToGiveToBank.addResourceWithType (tradePanel.getTradeChoice(), 4);
+		//int choice = tradePanel.getTradeChoiceInt ();
+		ResourceTuple resourcesToGiveToBank = new ResourceTuple ();
+		CommodityTuple commoditiesToGiveToBank = new CommodityTuple ();
 
-		if (players [currentPlayerTurn].hasAvailableResources (unitsToGiveToBank)) {
-			players [currentPlayerTurn].spendResources (unitsToGiveToBank);
-			ResourceTuple unitToReceive = new ResourceTuple ();
-			unitToReceive.addResourceWithType (tradePanel.getReceiveChoice (), 1);
-			players [currentPlayerTurn].receiveResources (unitToReceive);
+		Tuple<ResourceType, CommodityType> spending = GameAsset.getProductionAssetsOfIndex (tradePanel.getTradeChoiceInt ());
+		Tuple<ResourceType, CommodityType> receiving = GameAsset.getProductionAssetsOfIndex (tradePanel.getReceiveChoiceInt ());
 
-			print (players [currentPlayerTurn].playerName + " gives 4 " + tradePanel.getTradeChoice ().ToString () + " to the bank and receives 1 " + tradePanel.getReceiveChoice ());
+		if (tradePanel.getTradeChoiceInt() < 5) {
+			resourcesToGiveToBank.addResourceWithType (spending.first, 4);
+		} else {
+			commoditiesToGiveToBank.addCommodityWithType(spending.second, 4);
+		}
 
+		if (players [currentPlayerTurn].hasAvailableResources (resourcesToGiveToBank) && players [currentPlayerTurn].hasAvailableCommodities (commoditiesToGiveToBank)) {
+			players [currentPlayerTurn].spendResources (resourcesToGiveToBank);
+			players [currentPlayerTurn].spendCommodities (commoditiesToGiveToBank);
+
+			ResourceTuple resourceToReceive = new ResourceTuple ();
+			CommodityTuple commodityToReceive = new CommodityTuple ();
+
+			if (tradePanel.getReceiveChoiceInt () < 5) {
+				resourceToReceive.addResourceWithType (receiving.first, 1);
+			} else {
+				commodityToReceive.addCommodityWithType (receiving.second, 1);
+			}
+
+			players [currentPlayerTurn].receiveResources (resourceToReceive);
+			players [currentPlayerTurn].receiveCommodities (commodityToReceive);
+
+			//print (players [currentPlayerTurn].playerName + " gives 4 " + tradePanel.getTradeChoice ().ToString () + " to the bank and receives 1 " + tradePanel.getReceiveChoice ());
+			print (players [currentPlayerTurn].playerName + " gives 4 " + spending.ToString () + " to the bank and receives 1 " + receiving.ToString());
+
+			currentActiveButton = -1;
 			tradePanel.hideErrorText ();
 			tradePanel.gameObject.SetActive (false);
 			waitingForPlayer = false;
 		} else {
 			print ("Insufficient resources! Please try again...");
-			tradePanel.showNotEnoughError (tradePanel.getTradeChoice ());
+			tradePanel.showNotEnoughError (tradePanel.getTradeChoiceInt ());
 		}
 	}
 
 	void tradeCancelled() {
-		int buttonId = 7;
 		StopAllCoroutines();
 
+		currentActiveButton = -1;
 		tradePanel.hideErrorText ();
 		tradePanel.gameObject.SetActive (false);
 		waitingForPlayer = false;
 	}
 
 	void endTurn() {
-		int buttonId = 8;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
 				currentPlayerTurn = (currentPlayerTurn + 1) % players.Count;
@@ -314,11 +339,11 @@ public class GameManager : MonoBehaviour {
 	}
 
 	void diceRollEvent() {
-		int buttonId = 9;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
 				//StartCoroutine (diceRollPhase ());
-				resourceCollectionEvent ();
+				//resourceCollectionEvent ();
+				diceRollResolveEvent();
 			}
 		}
 	}
@@ -395,6 +420,7 @@ public class GameManager : MonoBehaviour {
 		if (ownedSettlements.Count == 0) {
 			print ("No settlements owned!");
 			uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			currentActiveButton = -1;
 			waitingForPlayer = false;
 			yield break;
 		}
@@ -402,6 +428,7 @@ public class GameManager : MonoBehaviour {
 		if (!players [currentPlayerTurn].hasAvailableResources (ResourceCostManager.getCostOfUnit (typeof(City)))) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
 			print ("Insufficient Resources to upgrade a settlement to a city!");
 			uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			currentActiveButton = -1;
 			waitingForPlayer = false;
 			yield break;
 		}
@@ -438,6 +465,7 @@ public class GameManager : MonoBehaviour {
 		highlightUnitsWithColor (ownedSettlements.Cast<Unit>().ToList(), true, players[currentPlayerTurn].playerColor);
 		uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 
+		currentActiveButton = -1;
 		waitingForPlayer = false;
 	}
 
@@ -456,6 +484,7 @@ public class GameManager : MonoBehaviour {
 		if (!canTrade) {
 			print (players [currentPlayerTurn].playerName + " can not trade with bank for " + resourceToGiveForOne + ":1! Insufficient resources!");
 			waitingForPlayer = false;
+			currentActiveButton = -1;
 			yield break;
 		}
 
@@ -482,6 +511,7 @@ public class GameManager : MonoBehaviour {
 			waitingForPlayer = false;
 			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+			currentActiveButton = -1;
 			Destroy (tradeUnit.gameObject);
 			removeUnitFromGame (tradeUnit);
 			yield break;
@@ -493,6 +523,7 @@ public class GameManager : MonoBehaviour {
 				waitingForPlayer = false;
 				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+				currentActiveButton = -1;
 				Destroy (tradeUnit.gameObject);
 				removeUnitFromGame (tradeUnit);
 				yield break;
@@ -505,6 +536,7 @@ public class GameManager : MonoBehaviour {
 			waitingForPlayer = false;
 			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
 			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+			currentActiveButton = -1;
 			removeUnitFromGame (tradeUnit);
 			yield break;
 		}
@@ -546,6 +578,7 @@ public class GameManager : MonoBehaviour {
 			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
 		}
 		highlightAllEdges(false);
+		currentActiveButton = -1;
 
 		waitingForPlayer = false;
 	}
@@ -560,6 +593,7 @@ public class GameManager : MonoBehaviour {
 			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
 			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+			currentActiveButton = -1;
 			removeUnitFromGame (intersectionUnit);
 			yield break;
 		}
@@ -570,6 +604,7 @@ public class GameManager : MonoBehaviour {
 				Destroy (intersectionUnit.gameObject);
 				waitingForPlayer = false;
 				uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+				currentActiveButton = -1;
 				removeUnitFromGame (intersectionUnit);
 				yield break;
 			}
@@ -580,6 +615,7 @@ public class GameManager : MonoBehaviour {
 			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
 			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+			currentActiveButton = -1;
 			removeUnitFromGame (intersectionUnit);
 			yield break;
 		}
@@ -611,6 +647,7 @@ public class GameManager : MonoBehaviour {
 
 		highlightAllIntersections(false);
 
+		currentActiveButton = -1;
 		waitingForPlayer = false;
 	}
 
@@ -702,6 +739,10 @@ public class GameManager : MonoBehaviour {
 		player.receiveResources (resourceObtained);
 	}
 
+	void giveCommoditiesToPlayer(Player player, CommodityTuple commodityObtained) {
+		player.receiveCommodities (commodityObtained);
+	}
+
 	ResourceTuple getResourceForTile(GameTile tile, int numCollected) {
 		ResourceTuple resourceCollected = new ResourceTuple ();
 		ResourceType typeOfResource = GameAsset.getResourceOfHex (tile.tileType);
@@ -713,14 +754,25 @@ public class GameManager : MonoBehaviour {
 		return resourceCollected;
 	}
 
-	List<GameTile> getTilesWithDiceValue(Player player, int valueRolled) {
+	CommodityTuple getCommodityForTile(GameTile tile, int numCollected) {
+		CommodityTuple commodityCollected = new CommodityTuple ();
+		CommodityType typeOfCommodity = GameAsset.getCommodityOfHex (tile.tileType);
+
+		if (typeOfCommodity != CommodityType.Null) {
+			commodityCollected.commodityTuple [typeOfCommodity] = numCollected;
+		}
+
+		return commodityCollected;
+	}
+
+	List<GameTile> getTilesWithDiceValue(Player player, int valueRolled, bool isCommodity) {
 		List<GameTile> eligibleTiles = new List<GameTile> ();
-		List<Unit> ownedUnits = player.getOwnedUnits ();
+		//List<Unit> ownedUnits = player.getOwnedUnits ();
 
 		// Faster Alternative: Dictionary<int, List<GameTile>> and each key is dice value, so O(1) access
 		// and assign each owner that many resources????
 
-		for (int i = 0; i < ownedUnits.Count; i++) {
+		/*for (int i = 0; i < ownedUnits.Count; i++) {
 			if (typeof(IntersectionUnit).IsAssignableFrom (ownedUnits [i].GetType ())) {
 				if (setupPhase && !typeof(City).IsAssignableFrom (ownedUnits [i].GetType ())) {
 					continue;
@@ -735,23 +787,72 @@ public class GameManager : MonoBehaviour {
 					}
 				}
 			}
+		}*/
+		List<City> ownedCities = player.getOwnedUnitsOfType (typeof(City)).Cast<City> ().ToList ();
+		List<Settlement> ownedSettlements = player.getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
+
+		for (int i = 0; i < ownedCities.Count; i++) {
+			Intersection relatedIntersection = ownedCities[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				if ((tile.diceValue == valueRolled || setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
+					eligibleTiles.Add (tile);
+				}
+			}
+		}
+
+		if (!isCommodity && !setupPhase) {
+			for (int i = 0; i < ownedSettlements.Count; i++) {
+				Intersection relatedIntersection = ownedSettlements[i].locationIntersection;
+
+				List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+				foreach(GameTile tile in adjacentTiles) {
+					if ((tile.diceValue == valueRolled || setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
+						eligibleTiles.Add (tile);
+					}
+				}
+			}
 		}
 
 		return eligibleTiles;
 	}
 
-	void resourceCollectionEvent() {
+	void diceRollResolveEvent() {
 		int diceOutcome = resourceManager.diceRollEvent ();
 
+		resourceCollectionEvent (diceOutcome);
+
+		if(!setupPhase)
+		commodityCollectionEvent (diceOutcome);
+	}
+
+	void resourceCollectionEvent(int diceOutcome) {
 		for (int i = 0; i < players.Count; i++) {
 			if (setupPhase && i != currentPlayerTurn) {
 				continue;
 			} else {
-				List<GameTile> eligibleTilesForPlayer = getTilesWithDiceValue (players [i], diceOutcome);
+				List<GameTile> eligibleTilesForPlayer = getTilesWithDiceValue (players [i], diceOutcome, false);
 
 				for (int j = 0; j < eligibleTilesForPlayer.Count; j++) {
 					print (players [i].playerName + " gets " + "1 " + GameAsset.getResourceOfHex (eligibleTilesForPlayer [j].tileType));
 					giveResourcesToPlayer (players [i], getResourceForTile (eligibleTilesForPlayer [j], 1));
+				}
+			}
+		}
+	}
+
+	void commodityCollectionEvent(int diceOutcome) {
+		for (int i = 0; i < players.Count; i++) {
+			if (setupPhase && i != currentPlayerTurn) {
+				continue;
+			} else {
+				List<GameTile> eligibleTilesForPlayer = getTilesWithDiceValue (players [i], diceOutcome, true);
+
+				for (int j = 0; j < eligibleTilesForPlayer.Count; j++) {
+					print (players [i].playerName + " gets " + "1 " + GameAsset.getCommodityOfHex (eligibleTilesForPlayer [j].tileType));
+					//giveResourcesToPlayer (players [i], getResourceForTile (eligibleTilesForPlayer [j], 1));
+					giveCommoditiesToPlayer(players[i], getCommodityForTile(eligibleTilesForPlayer[j], 1));
 				}
 			}
 		}

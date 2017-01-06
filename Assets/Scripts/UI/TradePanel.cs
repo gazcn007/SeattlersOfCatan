@@ -8,7 +8,8 @@ public class TradePanel : MonoBehaviour {
 	public Button[] buttonsOnPanel;
 	public ToggleGroup toggleGroup;
 	private Toggle[] toggles;
-	public Dropdown resourceDropdown;
+	public Dropdown spendDropdown;
+	public Dropdown receiveDropdown;
 	public Slider slider;
 	private Text numText;
 	private Text errorText;
@@ -17,8 +18,9 @@ public class TradePanel : MonoBehaviour {
 	void Start () {
 		buttonsOnPanel = GetComponentsInChildren<Button> ();
 		toggleGroup = GetComponentInChildren<ToggleGroup> ();
-		toggles = toggleGroup.GetComponentsInChildren<Toggle> ();
-		resourceDropdown = GetComponentInChildren<Dropdown> ();
+		//toggles = toggleGroup.GetComponentsInChildren<Toggle> ();
+		spendDropdown = GetComponentsInChildren<Dropdown> ()[0];
+		receiveDropdown = GetComponentsInChildren<Dropdown> ()[1];
 		slider = GetComponentInChildren<Slider> ();
 		numText = slider.GetComponentInChildren<Text> ();
 		GameObject errorTextObject = ComponentFinderExtension.FindChildByName (this.gameObject, "ErrorText");
@@ -31,7 +33,11 @@ public class TradePanel : MonoBehaviour {
 	}
 
 	public ResourceType getTradeChoice() {
-		return (ResourceType)resourceDropdown.value;
+		return (ResourceType)spendDropdown.value;
+	}
+
+	public int getTradeChoiceInt() {
+		return spendDropdown.value;
 	}
 
 	public ResourceType getReceiveChoice() {
@@ -51,9 +57,20 @@ public class TradePanel : MonoBehaviour {
 		}
 	}
 
-	public void showNotEnoughError(ResourceType resourceType) {
+	public int getReceiveChoiceInt() {
+		return receiveDropdown.value;
+	}
+
+	public void showNotEnoughError(int choice) {
+		Tuple<ResourceType, CommodityType> outcome = GameAsset.getProductionAssetsOfIndex (choice);
 		errorText.gameObject.SetActive (true);
-		errorText.text = "Error! Not Enough " + resourceType.ToString () + "s!";
+
+		if (choice < 5) {
+			errorText.text = "Error! Not Enough " + ((ResourceType)choice).ToString () + "s!";
+		} else {
+			errorText.text = "Error! Not Enough " + ((CommodityType)choice - 5).ToString () + "s!";
+		}
+
 	}
 
 	public void hideErrorText() {

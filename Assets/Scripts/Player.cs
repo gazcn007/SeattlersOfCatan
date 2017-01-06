@@ -164,22 +164,23 @@ public class Player : MonoBehaviour {
 	//	ownedUnits [typeof(Unit)].Add (unit);
 	//}
 
+	#region Resource Receive/Give Methods
+
 	public void receiveResources(ResourceTuple resourceToAdd) {
 		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
 
 		for (int i = 0; i < resourceKeys.Count; i++) {
 			if (resourceToAdd.resourceTuple [resourceKeys [i]] >= 0) {
+				print ("Added " + resourceToAdd.resourceTuple [resourceKeys [i]].ToString () + " " + resourceKeys [i].ToString () + " to " + this.playerName);
 				resources.resourceTuple [resourceKeys [i]] += resourceToAdd.resourceTuple [resourceKeys [i]];
 			}
 		}
 	}
 
 	public void spendResources(ResourceTuple resourceToSpend) {
-		print ("In spendresources");
 		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
 
 		for (int i = 0; i < resourceKeys.Count; i++) {
-			print ("Loop index: " + i.ToString ());
 			if (resources.resourceTuple [resourceKeys [i]] >= resourceToSpend.resourceTuple [resourceKeys [i]]) {
 				print ("Subtracted " + resourceToSpend.resourceTuple [resourceKeys [i]].ToString () + " " + resourceKeys [i].ToString () + " from " + this.playerName);
 				resources.resourceTuple [resourceKeys [i]] -= resourceToSpend.resourceTuple [resourceKeys [i]];
@@ -210,6 +211,58 @@ public class Player : MonoBehaviour {
 	public ResourceTuple getCurrentResources() {
 		return resources;
 	}
+
+	#endregion
+
+	#region Commodity Receive/Give Methods
+
+	public void receiveCommodities(CommodityTuple commodityToAdd) {
+		List<CommodityType> commodityKeys = new List<CommodityType>(commodities.commodityTuple.Keys);
+
+		for (int i = 0; i < commodityKeys.Count; i++) {
+			if (commodityToAdd.commodityTuple [commodityKeys [i]] >= 0) {
+				print ("Added " + commodityToAdd.commodityTuple [commodityKeys [i]].ToString () + " " + commodityKeys [i].ToString () + " to " + this.playerName);
+				commodities.commodityTuple [commodityKeys [i]] += commodityToAdd.commodityTuple [commodityKeys [i]];
+			}
+		}
+	}
+
+	public void spendCommodities(CommodityTuple commodityToSpend) {
+		List<CommodityType> commodityKeys = new List<CommodityType>(commodities.commodityTuple.Keys);
+
+		for (int i = 0; i < commodityKeys.Count; i++) {
+			if (commodities.commodityTuple [commodityKeys [i]] >= commodityToSpend.commodityTuple [commodityKeys [i]]) {
+				print ("Subtracted " + commodityToSpend.commodityTuple [commodityKeys [i]].ToString () + " " + commodityKeys [i].ToString () + " from " + this.playerName);
+				commodities.commodityTuple [commodityKeys [i]] -= commodityToSpend.commodityTuple [commodityKeys [i]];
+			}
+		}
+	}
+
+	public bool hasAvailableCommodities(CommodityTuple commoditiesNeeded) {
+		List<CommodityType> commodityKeys = new List<CommodityType>(commodities.commodityTuple.Keys);
+
+		for (int i = 0; i < commodityKeys.Count; i++) {
+			if (commodities.commodityTuple [commodityKeys [i]] < commoditiesNeeded.commodityTuple [commodityKeys [i]]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public void receiveCommodity(CommodityType commodity, int amount) {
+		if (amount < 0) {
+			//Error
+		} else {
+			commodities.commodityTuple [commodity] += amount;
+		}
+	}
+
+	public CommodityTuple getCurrentCommodities() {
+		return commodities;
+	}
+
+	#endregion
 
 	public void playTurn() {
 

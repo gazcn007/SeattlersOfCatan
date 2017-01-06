@@ -30,4 +30,31 @@ public class GameAsset : MonoBehaviour {
 			return ResourceType.Null;
 		}
 	}
+
+	public static CommodityType getCommodityOfHex(TileType tileType) {
+		switch (tileType) {
+		case TileType.Forests:
+			return CommodityType.Paper;
+		case TileType.Mountains:
+			return CommodityType.Coin;
+		case TileType.Pastures:
+			return CommodityType.Cloth;
+		default:
+			return CommodityType.Null;
+		}
+	}
+
+	public static Tuple<ResourceType, CommodityType> getProductionAssetsOfIndex(int number) {
+		Tuple<ResourceType, CommodityType> returnTuple = new Tuple<ResourceType, CommodityType> (ResourceType.Null, CommodityType.Null);
+
+		if (number < 0 || number > 7) {
+			return new Tuple<ResourceType, CommodityType> (ResourceType.Null, CommodityType.Null);
+		} else {
+			if (number < 5) {
+				return new Tuple<ResourceType, CommodityType> ((ResourceType)number, CommodityType.Null);
+			} else {
+				return new Tuple<ResourceType, CommodityType> (ResourceType.Null, (CommodityType)number - 5);
+			}
+		}
+	}
 }
