@@ -6,16 +6,19 @@ An online, multiplayer 3D video game implementation of the popular board game Se
 
 
 # Implementation
-The game board is procedurally generated, therefore allowing many different overall shapes, sizes and orientations of the map.
+The game board is procedurally generated. In addition to the original game, SettlersOfCatan3D allows many different map shapes, sizes and orientations that can be determined by the players for a versatile experience.
 
 ### Original Map
 ![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/regularGame.png)
 
+### Original Orientation with Increased Size
+![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/bigmap.png)
+
 ### Rectangle Map
-![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/rectangle2.png)
+![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/rectangleGame.png)
 
 ### Triangle Map
-![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/triangleGame.png)
+![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/triangle1.png)
 
 ### Parallelogram Map
 ![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/parallelogram1.png)
