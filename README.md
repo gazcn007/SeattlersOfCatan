@@ -30,13 +30,16 @@ The game board is procedurally generated. In addition to the original game, Sett
 
 ![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/implementation1.png)
 
+
 * Then added Intersection and Edge classes in proper positions and orientations to hold game pieces.
 
 ![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/implementation2.png)
 
+
 * Textures.
 
 ![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/implementation3.png)
+
 
 * Hexagon Characteristic to yield resources
 
