@@ -23,3 +23,6 @@ Then added Intersection and Edge classes in proper positions and orientations to
 
 Textures.
 
+Game Loop, Settlements and Roads
+
+Cities, Ships, Resources, Trading
