@@ -17,12 +17,15 @@ The game board is procedurally generated, therefore allowing many different over
 ### Parallelogram Map
 
 # Creation Timeline
+### December 2016
 Started by hexagonal meshes with offset indices and combining them to a single board.
 
 Then added Intersection and Edge classes in proper positions and orientations to hold game pieces.
 
 Textures.
 
+### January 2017
 Game Loop, Settlements and Roads
 
 Cities, Ships, Resources, Trading
+
