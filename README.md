@@ -1,6 +1,8 @@
 # SettlersOfCatan3D
 A 3D video game of the popular board game Settlers of Catan made with Unity3D
+* Implementation in progress *
 
+![alt text](https://github.com/nehirakdag/SettlersOfCatan3D/blob/master/Images/regularGame.png)
 
 # Implementation
 The game board is procedurally generated, therefore allowing many different overall shapes, sizes and orientations of the map.
