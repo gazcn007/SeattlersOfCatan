@@ -16,10 +16,9 @@ public class CommodityTuple {
 	public CommodityTuple() {
 		commodityTuple = new Dictionary<CommodityType, int>();
 
-		commodityTuple.Add (CommodityType.Cloth, numCloths);
-		commodityTuple.Add (CommodityType.Coin, numCoins);
 		commodityTuple.Add (CommodityType.Paper, numPapers);
-	}
+		commodityTuple.Add (CommodityType.Coin, numCoins);
+		commodityTuple.Add (CommodityType.Cloth, numCloths);}
 
 	public CommodityTuple(int cloths, int coins, int papers) {
 		commodityTuple = new Dictionary<CommodityType, int>();
@@ -28,10 +27,9 @@ public class CommodityTuple {
 		numCoins = coins;
 		numPapers = papers;
 
-
-		commodityTuple.Add (CommodityType.Cloth, numCloths);
-		commodityTuple.Add (CommodityType.Coin, numCoins);
 		commodityTuple.Add (CommodityType.Paper, numPapers);
+		commodityTuple.Add (CommodityType.Coin, numCoins);
+		commodityTuple.Add (CommodityType.Cloth, numCloths);
 	}
 
 	public void addCommodityWithType(CommodityType key, int value) {

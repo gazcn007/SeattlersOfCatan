@@ -165,12 +165,19 @@ public class GameManager : MonoBehaviour {
 	void updateCanvas() {
 		for (int i = 0; i < players.Count; i++) {
 			texts [i].text = "Player " + players [i].playerNumber + "\n" + players [i].playerName 
-				+ " VP= " + players[i].victoryPoints + "\nUnits Count: " + players [i].getNumUnits() + "\n<";
+				+ " \tVP= " + players[i].victoryPoints + "\nUnits Count: " + players [i].getNumUnits() + "\n<";
+
 			foreach (var key in players[i].getCurrentResources().resourceTuple) {
+				texts [i].text += key.Value + ", ";
+			}
+			texts [i].text += ">\n<";
+
+			foreach (var key in players[i].getCurrentCommodities().commodityTuple) {
 				texts [i].text += key.Value + ", ";
 			}
 			texts [i].text += ">";
 		}
+
 		texts [4].text = "Current Turn: " + players [currentPlayerTurn].playerName;
 	}
 
