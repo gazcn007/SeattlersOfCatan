@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour {
 	private Text[] texts;
 	private Button[] uiButtons;
 	private TradePanel tradePanel;
+	private PlayerHUD playerHUD;
 
 	private GameBoard gameBoard;
 	private BoardGenerator boardGenerator;
@@ -78,6 +79,8 @@ public class GameManager : MonoBehaviour {
 		GameObject currentTurnTextObject = GameObject.FindGameObjectWithTag ("CurrentTurnText");
 		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
 
+		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
+
 		texts = new Text[textObjects.Length + 1];
 		for (int i = 0; i < textObjects.Length; i++) {
 			texts [i] = textObjects [textObjects.Length - 1 - i].GetComponent<Text> ();
@@ -107,6 +110,7 @@ public class GameManager : MonoBehaviour {
 		player1.playerColor = Color.blue;
 		player1.playerName = "Nehir";
 		player1.playerNumber = 1;
+		//playerHUD.setPlayer ("Nehir");
 
 		GameObject player2Object = (GameObject) Instantiate (prefabManager.playerPrefab);
 		Player player2 = player2Object.GetComponent<Player> ();
