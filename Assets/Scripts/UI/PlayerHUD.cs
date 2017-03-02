@@ -14,6 +14,7 @@ public class PlayerHUD : MonoBehaviour {
 	public Text oretxt;
 	public Text honeytxt;
 	public Text goldtxt;
+	public Image avatarpanel;
 
 	// Use this for initialization
 	void Start () {
@@ -26,6 +27,8 @@ public class PlayerHUD : MonoBehaviour {
 		oretxt= GetComponentsInChildren<Text> ()[6];
 		honeytxt= GetComponentsInChildren<Text> ()[7];
 		goldtxt= GetComponentsInChildren<Text> ()[8];
+		avatarpanel=GetComponentsInChildren<Image> ()[10];
+		avatarpanel.color = Color.blue;
 		nametxt.text = "Holder";
 	}
 	
