@@ -6,6 +6,8 @@ using UnityEngine.UI;
 public class PlayerHUD : MonoBehaviour {
 
 	public Text nametxt;
+	public Text goldText;
+	public Text VpText;
 
 	// Resources
 	public Text bricktxt;
@@ -32,7 +34,7 @@ public class PlayerHUD : MonoBehaviour {
 	void Start () {
 
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
 		UpdateUIForPlayer ();
@@ -51,10 +53,17 @@ public class PlayerHUD : MonoBehaviour {
 		cointxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Coin].ToString();
 		clothtxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Cloth].ToString();
 
+
+		//resourcesText.text = displayingPlayer.getNumResources ().ToString();
+
 		resourcesText.text = displayingPlayer.getNumResources ().ToString();
+
 		//cardsText.text = Player.METHODTOGTNUMRESOURCECARDSLOL ();
 		roadsText.text = displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count.ToString();
 		knightsText.text = displayingPlayer.getOwnedUnitsOfType (typeof(Knight)).Count.ToString();
+		goldText.text= displayingPlayer.goldCoins.ToString();
+		VpText.text= displayingPlayer.victoryPoints.ToString();
+
 	}
 
 	public void setPlayer(Player p){
