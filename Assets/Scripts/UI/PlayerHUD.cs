@@ -33,10 +33,10 @@ public class PlayerHUD : MonoBehaviour {
 	void Update () {
 		
 	}
-	public void setPlayer(string p){
+	public void setPlayer(Player p){
 
 		//name
-		nametxt.text = p;
+		nametxt.text = p.playerName;
 
 		//resources
 		//Debug.Log(player.resources.resourceTuple[0]);
