@@ -18,6 +18,9 @@ public class GameManager : MonoBehaviour {
 	private Button[] uiButtons;
 	private TradePanel tradePanel;
 	private PlayerHUD playerHUD;
+	private OpponentHUD opponent1HUD;
+	private OpponentHUD opponent2HUD;
+	private OpponentHUD opponent3HUD;
 
 	private GameBoard gameBoard;
 	private BoardGenerator boardGenerator;
@@ -81,6 +84,10 @@ public class GameManager : MonoBehaviour {
 
 		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
 
+		opponent1HUD = canvas.transform.FindChild("opponent1HUD").gameObject.GetComponent<OpponentHUD>();
+		opponent2HUD = canvas.transform.FindChild("opponent2HUD").gameObject.GetComponent<OpponentHUD>();
+		opponent3HUD = canvas.transform.FindChild("opponent3HUD").gameObject.GetComponent<OpponentHUD>();
+
 		texts = new Text[textObjects.Length + 1];
 		for (int i = 0; i < textObjects.Length; i++) {
 			texts [i] = textObjects [textObjects.Length - 1 - i].GetComponent<Text> ();
@@ -117,18 +124,21 @@ public class GameManager : MonoBehaviour {
 		player2.playerColor = Color.red;
 		player2.playerName = "Omer";
 		player2.playerNumber = 2;
+		opponent1HUD.setPlayer(player2);
 
 		GameObject player3Object = (GameObject) Instantiate (prefabManager.playerPrefab);
 		Player player3 = player3Object.GetComponent<Player> ();
 		player3.playerColor = Color.yellow;
 		player3.playerName = "Milosz";
 		player3.playerNumber = 3;
+		opponent2HUD.setPlayer(player3);
 
 		GameObject player4Object = (GameObject) Instantiate (prefabManager.playerPrefab);
 		Player player4 = player4Object.GetComponent<Player> ();
 		player4.playerColor = Color.green;
 		player4.playerName = "Carl";
 		player4.playerNumber = 4;
+		opponent3HUD.setPlayer(player4);
 
 		players.Add (player1);
 		players.Add (player2);
