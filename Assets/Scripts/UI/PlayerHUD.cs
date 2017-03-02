@@ -6,51 +6,64 @@ using UnityEngine.UI;
 public class PlayerHUD : MonoBehaviour {
 
 	public Text nametxt;
-	public Text papertxt;
-	public Text lumbertxt;
+
+	// Resources
 	public Text bricktxt;
-	public Text wooltxt;
 	public Text graintxt;
+	public Text lumbertxt;
 	public Text oretxt;
-	public Text honeytxt;
-	public Text goldtxt;
+	public Text wooltxt;
+
+	// Commodities
+	public Text papertxt;
+	public Text cointxt;
+	public Text clothtxt;
+
+	public Text resourcesText;
+	public Text cardsText;
+	public Text roadsText;
+	public Text knightsText;
+
 	public Image avatarpanel;
+
+	public Player displayingPlayer;
 
 	// Use this for initialization
 	void Start () {
-		nametxt= GetComponentsInChildren<Text> ()[0];
-		papertxt= GetComponentsInChildren<Text> ()[1];
-		lumbertxt= GetComponentsInChildren<Text> ()[2];
-		bricktxt= GetComponentsInChildren<Text> ()[3];
-		wooltxt= GetComponentsInChildren<Text> ()[4];
-		graintxt= GetComponentsInChildren<Text> ()[5];
-		oretxt= GetComponentsInChildren<Text> ()[6];
-		honeytxt= GetComponentsInChildren<Text> ()[7];
-		goldtxt= GetComponentsInChildren<Text> ()[8];
-		avatarpanel=GetComponentsInChildren<Image> ()[10];
-		avatarpanel.color = Color.blue;
-		nametxt.text = "Holder";
+
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		
+		UpdateUIForPlayer ();
 	}
+
+	private void UpdateUIForPlayer() { 
+		// resources
+		bricktxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Brick].ToString();
+		graintxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Grain].ToString();
+		lumbertxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Lumber].ToString();
+		oretxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Ore].ToString();
+		wooltxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Wool].ToString();
+
+		// commodities
+		papertxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Paper].ToString();
+		cointxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Coin].ToString();
+		clothtxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Cloth].ToString();
+
+		resourcesText.text = displayingPlayer.getNumResources ().ToString();
+		//cardsText.text = Player.METHODTOGTNUMRESOURCECARDSLOL ();
+		roadsText.text = displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count.ToString();
+		knightsText.text = displayingPlayer.getOwnedUnitsOfType (typeof(Knight)).Count.ToString();
+	}
+
 	public void setPlayer(Player p){
+		displayingPlayer = p;
 
-		//name
+		// name
 		nametxt.text = p.playerName;
-
-		//resources
-		//Debug.Log(player.resources.resourceTuple[0]);
-		//bricktxt.text= p.resources.resourceTuple[0].ToString();
-		//graintxt.text= p.resources.resourceTuple[1].ToString();
-		//lumbertxt.text= p.resources.resourceTuple[2].ToString();
-		//oretxt.text= p.resources.resourceTuple[3].ToString();
-		//wooltxt.text= p.resources.resourceTuple[4].ToString();
-
-		//commodities
-
+		// color
+		avatarpanel.color = p.playerColor;
 
 	}
 }

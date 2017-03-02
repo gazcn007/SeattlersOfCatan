@@ -110,7 +110,7 @@ public class GameManager : MonoBehaviour {
 		player1.playerColor = Color.blue;
 		player1.playerName = "Nehir";
 		player1.playerNumber = 1;
-		//playerHUD.setPlayer (player1);
+		playerHUD.setPlayer (player1);
 
 		GameObject player2Object = (GameObject) Instantiate (prefabManager.playerPrefab);
 		Player player2 = player2Object.GetComponent<Player> ();

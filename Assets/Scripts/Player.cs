@@ -212,6 +212,16 @@ public class Player : MonoBehaviour {
 		return resources;
 	}
 
+	public int getNumResources() {
+		int sum = 0;
+		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+
+		for (int i = 0; i < resourceKeys.Count; i++) {
+			sum += resources.resourceTuple [resourceKeys [i]];
+		}
+		return sum;
+	}
+
 	#endregion
 
 	#region Commodity Receive/Give Methods
