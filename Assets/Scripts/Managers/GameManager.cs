@@ -788,27 +788,7 @@ public class GameManager : MonoBehaviour {
 
 	List<GameTile> getTilesWithDiceValue(Player player, int valueRolled, bool isCommodity) {
 		List<GameTile> eligibleTiles = new List<GameTile> ();
-		//List<Unit> ownedUnits = player.getOwnedUnits ();
 
-		// Faster Alternative: Dictionary<int, List<GameTile>> and each key is dice value, so O(1) access
-		// and assign each owner that many resources????
-
-		/*for (int i = 0; i < ownedUnits.Count; i++) {
-			if (typeof(IntersectionUnit).IsAssignableFrom (ownedUnits [i].GetType ())) {
-				if (setupPhase && !typeof(City).IsAssignableFrom (ownedUnits [i].GetType ())) {
-					continue;
-				}
-				IntersectionUnit intersectionUnit = (IntersectionUnit) ownedUnits [i];
-				Intersection relatedIntersection = intersectionUnit.locationIntersection;
-
-				List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
-				foreach(GameTile tile in adjacentTiles) {
-					if ((tile.diceValue == valueRolled || setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
-						eligibleTiles.Add (tile);
-					}
-				}
-			}
-		}*/
 		List<City> ownedCities = player.getOwnedUnitsOfType (typeof(City)).Cast<City> ().ToList ();
 		List<Settlement> ownedSettlements = player.getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
 
@@ -842,10 +822,14 @@ public class GameManager : MonoBehaviour {
 	void diceRollResolveEvent() {
 		int diceOutcome = resourceManager.diceRollEvent ();
 
-		resourceCollectionEvent (diceOutcome);
+		if (!setupPhase && diceOutcome == 7) {
+			StartCoroutine(moveRobberForCurrentPlayer ());
+		} else {
+			resourceCollectionEvent (diceOutcome);
 
-		if(!setupPhase)
-		commodityCollectionEvent (diceOutcome);
+			if(!setupPhase)
+				commodityCollectionEvent (diceOutcome);
+		}
 	}
 
 	void resourceCollectionEvent(int diceOutcome) {
@@ -856,8 +840,10 @@ public class GameManager : MonoBehaviour {
 				List<GameTile> eligibleTilesForPlayer = getTilesWithDiceValue (players [i], diceOutcome, false);
 
 				for (int j = 0; j < eligibleTilesForPlayer.Count; j++) {
-					print (players [i].playerName + " gets " + "1 " + GameAsset.getResourceOfHex (eligibleTilesForPlayer [j].tileType));
-					giveResourcesToPlayer (players [i], getResourceForTile (eligibleTilesForPlayer [j], 1));
+					if (eligibleTilesForPlayer [j].canProduce ()) {
+						print (players [i].playerName + " gets " + "1 " + GameAsset.getResourceOfHex (eligibleTilesForPlayer [j].tileType));
+						giveResourcesToPlayer (players [i], getResourceForTile (eligibleTilesForPlayer [j], 1));
+					}
 				}
 			}
 		}
@@ -871,12 +857,32 @@ public class GameManager : MonoBehaviour {
 				List<GameTile> eligibleTilesForPlayer = getTilesWithDiceValue (players [i], diceOutcome, true);
 
 				for (int j = 0; j < eligibleTilesForPlayer.Count; j++) {
-					print (players [i].playerName + " gets " + "1 " + GameAsset.getCommodityOfHex (eligibleTilesForPlayer [j].tileType));
-					//giveResourcesToPlayer (players [i], getResourceForTile (eligibleTilesForPlayer [j], 1));
-					giveCommoditiesToPlayer(players[i], getCommodityForTile(eligibleTilesForPlayer[j], 1));
+					if (eligibleTilesForPlayer [j].canProduce ()) {
+						print (players [i].playerName + " gets " + "1 " + GameAsset.getCommodityOfHex (eligibleTilesForPlayer [j].tileType));
+						//giveResourcesToPlayer (players [i], getResourceForTile (eligibleTilesForPlayer [j], 1));
+						giveCommoditiesToPlayer(players[i], getCommodityForTile(eligibleTilesForPlayer[j], 1));
+					}
 				}
 			}
 		}
+	}
+
+	#endregion
+
+	#region Move Game Pieces for Players
+
+	IEnumerator moveRobberForCurrentPlayer() {
+		waitingForPlayer = true;
+
+		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (boardGenerator.landTiles));
+		gameBoard.MoveRobber (players [currentPlayerTurn].lastGameTileSelection);
+
+		// STEAL CARDS FROM OTHERS (RANDOM?) 
+		// Something along the lines of forall intersections at selected tile, if occupied && occupier.owner != plyaer[currentturn]
+		// then steal 1 random resource (generate random num from 0 to resourceTypes.range - 1 (excluding null)
+		// while victimPlayer.resourcetuple[randomNum] == 0 then subtract 1 and add 1 to the player
+
+		waitingForPlayer = false;
 	}
 
 	#endregion
@@ -947,7 +953,7 @@ public class GameManager : MonoBehaviour {
 				bool validIntersection = true;
 
 				for (int j = 0; j < neighborsOfIntersection.Count; j++) {
-					if (neighborsOfIntersection [j].occupier != null) {// && neighborsOfIntersection [j].occupier.owner != player) {
+					if (!allIntersections[i].isSettleable() || neighborsOfIntersection [j].occupier != null) {// && neighborsOfIntersection [j].occupier.owner != player) {
 						validIntersection = false;
 					}
 				}
@@ -968,7 +974,8 @@ public class GameManager : MonoBehaviour {
 					List<Intersection> neighborIntersections = relatedEdge.getLinkedIntersections ();
 
 					for (int j = 0; j < neighborIntersections.Count; j++) {
-						if (neighborIntersections [j].occupier == null && neighborIntersections [j].isSettleable()) {
+						if (neighborIntersections [j].occupier == null && neighborIntersections [j].isSettleable()
+							&& neighborIntersections [j].isNotNeighboringIntersectionWithUnit()) {
 							validIntersections.Add (neighborIntersections [j]);
 						}
 					}

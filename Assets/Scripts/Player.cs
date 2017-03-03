@@ -17,6 +17,7 @@ public class Player : MonoBehaviour {
 	public ResourceTuple resources = new ResourceTuple(20, 20, 20, 20, 20);
 	public CommodityTuple commodities;
 
+	public GameTile lastGameTileSelection;
 	public Edge lastEdgeSelection;
 	public Intersection lastIntersectionSelection;
 	public int lastUnitSelectionId;
@@ -292,32 +293,32 @@ public class Player : MonoBehaviour {
 	}
 
 	public List<Unit> getOwnedUnitsOfType(System.Type type) {
-		print ("Getting type: " + type.ToString ());
+		//print ("Getting type: " + type.ToString ());
 
 		switch (type.ToString()) {
 		case "Settlement":
-			print ("In Settlement");
+			//print ("In Settlement");
 			return ownedUnits [typeof(Settlement)];
 		case "City":
-			print ("In City");
+			//print ("In City");
 			return ownedUnits [typeof(City)];
 		case "Metropolis":
-			print ("In Metropolis");
+			//print ("In Metropolis");
 			return ownedUnits [typeof(Metropolis)];
 		case "CityWall":
-			print ("In CityWall");
+			//print ("In CityWall");
 			return ownedUnits [typeof(CityWall)];
 		case "Road":
-			print ("In Road");
+			//print ("In Road");
 			return ownedUnits [typeof(Road)];
 		case "Ship":
-			print ("In Ship");
+			//print ("In Ship");
 			return ownedUnits [typeof(Ship)];
 		case "Knight":
-			print ("In Knight");
+			//print ("In Knight");
 			return ownedUnits [typeof(Knight)];
 		default:
-			print ("Default add case");
+			//print ("Default add case");
 			return ownedUnits [typeof(Unit)];
 		}
 	}
@@ -426,6 +427,37 @@ public class Player : MonoBehaviour {
 					}
 				}
 			} 
+		}
+	}
+
+	public IEnumerator makeGameTileSelection(List<GameTile> possibleTiles) {
+		bool selectionMade = false;
+		GameTile selectedTile;
+
+		while (!selectionMade) {
+			Debug.Log ("Waiting for game tile selection");
+			yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
+
+			RaycastHit hitInfo = new RaycastHit();
+			bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo);
+
+			if (hit) {
+				if (hitInfo.transform.gameObject.tag == "GameTile") {
+
+					selectedTile = hitInfo.transform.gameObject.GetComponent<GameTile> ();
+
+					if (selectedTile != null && selectedTile.occupier == null && possibleTiles.Contains (selectedTile)) {
+						selectionMade = true;
+						lastGameTileSelection = selectedTile;
+					} else {
+						Debug.Log ("HIT BAD INTERSECTION..");
+					}
+				} else {
+					Debug.Log ("hit object with tag: " + hitInfo.transform.gameObject.tag);
+				}
+			} else {
+				Debug.Log ("NO HIT..");
+			}
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BoardGenerator : MonoBehaviour {
@@ -13,10 +14,15 @@ public class BoardGenerator : MonoBehaviour {
 	public HexOrientation hexOrientation = HexOrientation.Pointy;
 	public float hexRadius = 1;
 
+	public List<GameTile> allTiles;
+	public List<GameTile> landTiles;
+
 	private TileTypeSettings hexSettings;
 	private GameBoard board;
 
 	private BoardDecorator boardDecorator;
+
+	private int numRepaints = 0;
 
 	private void Start() {
 		
@@ -45,16 +51,20 @@ public class BoardGenerator : MonoBehaviour {
 		//Set grid properties
 		//board.setTileTypesAndValues (hexSettings);
 		boardDecorator = new BoardDecorator(board, hexSettings);
+		allTiles = boardDecorator.allTiles;
+		landTiles = boardDecorator.landTiles;
 	}
 
 	public void paintBoard() {
-		List<GameTile> allTiles;
-		List<GameTile> landTiles;
 		allTiles = GameBoard.getTiles();
 
 		boardDecorator.paintLandTilesBySettings (allTiles, hexSettings);
 		landTiles = boardDecorator.findLandTiles (allTiles);
 		boardDecorator.setTileIDsBySettings (landTiles, hexSettings);
+	}
+
+	public List<GameTile> getOceanTiles() {
+		return allTiles.Except (landTiles).ToList ();
 	}
 
 }

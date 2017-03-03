@@ -11,6 +11,8 @@ public class GameTile : Tile {
 	public List<Edge> edges  = new List<Edge> ();
 	public List<Intersection> intersections = new List<Intersection> ();
 
+	public GamePiece occupier;
+
 	// Use this for initialization
 	void Start () {
 	}
@@ -26,6 +28,15 @@ public class GameTile : Tile {
 
 	public void addIntersection(Intersection intersection) {
 		intersections.Add (intersection);
+	}
+
+	public bool canProduce() {
+		if (occupier == null || !typeof(Robber).IsAssignableFrom (occupier.GetType ())) {
+			return true;
+		} else {
+			Debug.Log (this.name + " can not produce resource/commodities because it is blocked by robber");
+			return false;
+		}
 	}
 }
 
