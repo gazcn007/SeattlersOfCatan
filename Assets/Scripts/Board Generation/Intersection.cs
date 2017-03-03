@@ -121,4 +121,16 @@ public class Intersection : MonoBehaviour {
 			renderer.material.color = color;
 		}
 	}
+
+	public bool isNotNeighboringIntersectionWithUnit() {
+		bool notNeighboring = true;
+
+		foreach (Intersection neighbor in neighborIntersections) {
+			if (neighbor.occupier != null) {
+				notNeighboring = false;
+			}
+		}
+
+		return notNeighboring;
+	}
 }

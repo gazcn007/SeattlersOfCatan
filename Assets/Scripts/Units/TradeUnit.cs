@@ -17,4 +17,5 @@ public abstract class TradeUnit : Unit {
 	}
 
 	public abstract bool isRoad ();
+
 }

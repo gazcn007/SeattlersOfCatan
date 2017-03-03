@@ -4,14 +4,16 @@ using UnityEngine;
 
 public class BoardDecorator {
 
+	public GameTile desertTile;
+
 	private TileTypeSettings hexSettings;
 	private GameBoard gameBoard;
 
 	private int mapWidth;
 	private int mapHeight;
 
-	private List<GameTile> allTiles;
-	private List<GameTile> landTiles;
+	public List<GameTile> allTiles;
+	public List<GameTile> landTiles;
 
 	// Use this for initialization
 	public BoardDecorator(GameBoard board, TileTypeSettings settings) {
@@ -31,6 +33,8 @@ public class BoardDecorator {
 
 		hexSettings.setDiceProbabilitiesByTotalNumberOfHexes (landTiles.Count);
 		setTileIDsBySettings (landTiles, hexSettings);
+
+		board.placeRobberOnTile (desertTile);
 	}
 
 	public List<GameTile> findLandTiles(List<GameTile> allTiles) {
@@ -65,6 +69,7 @@ public class BoardDecorator {
 				if (pair.Key == TileType.Desert) {
 					//MonoBehaviour.Destroy (gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject);
 					gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (false);
+					desertTile = gameTiles[randomNum];
 				} else {
 					gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (true);
 				}
