@@ -62,7 +62,7 @@ public class TradePanel : MonoBehaviour {
 	}
 
 	public void showNotEnoughError(int choice) {
-		Tuple<ResourceType, CommodityType> outcome = GameAsset.getProductionAssetsOfIndex (choice);
+		//Tuple<ResourceType, CommodityType> outcome = GameAsset.getProductionAssetsOfIndex (choice);
 		errorText.gameObject.SetActive (true);
 
 		if (choice < 5) {

@@ -22,8 +22,6 @@ public class BoardGenerator : MonoBehaviour {
 
 	private BoardDecorator boardDecorator;
 
-	private int numRepaints = 0;
-
 	private void Start() {
 		
 	}

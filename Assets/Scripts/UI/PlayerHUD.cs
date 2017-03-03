@@ -42,16 +42,16 @@ public class PlayerHUD : MonoBehaviour {
 
 	private void UpdateUIForPlayer() { 
 		// resources
-		bricktxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Brick].ToString();
-		graintxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Grain].ToString();
-		lumbertxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Lumber].ToString();
-		oretxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Ore].ToString();
-		wooltxt.text= displayingPlayer.resources.resourceTuple[ResourceType.Wool].ToString();
+		bricktxt.text= displayingPlayer.assets.resources.resourceTuple[ResourceType.Brick].ToString();
+		graintxt.text= displayingPlayer.assets.resources.resourceTuple[ResourceType.Grain].ToString();
+		lumbertxt.text= displayingPlayer.assets.resources.resourceTuple[ResourceType.Lumber].ToString();
+		oretxt.text= displayingPlayer.assets.resources.resourceTuple[ResourceType.Ore].ToString();
+		wooltxt.text= displayingPlayer.assets.resources.resourceTuple[ResourceType.Wool].ToString();
 
 		// commodities
-		papertxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Paper].ToString();
-		cointxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Coin].ToString();
-		clothtxt.text= displayingPlayer.commodities.commodityTuple[CommodityType.Cloth].ToString();
+		papertxt.text= displayingPlayer.assets.commodities.commodityTuple[CommodityType.Paper].ToString();
+		cointxt.text= displayingPlayer.assets.commodities.commodityTuple[CommodityType.Coin].ToString();
+		clothtxt.text= displayingPlayer.assets.commodities.commodityTuple[CommodityType.Cloth].ToString();
 
 
 		//resourcesText.text = displayingPlayer.getNumResources ().ToString();
