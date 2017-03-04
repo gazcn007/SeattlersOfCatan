@@ -5,8 +5,8 @@ using UnityEngine;
 public class ResourceDistributionManager : MonoBehaviour {
 
 	private Object d6;
-	private RollingDie redDie;
-	private RollingDie yellowDie;
+	public RollingDie redDie;
+	public RollingDie yellowDie;
 
 
 	//Die eventDie;
@@ -18,8 +18,8 @@ public class ResourceDistributionManager : MonoBehaviour {
 
 
 		//instantiate both dies
-		redDie=new RollingDie(GameObject.Find("DieSpawn"),"redDie", "d6-red", GameObject.Find("DieSpawn").transform.position);
-		yellowDie= new RollingDie (GameObject.Find("DieSpawn"),"yellowDie", "d6-yellow", GameObject.Find("DieSpawn").transform.position);
+		redDie=new RollingDie(GameObject.Find("redDieSpawn"),"redDie", "d6-red", GameObject.Find("redDieSpawn").transform.position);
+		yellowDie= new RollingDie (GameObject.Find("yellowDieSpawn"),"yellowDie", "d6-yellow", GameObject.Find("yellowDieSpawn").transform.position);
 
 		//resourceCostManager = GetComponent<ResourceCostManager> ();
 	}
@@ -28,9 +28,6 @@ public class ResourceDistributionManager : MonoBehaviour {
 		//yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
 		redDie.ReRoll();
 		yellowDie.ReRoll ();
-		int redval = redDie.value;
-		int yellowval = yellowDie.value;
-		print ("test: " + redval +", " + yellowval);
 		return redDie.value + redDie.value;
 	}
 

@@ -141,7 +141,6 @@ public class Dice : MonoBehaviour {
 		GameObject die = prefab("d6", spawnPoint, Vector3.zero, mat);
 		die.transform.Rotate(new Vector3(Random.value * 360, Random.value * 360, Random.value * 360));
 		die.SetActive(true);
-	
 	}
 
 	/// <summary>
@@ -296,7 +295,7 @@ public class Dice : MonoBehaviour {
 /// <summary>
 /// Supporting rolling die class to keep die information
 /// </summary>
-class RollingDie
+public class RollingDie
 {
 
     public GameObject gameObject;		// associated gameObject
@@ -322,7 +321,7 @@ class RollingDie
             return die.value;
         }
     }
-
+		
 	// constructor
     public RollingDie(GameObject gameObject, string name, string mat, Vector3 spawnPoint)
     {
@@ -345,8 +344,6 @@ class RollingDie
         {
             GameObject.Destroy(gameObject);
             Dice.Roll(name, mat, spawnPoint, force);
-			//dievalue = value;
-			//GameObject.Destroy(gameObject);	
         }
     }
 }

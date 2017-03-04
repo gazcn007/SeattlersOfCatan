@@ -69,7 +69,7 @@ public class Die : MonoBehaviour {
     }
 
 	// calculate this die's value
-    void GetValue()
+    public int GetValue()
     {
 		// value = 0 -> undetermined or invalid
         value = 0;
@@ -104,6 +104,7 @@ public class Die : MonoBehaviour {
             side++;
 			// if we got a Vector.zero as the testHitVector we have checked all sides of this die
         } while (testHitVector != Vector3.zero);
+		return value;
     }
 
     void Update()
