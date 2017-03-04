@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour {
 	private Canvas canvas;
 	private Image currentturncolor;
 	private Image currentturnavatar;
-	private Button[] uiButtons;
+	public Button[] uiButtons;
 	private TradePanel tradePanel;
 	private PlayerHUD playerHUD;
 	private BuildPanel buildPanel;
@@ -70,9 +70,7 @@ public class GameManager : MonoBehaviour {
 		resourceManager = GetComponent<ResourceDistributionManager> ();
 
 		initializeUI ();
-
 		boardGenerator.GenerateBoard ();
-
 		gameBoard = boardGenerator.GetComponentInChildren<GameBoard>();
 
 		players = new List<Player>(4);
@@ -107,7 +105,6 @@ public class GameManager : MonoBehaviour {
 	}
 
 	#endregion
-
 	#region Game Initializer Methods
 
 	void addPlayers() {
@@ -164,8 +161,9 @@ public class GameManager : MonoBehaviour {
 			print (players [currentPlayerTurn].playerName + "'s turn.");
 			print (players [currentPlayerTurn].playerName + " must build a city on an intersection.");
 			yield return StartCoroutine (buildCity ());
+
 			//resourceCollectionEvent ();
-			diceRollResolveEvent();
+			
 			print (players [currentPlayerTurn].playerName + " must build a road on an edge.");
 			yield return StartCoroutine (buildRoad ());
 		}
@@ -361,7 +359,7 @@ public class GameManager : MonoBehaviour {
 			if (!waitingForPlayer) {
 				//StartCoroutine (diceRollPhase ());
 				//resourceCollectionEvent ();
-				diceRollResolveEvent();
+				
 			}
 		}
 	}
