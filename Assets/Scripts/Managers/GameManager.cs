@@ -14,10 +14,12 @@ public class GameManager : MonoBehaviour {
 	public List<Player> players;
 
 	private Canvas canvas;
+	private Image currentturn;
 	private Text[] texts;
 	private Button[] uiButtons;
 	private TradePanel tradePanel;
 	private PlayerHUD playerHUD;
+	private BuildPanel buildPanel;
 	private OpponentHUD opponent1HUD;
 	private OpponentHUD opponent2HUD;
 	private OpponentHUD opponent3HUD;
@@ -44,7 +46,7 @@ public class GameManager : MonoBehaviour {
 		addPlayers ();
 		StartCoroutine(settlePlayersOnBoard ());
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
 		//Debug.Log (players [currentPlayerTurn].playerName + "'s turn.");
@@ -79,29 +81,30 @@ public class GameManager : MonoBehaviour {
 
 	void initializeUI() {
 		GameObject[] textObjects = GameObject.FindGameObjectsWithTag ("DebugUIText");
-		GameObject currentTurnTextObject = GameObject.FindGameObjectWithTag ("CurrentTurnText");
+		currentturn=canvas.GetComponentInChildren<Image> ();
 		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
-
+		buildPanel = canvas.transform.FindChild("BuildPanel").gameObject.GetComponent<BuildPanel>();
 		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
 
 		opponent1HUD = canvas.transform.FindChild("opponent1HUD").gameObject.GetComponent<OpponentHUD>();
 		opponent2HUD = canvas.transform.FindChild("opponent2HUD").gameObject.GetComponent<OpponentHUD>();
 		opponent3HUD = canvas.transform.FindChild("opponent3HUD").gameObject.GetComponent<OpponentHUD>();
 
+		buildPanel.buttonsOnPanel[0].onClick.AddListener (buildSettlementEvent);
+		buildPanel.buttonsOnPanel[1].onClick.AddListener (buildRoadEvent);
+		buildPanel.buttonsOnPanel[2].onClick.AddListener (buildShipEvent);
+
 		texts = new Text[textObjects.Length + 1];
 		for (int i = 0; i < textObjects.Length; i++) {
 			texts [i] = textObjects [textObjects.Length - 1 - i].GetComponent<Text> ();
 		}
-		texts [texts.Length - 1] = currentTurnTextObject.GetComponent<Text> ();
-
+			
 		uiButtons = canvas.GetComponentsInChildren<Button> ();
 		uiButtons[0].onClick.AddListener (endTurn);
-		uiButtons[1].onClick.AddListener (buildSettlementEvent);
-		uiButtons[2].onClick.AddListener (buildRoadEvent);
-		uiButtons[3].onClick.AddListener (diceRollEvent);
-		uiButtons[4].onClick.AddListener (upgradeSettlementEvent);
-		uiButtons[5].onClick.AddListener (buildShipEvent);
-		uiButtons [6].onClick.AddListener (tradeWithBankEvent);
+		uiButtons[1].onClick.AddListener (diceRollEvent);
+		uiButtons[2].onClick.AddListener (upgradeSettlementEvent);
+		uiButtons[3].onClick.AddListener (tradeWithBankEvent);
+		uiButtons[4].onClick.AddListener (toggleBuild);
 
 		tradePanel.buttonsOnPanel[0].onClick.AddListener(tradeDone);
 		tradePanel.buttonsOnPanel[1].onClick.AddListener(tradeCancelled);
@@ -192,7 +195,7 @@ public class GameManager : MonoBehaviour {
 			texts [i].text += ">";
 		}
 
-		texts [4].text = "Current Turn: " + players [currentPlayerTurn].playerName;
+		currentturn.color=players [currentPlayerTurn].playerColor;
 	}
 
 	#endregion
@@ -203,7 +206,7 @@ public class GameManager : MonoBehaviour {
 		int buttonId = 1;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
-				uiButtons [2].GetComponentInChildren<Text> ().text = "Cancel";
+
 				currentActiveButton = buttonId;
 
 				StartCoroutine (buildRoad ());
@@ -215,7 +218,7 @@ public class GameManager : MonoBehaviour {
 					waitingForPlayer = false;
 
 					currentActiveButton = -1;
-					uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+
 				}
 			}
 		}
@@ -225,7 +228,7 @@ public class GameManager : MonoBehaviour {
 		int buttonId = 2;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
-				uiButtons [5].GetComponentInChildren<Text> ().text = "Cancel";
+	
 				currentActiveButton = buttonId;
 
 				StartCoroutine (buildShip ());
@@ -237,7 +240,7 @@ public class GameManager : MonoBehaviour {
 					waitingForPlayer = false;
 
 					currentActiveButton = -1;
-					uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+
 				}
 			}
 		}
@@ -247,7 +250,7 @@ public class GameManager : MonoBehaviour {
 		int buttonId = 3;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
-				uiButtons [1].GetComponentInChildren<Text> ().text = "Cancel";
+
 				currentActiveButton = buttonId;
 
 				StartCoroutine (buildSettlement ());
@@ -259,7 +262,7 @@ public class GameManager : MonoBehaviour {
 					waitingForPlayer = false;
 
 					currentActiveButton = -1;
-					uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+
 				}
 			}
 		}
@@ -269,7 +272,7 @@ public class GameManager : MonoBehaviour {
 		int buttonId = 4;
 		if (!setupPhase) {
 			if (!waitingForPlayer) {
-				uiButtons [4].GetComponentInChildren<Text> ().text = "Cancel";
+
 				currentActiveButton = buttonId;
 
 				StartCoroutine (upgradeSettlement ());
@@ -281,7 +284,7 @@ public class GameManager : MonoBehaviour {
 					waitingForPlayer = false;
 
 					currentActiveButton = -1;
-					uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+
 				}
 			}
 		}
@@ -294,6 +297,13 @@ public class GameManager : MonoBehaviour {
 				currentActiveButton = buttonId;
 				StartCoroutine (tradeXForOne (4));
 			}
+		}
+	}
+	void toggleBuild() {
+		if (buildPanel.isActiveAndEnabled == true) {
+			buildPanel.gameObject.SetActive (false);
+		}else{
+			buildPanel.gameObject.SetActive (true);
 		}
 	}
 
@@ -440,7 +450,7 @@ public class GameManager : MonoBehaviour {
 
 		if (ownedSettlements.Count == 0) {
 			print ("No settlements owned!");
-			uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+
 			currentActiveButton = -1;
 			waitingForPlayer = false;
 			yield break;
@@ -448,7 +458,7 @@ public class GameManager : MonoBehaviour {
 
 		if (!players [currentPlayerTurn].hasAvailableResources (ResourceCostManager.getCostOfUnit (typeof(City)))) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
 			print ("Insufficient Resources to upgrade a settlement to a city!");
-			uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+
 			currentActiveButton = -1;
 			waitingForPlayer = false;
 			yield break;
@@ -484,7 +494,7 @@ public class GameManager : MonoBehaviour {
 		Destroy (settlementToUpgrade.gameObject);
 
 		highlightUnitsWithColor (ownedSettlements.Cast<Unit>().ToList(), true, players[currentPlayerTurn].playerColor);
-		uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+
 
 		currentActiveButton = -1;
 		waitingForPlayer = false;
@@ -530,8 +540,7 @@ public class GameManager : MonoBehaviour {
 		if (costOfUnit == null) {
 			print ("costofunit is null, returning.");
 			waitingForPlayer = false;
-			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
-			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+
 			currentActiveButton = -1;
 			Destroy (tradeUnit.gameObject);
 			removeUnitFromGame (tradeUnit);
@@ -542,8 +551,7 @@ public class GameManager : MonoBehaviour {
 			if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
 				print ("Insufficient Resources to build this trade unit!");
 				waitingForPlayer = false;
-				uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
-				uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+
 				currentActiveButton = -1;
 				Destroy (tradeUnit.gameObject);
 				removeUnitFromGame (tradeUnit);
@@ -555,8 +563,7 @@ public class GameManager : MonoBehaviour {
 			print ("No possible location to build this trade unit!");
 			Destroy (tradeUnit.gameObject);
 			waitingForPlayer = false;
-			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
-			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+
 			currentActiveButton = -1;
 			removeUnitFromGame (tradeUnit);
 			yield break;
@@ -595,8 +602,7 @@ public class GameManager : MonoBehaviour {
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
 
-			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
-			uiButtons [5].GetComponentInChildren<Text> ().text = "Build Ship";
+
 		}
 		highlightAllEdges(false);
 		currentActiveButton = -1;
@@ -613,7 +619,7 @@ public class GameManager : MonoBehaviour {
 			print ("costofunit is null, returning.");
 			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
-			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+
 			currentActiveButton = -1;
 			removeUnitFromGame (intersectionUnit);
 			yield break;
@@ -624,7 +630,7 @@ public class GameManager : MonoBehaviour {
 				print ("Insufficient Resources to build this intersection unit!");
 				Destroy (intersectionUnit.gameObject);
 				waitingForPlayer = false;
-				uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+	
 				currentActiveButton = -1;
 				removeUnitFromGame (intersectionUnit);
 				yield break;
@@ -635,7 +641,7 @@ public class GameManager : MonoBehaviour {
 			print ("No possible location to build this intersection unit!");
 			Destroy (intersectionUnit.gameObject);
 			waitingForPlayer = false;
-			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+
 			currentActiveButton = -1;
 			removeUnitFromGame (intersectionUnit);
 			yield break;
@@ -663,7 +669,7 @@ public class GameManager : MonoBehaviour {
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
 
-			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+	
 		}
 
 		highlightAllIntersections(false);
@@ -1029,7 +1035,7 @@ public class GameManager : MonoBehaviour {
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
 
-			uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+
 		}
 		highlightAllEdges(false);
 
@@ -1075,7 +1081,7 @@ public class GameManager : MonoBehaviour {
 		if (!setupPhase) {
 			players [currentPlayerTurn].spendResources (costOfUnit);
 
-			uiButtons [1].GetComponentInChildren<Text> ().text = "Build Settlement";
+
 		}
 
 		highlightAllIntersections(false);
