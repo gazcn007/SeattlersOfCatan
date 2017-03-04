@@ -7,8 +7,8 @@ public class BoardGenerator : MonoBehaviour {
 
 	//Map settings
 	public MapShape mapShape = MapShape.Hexagon;
-	public int mapWidth = 3;
-	public int mapHeight = 3;
+	public int mapWidth = 18;
+	public int mapHeight = 18;
 
 	//Hex Settings
 	public HexOrientation hexOrientation = HexOrientation.Pointy;
