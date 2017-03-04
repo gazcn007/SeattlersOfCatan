@@ -27,7 +27,7 @@ public class PlayerHUD : MonoBehaviour {
 	public Text knightsText;
 
 	public Image avatarpanel;
-
+	public Image avatar;
 	public Player displayingPlayer;
 
 	// Use this for initialization
@@ -74,6 +74,7 @@ public class PlayerHUD : MonoBehaviour {
 		nametxt.text = p.playerName;
 		// color
 		avatarpanel.color = p.playerColor;
+		avatar.sprite = p.avatar;
 
 	}
 }

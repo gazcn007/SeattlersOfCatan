@@ -14,8 +14,8 @@ public class GameManager : MonoBehaviour {
 	public List<Player> players;
 
 	private Canvas canvas;
-	private Image currentturn;
-	private Text[] texts;
+	private Image currentturncolor;
+	private Image currentturnavatar;
 	private Button[] uiButtons;
 	private TradePanel tradePanel;
 	private PlayerHUD playerHUD;
@@ -81,7 +81,8 @@ public class GameManager : MonoBehaviour {
 
 	void initializeUI() {
 		GameObject[] textObjects = GameObject.FindGameObjectsWithTag ("DebugUIText");
-		currentturn=canvas.GetComponentInChildren<Image> ();
+		currentturncolor=canvas.GetComponentsInChildren<Image>()[0];
+		currentturnavatar=canvas.GetComponentsInChildren<Image>()[1];
 		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
 		buildPanel = canvas.transform.FindChild("BuildPanel").gameObject.GetComponent<BuildPanel>();
 		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
@@ -94,11 +95,6 @@ public class GameManager : MonoBehaviour {
 		buildPanel.buttonsOnPanel[1].onClick.AddListener (buildRoadEvent);
 		buildPanel.buttonsOnPanel[2].onClick.AddListener (buildShipEvent);
 
-		texts = new Text[textObjects.Length + 1];
-		for (int i = 0; i < textObjects.Length; i++) {
-			texts [i] = textObjects [textObjects.Length - 1 - i].GetComponent<Text> ();
-		}
-			
 		uiButtons = canvas.GetComponentsInChildren<Button> ();
 		uiButtons[0].onClick.AddListener (endTurn);
 		uiButtons[1].onClick.AddListener (diceRollEvent);
@@ -120,6 +116,7 @@ public class GameManager : MonoBehaviour {
 		player1.playerColor = Color.blue;
 		player1.playerName = "Nehir";
 		player1.playerNumber = 1;
+		player1.avatar=Resources.Load<Sprite>("avatars/steve-jobs");
 		playerHUD.setPlayer (player1);
 
 		GameObject player2Object = (GameObject) Instantiate (prefabManager.playerPrefab);
@@ -127,6 +124,7 @@ public class GameManager : MonoBehaviour {
 		player2.playerColor = Color.red;
 		player2.playerName = "Omer";
 		player2.playerNumber = 2;
+		player2.avatar=Resources.Load<Sprite>("avatars/charlie-chaplin");
 		opponent1HUD.setPlayer(player2);
 
 		GameObject player3Object = (GameObject) Instantiate (prefabManager.playerPrefab);
@@ -134,6 +132,7 @@ public class GameManager : MonoBehaviour {
 		player3.playerColor = Color.yellow;
 		player3.playerName = "Milosz";
 		player3.playerNumber = 3;
+		player3.avatar=Resources.Load<Sprite>("avatars/cristiano-ronaldo");
 		opponent2HUD.setPlayer(player3);
 
 		GameObject player4Object = (GameObject) Instantiate (prefabManager.playerPrefab);
@@ -141,6 +140,7 @@ public class GameManager : MonoBehaviour {
 		player4.playerColor = Color.green;
 		player4.playerName = "Carl";
 		player4.playerNumber = 4;
+		player4.avatar=Resources.Load<Sprite>("avatars/vladimir-putin");
 		opponent3HUD.setPlayer(player4);
 
 		players.Add (player1);
@@ -180,22 +180,9 @@ public class GameManager : MonoBehaviour {
 	#region UI
 
 	void updateCanvas() {
-		for (int i = 0; i < players.Count; i++) {
-			texts [i].text = "Player " + players [i].playerNumber + "\n" + players [i].playerName 
-				+ " \tVP= " + players[i].victoryPoints + "\nUnits Count: " + players [i].getNumUnits() + "\n<";
 
-			foreach (var key in players[i].getCurrentResources().resourceTuple) {
-				texts [i].text += key.Value + ", ";
-			}
-			texts [i].text += ">\n<";
-
-			foreach (var key in players[i].getCurrentCommodities().commodityTuple) {
-				texts [i].text += key.Value + ", ";
-			}
-			texts [i].text += ">";
-		}
-
-		currentturn.color=players [currentPlayerTurn].playerColor;
+		currentturncolor.color=players [currentPlayerTurn].playerColor;
+		currentturnavatar.sprite=players [currentPlayerTurn].avatar;
 	}
 
 	#endregion

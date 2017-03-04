@@ -7,7 +7,7 @@ public class Player : MonoBehaviour {
 
 	public string playerName;
 	public Color playerColor;
-
+	public Sprite avatar;
 	public int playerNumber;
 	public int goldCoins;
 	public int victoryPoints;
