@@ -38,8 +38,8 @@ public class TileTypeSettings : MonoBehaviour {
 
 	private Dictionary<int, int> diceProbabilities = new Dictionary<int, int>();
 
-	private int mapWidth = 3;
-	private int mapHeight = 3;
+	private int mapWidth = 18;
+	private int mapHeight = 18;
 
 	void Awake() {
 		StoreMaterialsInDictionary();
