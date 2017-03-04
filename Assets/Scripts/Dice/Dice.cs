@@ -73,7 +73,6 @@ public class Dice : MonoBehaviour {
         Object pf = Resources.Load("Prefabs/d6");
 		if (pf!=null)
 		{
-			print ("name: " + name);
 			// the prefab was found so create an instance for it.
 			GameObject inst = (GameObject) GameObject.Instantiate( pf , Vector3.zero, Quaternion.identity);
 			if (inst!=null)
@@ -304,7 +303,6 @@ class RollingDie
     public Die die;							// associated Die (value calculation) script
     public string name = "";				// dieType
     public string mat;						// die material (asString)
-	public int dievalue;
     public Vector3 spawnPoint;			// die spawnPoiunt
     public Vector3 force;					// die initial force impuls
 
