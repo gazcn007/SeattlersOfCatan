@@ -359,7 +359,7 @@ public class GameManager : MonoBehaviour {
 			if (!waitingForPlayer) {
 				//StartCoroutine (diceRollPhase ());
 				//resourceCollectionEvent ();
-				
+				diceRollResolveEvent();
 			}
 		}
 	}

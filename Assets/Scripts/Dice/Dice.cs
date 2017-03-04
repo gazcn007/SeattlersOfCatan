@@ -14,6 +14,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
+
+/*
+	Edits by Milosz Kulasek to reduce complexit
+*/
 using UnityEngine;
 using System.Collections;
 
@@ -62,12 +66,14 @@ public class Dice : MonoBehaviour {
 	/// <summary>
 	/// This method will create/instance a prefab at a specific position with a specific rotation and a specific scale and assign a material
 	/// </summary>
-	public static GameObject prefab(string name, Vector3 position, Vector3 rotation, Vector3 scale, string mat) 
+	public static GameObject prefab(string name, Vector3 position, Vector3 rotation, string mat) 
 	{		
 		// load the prefab from Resources
+		
         Object pf = Resources.Load("Prefabs/d6");
 		if (pf!=null)
 		{
+			print ("name: " + name);
 			// the prefab was found so create an instance for it.
 			GameObject inst = (GameObject) GameObject.Instantiate( pf , Vector3.zero, Quaternion.identity);
 			if (inst!=null)
@@ -76,8 +82,6 @@ public class Dice : MonoBehaviour {
 				if (mat!="") inst.GetComponent<Renderer>().material = material(mat);
 				inst.transform.position = position;
 				inst.transform.Rotate(rotation);
-				inst.transform.localScale = scale;
-				// return the created instance (GameObject)
 				return inst;
 			}
 		}
@@ -134,52 +138,11 @@ public class Dice : MonoBehaviour {
 	public static void Roll(string dice, string mat, Vector3 spawnPoint, Vector3 force)
 	{
         rolling = true;
-		// sotring dice to lowercase for comparing purposes
-		dice = dice.ToLower();				
-		int count = 1;
-		string dieType = "d6";
-		
-		// 'd' must be present for a valid 'dice' specification
-		int p = dice.IndexOf("d");
-		if (p>=0)
-		{
-			// check if dice starts with d, if true a single die is rolled.
-			// dice must have a count because dice does not start with 'd'
-			if (p>0)
-			{
-				// extract count
-				string[] a = dice.Split('d');
-				count = System.Convert.ToInt32(a[0]);
-				// get die type
-				if (a.Length>1)
-					dieType = "d"+a[1];
-				else
-					dieType = "d6";
-			}
-			else
-				dieType = dice;
-			
-			// instantiate the dice
-			for (int d=0; d<count; d++)
-			{
-				// randomize spawnPoint variation
-				spawnPoint.x = spawnPoint.x - 1 + Random.value * 2;		
-				spawnPoint.y = spawnPoint.y - 1 + Random.value * 2;
-                spawnPoint.y = spawnPoint.y - 1 + Random.value * 2;
-				// create the die prefab/gameObject
-                GameObject die = prefab(dieType, spawnPoint, Vector3.zero, Vector3.one, mat);
-				// give it a random rotation
-				die.transform.Rotate(new Vector3(Random.value * 360, Random.value * 360, Random.value * 360));
-				// inactivate this gameObject because activating it will be handeled using the rollQueue and at the apropriate time
-				die.SetActive(false);
-				// create RollingDie class that will hold things like spawnpoint and force, to be used when activating the die at a later stage
-                RollingDie rDie = new RollingDie(die, dieType, mat, spawnPoint, force);
-				// add RollingDie to allDices
-				allDice.Add(rDie);               
-				// add RollingDie to the rolling queue
-                rollQueue.Add(rDie);
-			}
-		}
+
+		GameObject die = prefab("d6", spawnPoint, Vector3.zero, mat);
+		die.transform.Rotate(new Vector3(Random.value * 360, Random.value * 360, Random.value * 360));
+		die.SetActive(true);
+	
 	}
 
 	/// <summary>
@@ -338,10 +301,10 @@ class RollingDie
 {
 
     public GameObject gameObject;		// associated gameObject
-    public Die die;								// associated Die (value calculation) script
-
+    public Die die;							// associated Die (value calculation) script
     public string name = "";				// dieType
     public string mat;						// die material (asString)
+	public int dievalue;
     public Vector3 spawnPoint;			// die spawnPoiunt
     public Vector3 force;					// die initial force impuls
 
@@ -363,13 +326,16 @@ class RollingDie
     }
 
 	// constructor
-    public RollingDie(GameObject gameObject, string name, string mat, Vector3 spawnPoint, Vector3 force)
+    public RollingDie(GameObject gameObject, string name, string mat, Vector3 spawnPoint)
     {
+		Vector3 rollTarget = Vector3.zero + new Vector3(2, 1, 3);
+
         this.gameObject = gameObject;
         this.name = name;
         this.mat = mat;
         this.spawnPoint = spawnPoint;
-        this.force = force;
+		this.force = Vector3.Lerp(gameObject.transform.position, rollTarget, 1).normalized * (2);;
+		//this.value = Dice.Value;
 		// get Die script of current gameObject
         die = (Die)gameObject.GetComponent(typeof(Die));
     }
@@ -381,6 +347,8 @@ class RollingDie
         {
             GameObject.Destroy(gameObject);
             Dice.Roll(name, mat, spawnPoint, force);
+			//dievalue = value;
+			//GameObject.Destroy(gameObject);	
         }
     }
 }
