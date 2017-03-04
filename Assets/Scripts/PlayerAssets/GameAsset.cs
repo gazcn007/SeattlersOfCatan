@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class GameAsset : MonoBehaviour {
 
@@ -44,17 +46,55 @@ public class GameAsset : MonoBehaviour {
 		}
 	}
 
-	public static Tuple<ResourceType, CommodityType> getProductionAssetsOfIndex(int number) {
+	/*public static Tuple<ResourceType, CommodityType> getProductionAssetsOfIndex(int index) {
 		Tuple<ResourceType, CommodityType> returnTuple = new Tuple<ResourceType, CommodityType> (ResourceType.Null, CommodityType.Null);
 
-		if (number < 0 || number > 7) {
+		if (index < 0 || index > 7) {
 			return new Tuple<ResourceType, CommodityType> (ResourceType.Null, CommodityType.Null);
 		} else {
-			if (number < 5) {
-				return new Tuple<ResourceType, CommodityType> ((ResourceType)number, CommodityType.Null);
+			if (index < 5) {
+				return new Tuple<ResourceType, CommodityType> ((ResourceType)index, CommodityType.Null);
 			} else {
-				return new Tuple<ResourceType, CommodityType> (ResourceType.Null, (CommodityType)number - 5);
+				return new Tuple<ResourceType, CommodityType> (ResourceType.Null, (CommodityType)index - 5);
 			}
 		}
+	}*/
+
+	public static AssetTuple getAssetOfIndex(int index, int number) {
+		if (index < 0 || index > 7) {
+			return new AssetTuple ();
+		} else {
+			if (index < 5) {
+				return getAsset ((ResourceType)index, number);
+			} else {
+				return getAsset ((CommodityType)index - 5, number);
+			}
+		}
+	}
+
+	public static AssetTuple getAsset(ResourceType resourceType, int number) {
+		AssetTuple returnTuple = new AssetTuple ();
+		returnTuple.resources.resourceTuple [resourceType] = number;
+
+		return returnTuple;
+	}
+
+	public static AssetTuple getAsset(CommodityType commodityType, int number) {
+		AssetTuple returnTuple = new AssetTuple ();
+		returnTuple.commodities.commodityTuple [commodityType] = number;
+
+		return returnTuple;
+	}
+
+	public static AssetTuple getRandomAsset(int number) {
+		AssetTuple randomAsset = new AssetTuple (0, 0, 0, 0, 0, 0, 0, 0);
+
+		if (Random.Range (0.0f, 1.0f) <= 0.5f) {
+			randomAsset.resources.resourceTuple [(ResourceType)Random.Range (0, Enum.GetNames (typeof(ResourceType)).Length)] = number;
+		} else {
+			randomAsset.commodities.commodityTuple [(CommodityType)Random.Range (0, Enum.GetNames (typeof(CommodityType)).Length)] = number;
+		}
+
+		return randomAsset;
 	}
 }

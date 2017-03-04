@@ -14,8 +14,8 @@ public class EditorCamera : MonoBehaviour {
 	public Transform target;
 	public Vector3 targetOffset;
 	public float distance = 5.0f;
-	public float maxDistance = 20;
-	public float minDistance = .6f;
+	public float maxDistance = 2.0f;
+	public float minDistance = .1f;
 	public float xSpeed = 200.0f;
 	public float ySpeed = 200.0f;
 	public int yMinLimit = -80;
@@ -71,7 +71,7 @@ public class EditorCamera : MonoBehaviour {
 			desiredDistance -= Input.GetAxis("Mouse Y") * Time.deltaTime * zoomRate*0.125f * Mathf.Abs(desiredDistance);
 		}
 		// If middle mouse and left alt are selected? ORBIT
-		else if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.LeftAlt))
+		/*else if (Input.GetMouseButton(0) && Input.GetKey(KeyCode.LeftAlt))
 		{
 			xDeg += Input.GetAxis("Mouse X") * xSpeed * 0.02f;
 			yDeg -= Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
@@ -95,11 +95,11 @@ public class EditorCamera : MonoBehaviour {
 			target.Translate(Vector3.right * -Input.GetAxis("Mouse X") * panSpeed);
 			target.Translate(transform.up * -Input.GetAxis("Mouse Y") * panSpeed, Space.World);
 		}
-
+		*/
 		////////Orbit Position
 
 		// affect the desired Zoom distance if we roll the scrollwheel
-		desiredDistance -= Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * zoomRate * Mathf.Abs(desiredDistance);
+		desiredDistance -= Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * 4.0f * zoomRate * Mathf.Abs(desiredDistance);
 		//clamp the zoom min/max
 		desiredDistance = Mathf.Clamp(desiredDistance, minDistance, maxDistance);
 		// For smoothing of the zoom, lerp distance

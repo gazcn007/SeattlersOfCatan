@@ -17,6 +17,9 @@ public class GameManager : MonoBehaviour {
 	private Text[] texts;
 	private Button[] uiButtons;
 	private TradePanel tradePanel;
+	private RobberStealPanel robberStealPanel;
+	private DiscardPanel discardPanel;
+
 	private PlayerHUD playerHUD;
 	private OpponentHUD opponent1HUD;
 	private OpponentHUD opponent2HUD;
@@ -80,8 +83,10 @@ public class GameManager : MonoBehaviour {
 	void initializeUI() {
 		GameObject[] textObjects = GameObject.FindGameObjectsWithTag ("DebugUIText");
 		GameObject currentTurnTextObject = GameObject.FindGameObjectWithTag ("CurrentTurnText");
-		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
 
+		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
+		robberStealPanel = canvas.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
+		discardPanel = canvas.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
 		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
 
 		opponent1HUD = canvas.transform.FindChild("opponent1HUD").gameObject.GetComponent<OpponentHUD>();
@@ -297,7 +302,7 @@ public class GameManager : MonoBehaviour {
 		}
 	}
 
-	void tradeDone() {
+	/*void tradeDone() {
 		bool successful = false;
 		//int choice = tradePanel.getTradeChoiceInt ();
 		ResourceTuple resourcesToGiveToBank = new ResourceTuple ();
@@ -339,6 +344,26 @@ public class GameManager : MonoBehaviour {
 			print ("Insufficient resources! Please try again...");
 			tradePanel.showNotEnoughError (tradePanel.getTradeChoiceInt ());
 		}
+	}*/
+
+	void tradeDone() {
+		AssetTuple assetsToSpend = GameAsset.getAssetOfIndex (tradePanel.getTradeChoiceInt (), 4);
+		AssetTuple assetsToReceive = GameAsset.getAssetOfIndex (tradePanel.getReceiveChoiceInt (), 1);
+
+		if (players [currentPlayerTurn].hasAvailableAssets (assetsToSpend)) { 
+			players [currentPlayerTurn].spendAssets (assetsToSpend);
+			players [currentPlayerTurn].receiveAssets (assetsToReceive);
+			//print (players [currentPlayerTurn].playerName + " gives 4 " + tradePanel.getTradeChoiceInt ().ToString () + " to the bank and receives 1 " + assetsToReceive.ToString());
+
+			currentActiveButton = -1;
+			tradePanel.hideErrorText ();
+			tradePanel.gameObject.SetActive (false);
+			waitingForPlayer = false;
+		} else {
+			print ("Insufficient resources! Please try again...");
+			tradePanel.showNotEnoughError (tradePanel.getTradeChoiceInt ());
+		}
+
 	}
 
 	void tradeCancelled() {
@@ -437,6 +462,7 @@ public class GameManager : MonoBehaviour {
 		waitingForPlayer = true;
 		List<Settlement> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
 		//List<Unit> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement));
+		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (typeof(City));
 
 		if (ownedSettlements.Count == 0) {
 			print ("No settlements owned!");
@@ -446,7 +472,7 @@ public class GameManager : MonoBehaviour {
 			yield break;
 		}
 
-		if (!players [currentPlayerTurn].hasAvailableResources (ResourceCostManager.getCostOfUnit (typeof(City)))) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
+		if (!players [currentPlayerTurn].hasAvailableResources (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
 			print ("Insufficient Resources to upgrade a settlement to a city!");
 			uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 			currentActiveButton = -1;
@@ -483,6 +509,7 @@ public class GameManager : MonoBehaviour {
 
 		Destroy (settlementToUpgrade.gameObject);
 
+		players [currentPlayerTurn].spendResources (costOfUnit);
 		highlightUnitsWithColor (ownedSettlements.Cast<Unit>().ToList(), true, players[currentPlayerTurn].playerColor);
 		uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 
@@ -823,7 +850,7 @@ public class GameManager : MonoBehaviour {
 		int diceOutcome = resourceManager.diceRollEvent ();
 
 		if (!setupPhase && diceOutcome == 7) {
-			StartCoroutine(moveRobberForCurrentPlayer ());
+			StartCoroutine(diceRollSevenEvents());
 		} else {
 			resourceCollectionEvent (diceOutcome);
 
@@ -871,12 +898,70 @@ public class GameManager : MonoBehaviour {
 
 	#region Move Game Pieces for Players
 
+	IEnumerator diceRollSevenEvents() {
+		waitingForPlayer = true;
+		yield return StartCoroutine (discardCardsForAllPlayers ());
+		yield return StartCoroutine (moveRobberForCurrentPlayer ());
+		waitingForPlayer = false;
+	}
+
+	IEnumerator discardCardsForAllPlayers() {
+		int numDiscards = players [currentPlayerTurn].getNumDiscardsNeeded ();
+
+		if (numDiscards > 0) {
+			discardPanel.displayPanelForAssets (players [currentPlayerTurn].getCurrentAssets (), numDiscards);
+			yield return StartCoroutine (discardPanel.waitUntilButtonDown ());
+
+			players [currentPlayerTurn].spendAssets (discardPanel.discardTuple);
+			discardPanel.gameObject.SetActive (false);
+		}
+	}
+
 	IEnumerator moveRobberForCurrentPlayer() {
 		waitingForPlayer = true;
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (boardGenerator.landTiles));
 		gameBoard.MoveRobber (players [currentPlayerTurn].lastGameTileSelection);
 
+		List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
+		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.intersections) {
+			if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
+				opponentUnits.Add (intersection.occupier);
+			}
+		}
+
+		List<Player> stealableOpponents = new List<Player> ();
+		foreach (IntersectionUnit opponentUnit in opponentUnits) {
+			if (!stealableOpponents.Contains (opponentUnit.owner) && !opponentUnit.owner.hasZeroAssets()) {
+				stealableOpponents.Add (opponentUnit.owner);
+			}
+		}
+
+		if (stealableOpponents.Count == 1) { 
+			// If you steal 2 things if you have a city, then the argument here would be 2 etc.
+			AssetTuple randomStolenAsset = stealableOpponents [0].getRandomSufficientAsset (1);
+			stealableOpponents [0].spendAssets (randomStolenAsset);
+			players [currentPlayerTurn].receiveAssets (randomStolenAsset);
+		} else if (stealableOpponents.Count > 1) {
+			robberStealPanel.displayPanelForChoices (stealableOpponents);
+			bool selectionMade = false;
+
+			while (!selectionMade) {
+				if (!robberStealPanel.selectionMade) {
+					yield return StartCoroutine (robberStealPanel.waitUntilButtonDown());
+				}
+
+				if (robberStealPanel.selectionMade) {
+					selectionMade = true;
+				}
+			}
+
+			AssetTuple randomStolenAsset = stealableOpponents [robberStealPanel.getSelection()].getRandomSufficientAsset (1);
+			stealableOpponents [robberStealPanel.getSelection()].spendAssets (randomStolenAsset);
+			players [currentPlayerTurn].receiveAssets (randomStolenAsset);
+
+			robberStealPanel.gameObject.SetActive (false);
+		}
 		// STEAL CARDS FROM OTHERS (RANDOM?) 
 		// Something along the lines of forall intersections at selected tile, if occupied && occupier.owner != plyaer[currentturn]
 		// then steal 1 random resource (generate random num from 0 to resourceTypes.range - 1 (excluding null)

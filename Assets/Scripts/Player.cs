@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Player : MonoBehaviour {
 
@@ -14,8 +16,7 @@ public class Player : MonoBehaviour {
 
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	private Dictionary<System.Type, List<Unit>> ownedUnits;
-	public ResourceTuple resources = new ResourceTuple(20, 20, 20, 20, 20);
-	public CommodityTuple commodities;
+	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 10, 10, 10);
 
 	public GameTile lastGameTileSelection;
 	public Edge lastEdgeSelection;
@@ -165,35 +166,96 @@ public class Player : MonoBehaviour {
 	//	ownedUnits [typeof(Unit)].Add (unit);
 	//}
 
+	#region Asset Receive/Give Methods
+
+	public void receiveAssets(AssetTuple assetToAdd) {
+		this.receiveResources (assetToAdd.resources);
+		this.receiveCommodities (assetToAdd.commodities);
+	}
+
+	public void spendAssets(AssetTuple assetToSpend) {
+		this.spendResources (assetToSpend.resources);
+		this.spendCommodities (assetToSpend.commodities);
+	}
+
+	public bool hasAvailableAssets(AssetTuple assetsNeeded) {
+		return hasAvailableResources (assetsNeeded.resources) && hasAvailableCommodities (assetsNeeded.commodities);
+	}
+
+	public AssetTuple getCurrentAssets() {
+		return assets;
+	}
+
+	public int getNumAssets() {
+		return getNumResources () + getNumCommodities ();
+	}
+
+	public int getNumDiscardsNeeded() {
+		int numAssets = getNumAssets ();
+		int numDiscardsNeeded = 0;
+
+		if (numAssets > 7) {
+			numDiscardsNeeded = (numAssets / 2);
+		}
+
+		return numDiscardsNeeded;
+	}
+
+	public AssetTuple getRandomSufficientAsset(int number) {
+		AssetTuple randomAsset = new AssetTuple ();
+
+		if (Random.Range (0.0f, 1.0f) <= 0.5f) {
+			int randomResourceIndex;
+			do{
+				randomResourceIndex = Random.Range (0, Enum.GetNames (typeof(ResourceType)).Length - 1);
+				randomAsset = GameAsset.getAssetOfIndex(randomResourceIndex, number);
+			} while(!hasAvailableAssets(randomAsset));
+		} else {
+			int randomCommodityIndex;
+			do{
+				randomCommodityIndex = Random.Range (0, Enum.GetNames (typeof(CommodityType)).Length - 1) + 5;
+				randomAsset = GameAsset.getAssetOfIndex(randomCommodityIndex, number);
+			} while(!hasAvailableAssets(randomAsset));
+		}
+
+		return randomAsset;
+	}
+
+	public bool hasZeroAssets() {
+		return hasZeroResources() && hasZeroCommodities();
+	}
+
+	#endregion
+
 	#region Resource Receive/Give Methods
 
 	public void receiveResources(ResourceTuple resourceToAdd) {
-		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+		List<ResourceType> resourceKeys = new List<ResourceType>(assets.resources.resourceTuple.Keys);
 
 		for (int i = 0; i < resourceKeys.Count; i++) {
 			if (resourceToAdd.resourceTuple [resourceKeys [i]] >= 0) {
 				print ("Added " + resourceToAdd.resourceTuple [resourceKeys [i]].ToString () + " " + resourceKeys [i].ToString () + " to " + this.playerName);
-				resources.resourceTuple [resourceKeys [i]] += resourceToAdd.resourceTuple [resourceKeys [i]];
+				assets.resources.resourceTuple [resourceKeys [i]] += resourceToAdd.resourceTuple [resourceKeys [i]];
 			}
 		}
 	}
 
 	public void spendResources(ResourceTuple resourceToSpend) {
-		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+		List<ResourceType> resourceKeys = new List<ResourceType>(assets.resources.resourceTuple.Keys);
 
 		for (int i = 0; i < resourceKeys.Count; i++) {
-			if (resources.resourceTuple [resourceKeys [i]] >= resourceToSpend.resourceTuple [resourceKeys [i]]) {
+			if (assets.resources.resourceTuple [resourceKeys [i]] >= resourceToSpend.resourceTuple [resourceKeys [i]]) {
 				print ("Subtracted " + resourceToSpend.resourceTuple [resourceKeys [i]].ToString () + " " + resourceKeys [i].ToString () + " from " + this.playerName);
-				resources.resourceTuple [resourceKeys [i]] -= resourceToSpend.resourceTuple [resourceKeys [i]];
+				assets.resources.resourceTuple [resourceKeys [i]] -= resourceToSpend.resourceTuple [resourceKeys [i]];
 			}
 		}
 	}
 
 	public bool hasAvailableResources(ResourceTuple resourcesNeeded) {
-		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+		List<ResourceType> resourceKeys = new List<ResourceType>(assets.resources.resourceTuple.Keys);
 
 		for (int i = 0; i < resourceKeys.Count; i++) {
-			if (resources.resourceTuple [resourceKeys [i]] < resourcesNeeded.resourceTuple [resourceKeys [i]]) {
+			if (assets.resources.resourceTuple [resourceKeys [i]] < resourcesNeeded.resourceTuple [resourceKeys [i]]) {
 				return false;
 			}
 		}
@@ -205,22 +267,35 @@ public class Player : MonoBehaviour {
 		if (amount < 0) {
 			//Error
 		} else {
-			resources.resourceTuple [resource] += amount;
+			assets.resources.resourceTuple [resource] += amount;
 		}
 	}
 
 	public ResourceTuple getCurrentResources() {
-		return resources;
+		return assets.resources;
 	}
 
 	public int getNumResources() {
 		int sum = 0;
-		List<ResourceType> resourceKeys = new List<ResourceType>(resources.resourceTuple.Keys);
+		List<ResourceType> resourceKeys = new List<ResourceType>(assets.resources.resourceTuple.Keys);
 
 		for (int i = 0; i < resourceKeys.Count; i++) {
-			sum += resources.resourceTuple [resourceKeys [i]];
+			sum += assets.resources.resourceTuple [resourceKeys [i]];
 		}
 		return sum;
+	}
+
+	public bool hasZeroResources() {
+		bool zero = true;
+
+		List<ResourceType> resourceKeys = new List<ResourceType>(assets.resources.resourceTuple.Keys);
+		for (int i = 0; i < resourceKeys.Count; i++) {
+			if (assets.resources.resourceTuple [resourceKeys [i]] != 0) {
+				zero = false;
+			}
+		}
+
+		return zero;
 	}
 
 	#endregion
@@ -228,32 +303,32 @@ public class Player : MonoBehaviour {
 	#region Commodity Receive/Give Methods
 
 	public void receiveCommodities(CommodityTuple commodityToAdd) {
-		List<CommodityType> commodityKeys = new List<CommodityType>(commodities.commodityTuple.Keys);
+		List<CommodityType> commodityKeys = new List<CommodityType>(assets.commodities.commodityTuple.Keys);
 
 		for (int i = 0; i < commodityKeys.Count; i++) {
 			if (commodityToAdd.commodityTuple [commodityKeys [i]] >= 0) {
 				print ("Added " + commodityToAdd.commodityTuple [commodityKeys [i]].ToString () + " " + commodityKeys [i].ToString () + " to " + this.playerName);
-				commodities.commodityTuple [commodityKeys [i]] += commodityToAdd.commodityTuple [commodityKeys [i]];
+				assets.commodities.commodityTuple [commodityKeys [i]] += commodityToAdd.commodityTuple [commodityKeys [i]];
 			}
 		}
 	}
 
 	public void spendCommodities(CommodityTuple commodityToSpend) {
-		List<CommodityType> commodityKeys = new List<CommodityType>(commodities.commodityTuple.Keys);
+		List<CommodityType> commodityKeys = new List<CommodityType>(assets.commodities.commodityTuple.Keys);
 
 		for (int i = 0; i < commodityKeys.Count; i++) {
-			if (commodities.commodityTuple [commodityKeys [i]] >= commodityToSpend.commodityTuple [commodityKeys [i]]) {
+			if (assets.commodities.commodityTuple [commodityKeys [i]] >= commodityToSpend.commodityTuple [commodityKeys [i]]) {
 				print ("Subtracted " + commodityToSpend.commodityTuple [commodityKeys [i]].ToString () + " " + commodityKeys [i].ToString () + " from " + this.playerName);
-				commodities.commodityTuple [commodityKeys [i]] -= commodityToSpend.commodityTuple [commodityKeys [i]];
+				assets.commodities.commodityTuple [commodityKeys [i]] -= commodityToSpend.commodityTuple [commodityKeys [i]];
 			}
 		}
 	}
 
 	public bool hasAvailableCommodities(CommodityTuple commoditiesNeeded) {
-		List<CommodityType> commodityKeys = new List<CommodityType>(commodities.commodityTuple.Keys);
+		List<CommodityType> commodityKeys = new List<CommodityType>(assets.commodities.commodityTuple.Keys);
 
 		for (int i = 0; i < commodityKeys.Count; i++) {
-			if (commodities.commodityTuple [commodityKeys [i]] < commoditiesNeeded.commodityTuple [commodityKeys [i]]) {
+			if (assets.commodities.commodityTuple [commodityKeys [i]] < commoditiesNeeded.commodityTuple [commodityKeys [i]]) {
 				return false;
 			}
 		}
@@ -265,12 +340,35 @@ public class Player : MonoBehaviour {
 		if (amount < 0) {
 			//Error
 		} else {
-			commodities.commodityTuple [commodity] += amount;
+			assets.commodities.commodityTuple [commodity] += amount;
 		}
 	}
 
 	public CommodityTuple getCurrentCommodities() {
-		return commodities;
+		return assets.commodities;
+	}
+
+	public int getNumCommodities() {
+		int sum = 0;
+		List<CommodityType> commodityKeys = new List<CommodityType>(assets.commodities.commodityTuple.Keys);
+
+		for (int i = 0; i < commodityKeys.Count; i++) {
+			sum += assets.commodities.commodityTuple [commodityKeys [i]];
+		}
+		return sum;
+	}
+
+	public bool hasZeroCommodities() {
+		bool zero = true;
+
+		List<CommodityType> commodityKeys = new List<CommodityType>(assets.commodities.commodityTuple.Keys);
+		for (int i = 0; i < commodityKeys.Count; i++) {
+			if (assets.commodities.commodityTuple [commodityKeys [i]] != 0) {
+				zero = false;
+			}
+		}
+
+		return zero;
 	}
 
 	#endregion
