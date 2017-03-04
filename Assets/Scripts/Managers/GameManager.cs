@@ -18,6 +18,8 @@ public class GameManager : MonoBehaviour {
 	private Button[] uiButtons;
 	private TradePanel tradePanel;
 	private RobberStealPanel robberStealPanel;
+	private DiscardPanel discardPanel;
+
 	private PlayerHUD playerHUD;
 	private OpponentHUD opponent1HUD;
 	private OpponentHUD opponent2HUD;
@@ -84,6 +86,7 @@ public class GameManager : MonoBehaviour {
 
 		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
 		robberStealPanel = canvas.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
+		discardPanel = canvas.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
 		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
 
 		opponent1HUD = canvas.transform.FindChild("opponent1HUD").gameObject.GetComponent<OpponentHUD>();
@@ -847,7 +850,7 @@ public class GameManager : MonoBehaviour {
 		int diceOutcome = resourceManager.diceRollEvent ();
 
 		if (!setupPhase && diceOutcome == 7) {
-			StartCoroutine(moveRobberForCurrentPlayer ());
+			StartCoroutine(diceRollSevenEvents());
 		} else {
 			resourceCollectionEvent (diceOutcome);
 
@@ -895,6 +898,25 @@ public class GameManager : MonoBehaviour {
 
 	#region Move Game Pieces for Players
 
+	IEnumerator diceRollSevenEvents() {
+		waitingForPlayer = true;
+		yield return StartCoroutine (discardCardsForAllPlayers ());
+		yield return StartCoroutine (moveRobberForCurrentPlayer ());
+		waitingForPlayer = false;
+	}
+
+	IEnumerator discardCardsForAllPlayers() {
+		int numDiscards = players [currentPlayerTurn].getNumDiscardsNeeded ();
+
+		if (numDiscards > 0) {
+			discardPanel.displayPanelForAssets (players [currentPlayerTurn].getCurrentAssets (), numDiscards);
+			yield return StartCoroutine (discardPanel.waitUntilButtonDown ());
+
+			players [currentPlayerTurn].spendAssets (discardPanel.discardTuple);
+			discardPanel.gameObject.SetActive (false);
+		}
+	}
+
 	IEnumerator moveRobberForCurrentPlayer() {
 		waitingForPlayer = true;
 
@@ -925,12 +947,20 @@ public class GameManager : MonoBehaviour {
 			bool selectionMade = false;
 
 			while (!selectionMade) {
-				yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
+				if (!robberStealPanel.selectionMade) {
+					yield return StartCoroutine (robberStealPanel.waitUntilButtonDown());
+				}
 
-				// IF BUTTON WAS PRESSED, selectionMade = true
+				if (robberStealPanel.selectionMade) {
+					selectionMade = true;
+				}
 			}
 
+			AssetTuple randomStolenAsset = stealableOpponents [robberStealPanel.getSelection()].getRandomSufficientAsset (1);
+			stealableOpponents [robberStealPanel.getSelection()].spendAssets (randomStolenAsset);
+			players [currentPlayerTurn].receiveAssets (randomStolenAsset);
 
+			robberStealPanel.gameObject.SetActive (false);
 		}
 		// STEAL CARDS FROM OTHERS (RANDOM?) 
 		// Something along the lines of forall intersections at selected tile, if occupied && occupier.owner != plyaer[currentturn]

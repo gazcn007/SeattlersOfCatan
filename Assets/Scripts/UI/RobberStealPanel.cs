@@ -11,9 +11,11 @@ public class RobberStealPanel : MonoBehaviour {
 
 	public List<Player> choices;
 
+	public bool selectionMade = false;
+
 	// Use this for initialization
 	void Start () {
-		//selectionMadeButton.onClick.AddListener(
+		selectionMadeButton.onClick.AddListener (confirmSelection);
 	}
 	
 	// Update is called once per frame
@@ -30,8 +32,25 @@ public class RobberStealPanel : MonoBehaviour {
 		}
 
 		opponentChoicesDropdown.AddOptions(playerNames);
+		selectionMade = false;
 		this.gameObject.SetActive (true);
 	}
 
+	public void confirmSelection() {
+		selectionMade = true;
+	}
+
+	public int getSelection() {
+		return opponentChoicesDropdown.value;
+	}
+
+	public IEnumerator waitUntilButtonDown() {
+		yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
+	
+		while (!selectionMade) {
+			yield return new WaitForEndOfFrame ();
+		}
+
+	}
 
 }

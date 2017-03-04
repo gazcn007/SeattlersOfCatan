@@ -24,5 +24,28 @@ public class AssetTuple {
 		this.resources = resourceTuple;
 		this.commodities = commodityTuple;
 	}
+
+	public int GetValueAtIndex(int index) {
+		if (index < 0 || index > 7) {
+			return 0;
+		} else {
+			if (index < 5) {
+				return resources.resourceTuple [(ResourceType)index];
+			} else {
+				return commodities.commodityTuple [(CommodityType)index - 5];
+			}
+		}
+	}
+
+	public void SetValueAtIndex(int index, int value) {
+		if (index < 0 || index > 7) {
+		} else {
+			if (index < 5) {
+				this.resources.resourceTuple [(ResourceType)index] = value;
+			} else {
+				this.commodities.commodityTuple [(CommodityType)index - 5] = value;
+			}
+		}
+	}
 	
 }

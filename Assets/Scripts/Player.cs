@@ -190,19 +190,30 @@ public class Player : MonoBehaviour {
 		return getNumResources () + getNumCommodities ();
 	}
 
+	public int getNumDiscardsNeeded() {
+		int numAssets = getNumAssets ();
+		int numDiscardsNeeded = 0;
+
+		if (numAssets > 7) {
+			numDiscardsNeeded = (numAssets / 2);
+		}
+
+		return numDiscardsNeeded;
+	}
+
 	public AssetTuple getRandomSufficientAsset(int number) {
 		AssetTuple randomAsset = new AssetTuple ();
 
 		if (Random.Range (0.0f, 1.0f) <= 0.5f) {
 			int randomResourceIndex;
 			do{
-				randomResourceIndex = Random.Range (0, Enum.GetNames (typeof(ResourceType)).Length);
+				randomResourceIndex = Random.Range (0, Enum.GetNames (typeof(ResourceType)).Length - 1);
 				randomAsset = GameAsset.getAssetOfIndex(randomResourceIndex, number);
 			} while(!hasAvailableAssets(randomAsset));
 		} else {
 			int randomCommodityIndex;
 			do{
-				randomCommodityIndex = Random.Range (0, Enum.GetNames (typeof(CommodityType)).Length) + 5;
+				randomCommodityIndex = Random.Range (0, Enum.GetNames (typeof(CommodityType)).Length - 1) + 5;
 				randomAsset = GameAsset.getAssetOfIndex(randomCommodityIndex, number);
 			} while(!hasAvailableAssets(randomAsset));
 		}
