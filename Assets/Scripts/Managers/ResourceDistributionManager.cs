@@ -56,7 +56,6 @@ public class ResourceDistributionManager : MonoBehaviour {
 		}
 
 		redDie = redDieObj.GetComponent<Die> ();
-		int redDieint = redDie.GetValue ();
 		yellowDie = yellowDieObj.GetComponent<Die> ();
 		//redDieObj.gameObject.SetActive (false);
 		//yellowDieObj.gameObject.SetActive (false);
