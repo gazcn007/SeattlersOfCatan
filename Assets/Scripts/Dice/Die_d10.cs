@@ -16,7 +16,7 @@
  */ 
 using UnityEngine;
 using System.Collections;
-
+/*
 // Die subclass to expose the D10 side hitVectors
 public class Die_d10 : Die {
 		
@@ -38,4 +38,4 @@ public class Die_d10 : Die {
         return Vector3.zero;
     }
 	
-}
+}*/

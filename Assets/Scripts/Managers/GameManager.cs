@@ -67,12 +67,12 @@ public class GameManager : MonoBehaviour {
 		prefabManager = GetComponent<PrefabManager> ();
 		boardGenerator = GameObject.FindGameObjectWithTag ("Board Generator").GetComponent<BoardGenerator>();
 		canvas = GameObject.FindObjectOfType<Canvas> ();
-		resourceManager = GetComponent<ResourceDistributionManager> ();
+
 
 		initializeUI ();
 		boardGenerator.GenerateBoard ();
 		gameBoard = boardGenerator.GetComponentInChildren<GameBoard>();
-
+		resourceManager = GetComponent<ResourceDistributionManager> ();
 		players = new List<Player>(4);
 		unitsInPlay = new Dictionary<int, Unit> ();
 	}

@@ -28,11 +28,9 @@ public class Die : MonoBehaviour {
 	
 	// current value, 0 is undetermined (die is rolling) or invalid.
 	public int value = 0;	
-
 	//------------------------------------------------------------------------------------------------------------------------------
 	// protected and private attributes
 	//------------------------------------------------------------------------------------------------------------------------------	
-	
 	// normalized (hit)vector from die center to upper side in local space is used to determine what side of a specific die is up/down = value
     protected Vector3 localHitNormalized;
 	// hitVector check margin
@@ -111,7 +109,7 @@ public class Die : MonoBehaviour {
     {
 		// determine the value is the die is not rolling
         if (!rolling && localHit)
-            GetValue();
+            value=GetValue();
     }
 
 
@@ -126,9 +124,22 @@ public class Die : MonoBehaviour {
 
 	// virtual  method that to get a die side hitVector.
 	// this has to be overridden in the dieType specific subclass
-    protected virtual Vector3 HitVector(int side)
+    /*protected virtual Vector3 HitVector(int side)
     {
         return Vector3.zero;
-    }
+    }*/
+	protected Vector3 HitVector(int side)
+	{
+		switch (side)
+		{
+		case 1: return new Vector3(0F, 0F, 1F);
+		case 2: return new Vector3(0F, -1F, 0F);
+		case 3: return new Vector3(-1F, 0F, 0F);
+		case 4: return new Vector3(1F, 0F, 0F);
+		case 5: return new Vector3(0F, 1F, 0F);
+		case 6: return new Vector3(0F, 0F, -1F);
+		}
+		return Vector3.zero;
+	}
 	
 }

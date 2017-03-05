@@ -18,8 +18,9 @@ using UnityEngine;
 using System.Collections;
 
 // Die subclass to expose the D6 side hitVectors
-public class Die_d6 : Die {
-		
+/*public class Die_d6 : Die {
+	public int dievalue;
+
     override protected Vector3 HitVector(int side)
     {
         switch (side)
@@ -33,5 +34,4 @@ public class Die_d6 : Die {
         }
         return Vector3.zero;
     }
-		
-}
+}*/

@@ -9,7 +9,7 @@ public class PrefabManager : MonoBehaviour {
 	public GameObject cityPrefab;
 	public GameObject metropolisPrefab;
 	public GameObject cityWallPrefab;
-
+	public GameObject d6;
 	public GameObject roadPrefab;
 	public GameObject shipPrefab;
 

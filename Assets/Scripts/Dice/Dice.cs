@@ -25,7 +25,7 @@ using System.Collections;
 /// This dice dupporting class has some 'static' methods to help you throwning dice
 ///  and getting the rolling dice count, value or rolling state (asString)
 /// </summary>
-public class Dice : MonoBehaviour {	
+/*public class Dice : MonoBehaviour {	
 	
 	//------------------------------------------------------------------------------------------------------------------------------
 	// public attributes
@@ -134,13 +134,24 @@ public class Dice : MonoBehaviour {
 	/// format dice 			: 	({count}){die type}	, exmpl.  d6, 4d4, 12d8 , 1d20
 	/// possible die types 	:	d4, d6, d8 , d10, d12, d20
 	/// </summary>
-	public static void Roll(string dice, string mat, Vector3 spawnPoint, Vector3 force)
+	public static int Roll(string dice, string mat, Vector3 spawnPoint, Vector3 force)
 	{
-        rolling = true;
+		rolling = true;
+		//Object pf = Resources.Load ("Prefabs/d6");
 
-		GameObject die = prefab("d6", spawnPoint, Vector3.zero, mat);
-		die.transform.Rotate(new Vector3(Random.value * 360, Random.value * 360, Random.value * 360));
-		die.SetActive(true);
+		// the prefab was found so create an instance for it.
+		GameObject die = (GameObject) GameObject.Instantiate(Resources.Load ("Prefabs/d6"), Vector3.zero, Quaternion.identity);
+
+		// the instance could be created so set material, position, rotation and scale.
+		die.GetComponent<Renderer> ().material = material (mat);
+		die.transform.position = spawnPoint;
+
+		//Die_d6 die = prefab("d6", spawnPoint, Vector3.zero, mat);
+		die.transform.Rotate (new Vector3 (Random.value * 360, Random.value * 360, Random.value * 360));
+		die.gameObject.SetActive (true);
+		Die_d6 test=(Die_d6)die.GetComponent(typeof(Die_d6));
+		print ("test: " + test.value);
+		return test.value;
 	}
 
 	/// <summary>
@@ -298,7 +309,8 @@ public class Dice : MonoBehaviour {
 public class RollingDie
 {
 
-    public GameObject gameObject;		// associated gameObject
+    public GameObject gameObject;
+	private int tempdie;				// associated gameObject
     public Die die;							// associated Die (value calculation) script
     public string name = "";				// dieType
     public string mat;						// die material (asString)
@@ -318,7 +330,9 @@ public class RollingDie
     {
         get
         {
-            return die.value;
+			int val = die.value;
+            return val;
+
         }
     }
 		
@@ -343,8 +357,8 @@ public class RollingDie
         if (name != "")
         {
             GameObject.Destroy(gameObject);
-            Dice.Roll(name, mat, spawnPoint, force);
+			tempdie = Dice.Roll (name, mat, spawnPoint, force);
         }
     }
-}
+}*/
 
