@@ -42,32 +42,33 @@ public class UIManager : MonoBehaviour {
 
 	void InitializeUIManager() {
 		playerHUD = GetComponentInChildren<PlayerHUD> ();
-		opponentHUDs = GetComponentsInChildren<OpponentHUD> ();
+		opponentHUDs = GameObject.FindGameObjectWithTag ("OpponentHUDSPanel").GetComponentsInChildren<OpponentHUD> ();
 
-		buildPanel = GetComponentInChildren<BuildPanel> ();
-		tradePanel = GetComponentInChildren<TradePanel>();
 		robberStealPanel = GetComponentInChildren<RobberStealPanel>();
 		discardPanel = GetComponentInChildren<DiscardPanel>();
 
+		tradePanel = this.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
+		buildPanel = this.transform.FindChild("BuildPanel").gameObject.GetComponent<BuildPanel>();
 		currentTurnColor = GetComponentsInChildren<Image> () [0];
 		currentTurnAvatar = GetComponentsInChildren<Image> () [1];
 
-		buildPanel.buttonsOnPanel[0].onClick.AddListener (buildSettlementEvent);
-		buildPanel.buttonsOnPanel[1].onClick.AddListener (buildRoadEvent);
-		buildPanel.buttonsOnPanel[2].onClick.AddListener (buildShipEvent);
 
 		uiButtons = GetComponentsInChildren<Button> ();
 		uiButtons[0].onClick.AddListener (endTurn);
 		uiButtons[1].onClick.AddListener (diceRollEvent);
-		uiButtons[2].onClick.AddListener (upgradeSettlementEvent);
-		uiButtons[3].onClick.AddListener (tradeWithBankEvent);
-		uiButtons[4].onClick.AddListener (toggleBuild);
+		uiButtons[2].onClick.AddListener (tradeWithBankEvent);
+		uiButtons[3].onClick.AddListener (toggleBuild);
+
+		buildPanel.buttonsOnPanel[0].onClick.AddListener (buildSettlementEvent);
+		buildPanel.buttonsOnPanel[1].onClick.AddListener (buildRoadEvent);
+		buildPanel.buttonsOnPanel[2].onClick.AddListener (buildShipEvent);
+		buildPanel.buttonsOnPanel[3].onClick.AddListener (upgradeSettlementEvent);
 
 		tradePanel.buttonsOnPanel [0].onClick.AddListener (tradeDone);
 		tradePanel.buttonsOnPanel [1].onClick.AddListener (tradeCancelled);
 
-		buildPanel.gameObject.SetActive (false);
 		tradePanel.gameObject.SetActive (false);
+		buildPanel.gameObject.SetActive (false);
 		//robberStealPanel.gameObject.SetActive (false);
 		//discardPanel.gameObject.SetActive (false);
 	}
@@ -84,16 +85,16 @@ public class UIManager : MonoBehaviour {
 			if (PhotonNetwork.playerList.Length == 4) {
 				Player player4 = LevelManager.instance.players [(3 + offset) % PhotonNetwork.playerList.Length];
 
-				opponentHUDs [0].GetComponent<OpponentHUD> ().setPlayer (player4);
+				opponentHUDs [2].GetComponent<OpponentHUD> ().setPlayer (player4);
 			} else {
-				opponentHUDs [0].gameObject.SetActive (false);
+				opponentHUDs [2].gameObject.SetActive (false);
 			}
 			opponentHUDs [1].GetComponent<OpponentHUD> ().setPlayer (player3);
 		} else {
-			opponentHUDs [0].gameObject.SetActive (false);
 			opponentHUDs [1].gameObject.SetActive (false);
+			opponentHUDs [2].gameObject.SetActive (false);
 		}
-		opponentHUDs [2].GetComponent<OpponentHUD> ().setPlayer (player2);
+		opponentHUDs [0].GetComponent<OpponentHUD> ().setPlayer (player2);
 		playerHUD.GetComponent<PlayerHUD> ().setPlayer (player1);
 	}
 
@@ -200,7 +201,11 @@ public class UIManager : MonoBehaviour {
 	void toggleBuild() {
 		Debug.Log ("toggleBuild()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			buildPanel.gameObject.SetActive (true);
+			if (buildPanel.isActiveAndEnabled == true) {
+				buildPanel.gameObject.SetActive (false);
+			} else {
+				buildPanel.gameObject.SetActive (true);
+			}
 		}
 	}
 
