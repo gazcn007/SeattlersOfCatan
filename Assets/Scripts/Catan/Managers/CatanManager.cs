@@ -59,7 +59,7 @@ public class CatanManager : MonoBehaviour {
 		GameObject resourceManagerGO = Instantiate (resourceManagerPrefab, this.transform);
 		GameObject unitManagerGO = Instantiate (unitManagerPrefab, this.transform);
 		GameObject boardManagerGO = Instantiate (boardManagerPrefab, this.transform);
-
+	
 		resourceManager = GetComponentInChildren<ResourceManager> ();
 		unitManager = GetComponentInChildren<UnitManager> ();
 		boardManager = GetComponentInChildren<BoardManager> ();
