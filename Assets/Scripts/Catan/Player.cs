@@ -23,11 +23,9 @@ public class Player : MonoBehaviour {
 	public Intersection lastIntersectionSelection;
 	public int lastUnitSelectionId;
 
-<<<<<<< HEAD:Assets/Scripts/Catan/Player.cs
-=======
+
 	public bool collectedThisTurn;
 
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2:Assets/Scripts/Catan/Player.cs
 	public Sprite avatar;
 
 	// Use this for initialization

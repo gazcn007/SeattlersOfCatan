@@ -38,10 +38,8 @@ public class BoardManager : MonoBehaviour {
 			foreach(GameTile tile in adjacentTiles) {
 				if ((tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
 					eligibleTiles.Add (tile);
-<<<<<<< HEAD
-=======
+
 					Debug.Log ("Added " + tile.name);
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 				}
 			}
 		}
@@ -54,19 +52,13 @@ public class BoardManager : MonoBehaviour {
 				foreach(GameTile tile in adjacentTiles) {
 					if ((tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
 						eligibleTiles.Add (tile);
-<<<<<<< HEAD
-=======
+
 						Debug.Log ("Added " + tile.name);
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 					}
 				}
 			}
 		}
-<<<<<<< HEAD
 
-=======
-			
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 		return eligibleTiles;
 	}
 
@@ -201,8 +193,7 @@ public class BoardManager : MonoBehaviour {
 		return validIntersectionIDs;
 	}
 
-<<<<<<< HEAD
-=======
+
 	public List<GameTile> getLandTiles(bool occupierCheck) {
 		List<GameTile> allTiles = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().GameTiles.Values.ToList ();
 		List<GameTile> landTiles = new List<GameTile>();
@@ -222,7 +213,6 @@ public class BoardManager : MonoBehaviour {
 		return landTiles;
 	}
 
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 	#endregion
 
 	#region Highlighter Methods

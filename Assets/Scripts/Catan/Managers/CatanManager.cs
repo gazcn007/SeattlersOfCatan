@@ -59,11 +59,8 @@ public class CatanManager : MonoBehaviour {
 		GameObject resourceManagerGO = Instantiate (resourceManagerPrefab, this.transform);
 		GameObject unitManagerGO = Instantiate (unitManagerPrefab, this.transform);
 		GameObject boardManagerGO = Instantiate (boardManagerPrefab, this.transform);
-<<<<<<< HEAD
-	
-=======
 
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
+
 		resourceManager = GetComponentInChildren<ResourceManager> ();
 		unitManager = GetComponentInChildren<UnitManager> ();
 		boardManager = GetComponentInChildren<BoardManager> ();
@@ -263,8 +260,7 @@ public class CatanManager : MonoBehaviour {
 		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelectionId);
 	}
 
-<<<<<<< HEAD
-=======
+
 	public IEnumerator moveRobberForCurrentPlayer() {
 		waitingForPlayer = true;
 
@@ -322,7 +318,6 @@ public class CatanManager : MonoBehaviour {
 		waitingForPlayer = false;
 	}
 
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 	public void tradeWithBankAttempt(int resourceToGiveForOne) {
 		bool canTrade = resourceManager.canTrade (players [currentPlayerTurn], resourceToGiveForOne);
 

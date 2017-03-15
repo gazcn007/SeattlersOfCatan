@@ -29,11 +29,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	public void OnReadyToPlay() {
 		GetComponent<PhotonView> ().RPC ("GenerateBoardForClient", PhotonTargets.All, new object[] { });
-<<<<<<< HEAD
-		GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
-=======
+
 		//GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 		StartCoroutine (CatanSetupPhase());
 	}
 
@@ -62,10 +59,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		});
 	}
 
-<<<<<<< HEAD
-	public void OnDiceRolled() {
-		if (!diceRolledThisTurn) {
-=======
+
 	public void OnMoveGamePiece(int boardPieceNum, int tileID) {
 		GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 			boardPieceNum,
@@ -76,30 +70,13 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public void OnDiceRolled() {
 		if (!diceRolledThisTurn) {
 			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 			int redDieRoll = Random.Range (1, 7);
 			int yellowDieRoll = Random.Range (1, 7);
 
 			print ("Red die rolled: " + redDieRoll);
 			print ("Yellow die rolled: " + yellowDieRoll);
 
-<<<<<<< HEAD
-			//if (!setupPhase && diceOutcome == 7) {
-			//	StartCoroutine(diceRollSevenEvents());
-			//} else {
-			GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
-				redDieRoll + yellowDieRoll
-			});
-			//ResourceCollectionEvent (redDieRoll + yellowDieRoll);
 
-			if (!setupPhase) {
-				//CommodityCollectionEvent (redDieRoll + yellowDieRoll);
-				GetComponent<PhotonView> ().RPC ("CommodityCollectionEvent", PhotonTargets.All, new object[] {
-					redDieRoll + yellowDieRoll
-				});
-			}
-			//}
-=======
 			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
 				//StartCoroutine(diceRollSevenEvents());
 				StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
@@ -116,7 +93,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 					});
 				}
 			}
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 			diceRolledThisTurn = true;
 		}
 	}
@@ -187,22 +163,18 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			GetComponent<PhotonView> ().RPC ("SetPlayerTurn", PhotonTargets.Others, new object[] { i });
 			yield return StartCoroutine(ClientBuildCity (i));
 			// RESOURCE COLLECTION EVENT!!!
-<<<<<<< HEAD
-=======
+
 			GetComponent<PhotonView> ().RPC ("CollectResources", PhotonTargets.All, new object[] { i });
 			//GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
 			//	0
 			//});
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 			yield return StartCoroutine(ClientBuildRoad (i));
 			//GetComponent<PhotonView> ().RPC ("EndTurn", PhotonTargets.Others, new object[] { });
 		}
 		setupPhase = false;
 		waitingForPlayer = false;
-<<<<<<< HEAD
-=======
+
 		currentPlayerTurn = 0;
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 	}
 
 	[PunRPC]
@@ -334,10 +306,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	void SetPlayerTurn(int currentTurnPlayer) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		clientCatanManager.SetCurrentTurn (currentTurnPlayer);
-<<<<<<< HEAD
-=======
+
 		EventTransferManager.instance.currentPlayerTurn = currentTurnPlayer;
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 	}
 
 	[PunRPC]
@@ -350,10 +320,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	[PunRPC]
 	void CleanExtraInstances() {
 		GameObject[] boards = GameObject.FindGameObjectsWithTag ("Board");
-<<<<<<< HEAD
-		Debug.Log ("Boards length is: " + boards.Length);
-=======
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 
 		for (int i = 0; i < boards.Length; i++) {
 			GameBoard board = boards [i].GetComponent<GameBoard> ();
@@ -386,18 +352,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 
 		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
-<<<<<<< HEAD
-			if (EventTransferManager.instance.setupPhase && i != clientCatanManager.currentPlayerTurn) {
-				continue;
-			} else {
-				int[] tileIDs = clientCatanManager.boardManager.getTileIDsWithDiceValue (i, diceOutcome, false);
-=======
+
 			if (EventTransferManager.instance.setupPhase && i != clientCatanManager.currentPlayerTurn && PhotonNetwork.player.ID - 1 != i) {
 				continue;
 			} else {
 				int[] tileIDs = clientCatanManager.boardManager.getTileIDsWithDiceValue (i, diceOutcome, false);
 				Debug.Log ("Called resource collection for player:" + clientCatanManager.players[i].playerName + " by " + clientCatanManager.players[PhotonNetwork.player.ID - 1].playerName);
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 
 				for (int j = 0; j < tileIDs.Length; j++) {
 					if (clientBoard.GameTiles [tileIDs [j]].canProduce ()) {
@@ -415,8 +375,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-<<<<<<< HEAD
-=======
+
 	void CollectResources(int playerNum) {
 		if (PhotonNetwork.player.ID == playerNum + 1) {
 			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
@@ -438,7 +397,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 	void CommodityCollectionEvent(int diceOutcome) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
@@ -487,15 +445,13 @@ public class EventTransferManager : Photon.MonoBehaviour {
 					(int)tile.tileType
 				});
 			}
-<<<<<<< HEAD
-=======
+
 
 			int robberTileID = clientBoard.robber.occupyingTile.id;
 			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.Others, new object[] {
 				0,
 				robberTileID
 			});
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 		}
 	}
 
@@ -508,9 +464,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			tileToPaint.setTileType (tileTypeNum);
 			tileToPaint.setDiceValue (diceValue);
 		}
-<<<<<<< HEAD
 
-=======
 	}
 
 	[PunRPC]
@@ -540,7 +494,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 
 		}
->>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 	}
 
 	[PunRPC]
