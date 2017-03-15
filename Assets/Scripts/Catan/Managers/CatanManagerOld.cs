@@ -90,10 +90,11 @@ public class CatanManagerOld : MonoBehaviour {
 		GameObject[] textObjects = GameObject.FindGameObjectsWithTag ("DebugUIText");
 		GameObject currentTurnTextObject = GameObject.FindGameObjectWithTag ("CurrentTurnText");
 
-		tradePanel = canvas.transform.FindChild("TradePanel").GetComponent<TradePanel>();
-		robberStealPanel = canvas.transform.FindChild("RobberStealPanel").GetComponent<RobberStealPanel>();
+
+		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
+		robberStealPanel = canvas.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
 		discardPanel = canvas.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
-		playerHUD = GameObject.FindGameObjectWithTag("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
+		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
 
 		opponent1HUD = GameObject.FindGameObjectsWithTag("OpponentHUD")[0].GetComponent<OpponentHUD>();
 		opponent2HUD = GameObject.FindGameObjectsWithTag("OpponentHUD")[1].GetComponent<OpponentHUD>();
@@ -443,7 +444,8 @@ public class CatanManagerOld : MonoBehaviour {
 		waitingForPlayer = true;
 		List<Settlement> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
 		//List<Unit> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement));
-		ResourceTuple costOfUnit = resourceManager.getCostOfUnit (typeof(City));
+
+		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (typeof(City));
 
 		if (ownedSettlements.Count == 0) {
 			print ("No settlements owned!");
@@ -905,7 +907,8 @@ public class CatanManagerOld : MonoBehaviour {
 		gameBoard.MoveRobber (players [currentPlayerTurn].lastGameTileSelection);
 
 		List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
-		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
+
+		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.intersections) {
 			if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
 				opponentUnits.Add (intersection.occupier);
 			}
