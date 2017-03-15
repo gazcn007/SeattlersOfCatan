@@ -444,8 +444,7 @@ public class CatanManagerOld : MonoBehaviour {
 		waitingForPlayer = true;
 		List<Settlement> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
 		//List<Unit> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement));
-
-		ResourceTuple costOfUnit = ResourceCostManager.getCostOfUnit (typeof(City));
+		ResourceTuple costOfUnit = resourceManager.getCostOfUnit (typeof(City));
 
 		if (ownedSettlements.Count == 0) {
 			print ("No settlements owned!");
@@ -907,8 +906,7 @@ public class CatanManagerOld : MonoBehaviour {
 		gameBoard.MoveRobber (players [currentPlayerTurn].lastGameTileSelection);
 
 		List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
-
-		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.intersections) {
+		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
 			if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
 				opponentUnits.Add (intersection.occupier);
 			}
