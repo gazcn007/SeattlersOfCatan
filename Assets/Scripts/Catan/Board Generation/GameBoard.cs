@@ -299,7 +299,9 @@ public class GameBoard : MonoBehaviour {
 
 	#region GamePiece Place and Move Methods
 
-	public void placeRobberOnTile(GameTile tile) {
+	public void placeRobberOnTile(int tileID) {
+		GameTile tile = GameTiles [tileID];
+
 		GameObject robberGO = Instantiate (robberPrefab, tile.transform);
 		robberGO.transform.position = tile.transform.position;
 
@@ -310,7 +312,9 @@ public class GameBoard : MonoBehaviour {
 		tile.occupier = robber;
 	}
 
-	public void placePirateOnTile(GameTile tile) {
+	public void placePirateOnTile(int tileID) {
+		GameTile tile = GameTiles [tileID];
+
 		GameObject pirateGO = Instantiate (piratePrefab, tile.transform);
 		pirateGO.transform.position = tile.transform.position;
 
@@ -321,7 +325,9 @@ public class GameBoard : MonoBehaviour {
 		tile.occupier = pirate;
 	}
 
-	public void placeMerchantOnTile(GameTile tile) {
+	public void placeMerchantOnTile(int tileID) {
+		GameTile tile = GameTiles [tileID];
+
 		GameObject merchantGO = Instantiate (merchantPrefab, tile.transform);
 		merchantGO.transform.position = tile.transform.position;
 
@@ -332,38 +338,56 @@ public class GameBoard : MonoBehaviour {
 		tile.occupier = merchant;
 	}
 
-	public void MoveRobber(GameTile newTile) {
+	public void MoveRobber(int newTileID) {
+		GameTile newTile = GameTiles [newTileID];
+
 		if (newTile.tileType != TileType.Ocean) {
-			if (robber.occupyingTile.tileType != TileType.Desert) {
-				robber.occupyingTile.transform.FindChild ("Dice Value").gameObject.SetActive (true);
+			if (robber == null) {
+				placeRobberOnTile(newTileID);
+			} else {
+				if (robber.occupyingTile.tileType != TileType.Desert) {
+					robber.occupyingTile.transform.FindChild ("Dice Value").gameObject.SetActive (true);
+				}
+				robber.occupyingTile.occupier = null;
+				robber.occupyingTile = newTile;
+				robber.transform.position = newTile.transform.position;
+				newTile.occupier = robber;
+				newTile.transform.FindChild ("Dice Value").gameObject.SetActive (false);
 			}
-			robber.occupyingTile.occupier = null;
-			robber.occupyingTile = newTile;
-			robber.transform.position = newTile.transform.position;
-			newTile.occupier = robber;
-			newTile.transform.FindChild ("Dice Value").gameObject.SetActive (false);
 		}
 	}
 
-	public void MovePirate(GameTile newTile) {
+	public void MovePirate(int newTileID) {
+		GameTile newTile = GameTiles [newTileID];
+
 		if (newTile.tileType == TileType.Ocean) {
-			pirate.occupyingTile.occupier = null;
-			pirate.occupyingTile = newTile;
-			pirate.transform.position = newTile.transform.position;
-			newTile.occupier = pirate;
+			if (pirate == null) {
+				placePirateOnTile(newTileID);
+			} else {
+				pirate.occupyingTile.occupier = null;
+				pirate.occupyingTile = newTile;
+				pirate.transform.position = newTile.transform.position;
+				newTile.occupier = pirate;
+			}
 		}
 	}
 
-	public void MoveMerchant(GameTile newTile) {
+	public void MoveMerchant(int newTileID) {
+		GameTile newTile = GameTiles [newTileID];
+
 		if (newTile.tileType != TileType.Ocean) {
-			if (merchant.occupyingTile.tileType != TileType.Desert) {
-				merchant.occupyingTile.transform.FindChild ("Dice Value").gameObject.SetActive (true);
+			if (merchant == null) {
+				placeMerchantOnTile (newTileID);
+			} else {
+				if (merchant.occupyingTile.tileType != TileType.Desert) {
+					merchant.occupyingTile.transform.FindChild ("Dice Value").gameObject.SetActive (true);
+				}
+				merchant.occupyingTile.occupier = null;
+				merchant.occupyingTile = newTile;
+				merchant.transform.position = newTile.transform.position;
+				newTile.occupier = merchant;
+				newTile.transform.FindChild ("Dice Value").gameObject.SetActive (false);
 			}
-			merchant.occupyingTile.occupier = null;
-			merchant.occupyingTile = newTile;
-			merchant.transform.position = newTile.transform.position;
-			newTile.occupier = merchant;
-			newTile.transform.FindChild ("Dice Value").gameObject.SetActive (false);
 		}
 	}
 

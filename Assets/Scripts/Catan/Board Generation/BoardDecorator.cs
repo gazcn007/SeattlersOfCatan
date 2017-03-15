@@ -34,7 +34,11 @@ public class BoardDecorator {
 		hexSettings.setDiceProbabilitiesByTotalNumberOfHexes (landTiles.Count);
 		setTileIDsBySettings (landTiles, hexSettings);
 
+<<<<<<< HEAD:Assets/Scripts/Catan/Board Generation/BoardDecorator.cs
 		//board.placeRobberOnTile (desertTile);
+=======
+		board.placeRobberOnTile (desertTile.id);
+>>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2:Assets/Scripts/Catan/Board Generation/BoardDecorator.cs
 	}
 
 	public List<GameTile> findLandTiles(List<GameTile> allTiles) {

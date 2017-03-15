@@ -59,7 +59,11 @@ public class CatanManager : MonoBehaviour {
 		GameObject resourceManagerGO = Instantiate (resourceManagerPrefab, this.transform);
 		GameObject unitManagerGO = Instantiate (unitManagerPrefab, this.transform);
 		GameObject boardManagerGO = Instantiate (boardManagerPrefab, this.transform);
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 		resourceManager = GetComponentInChildren<ResourceManager> ();
 		unitManager = GetComponentInChildren<UnitManager> ();
 		boardManager = GetComponentInChildren<BoardManager> ();
@@ -259,6 +263,66 @@ public class CatanManager : MonoBehaviour {
 		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelectionId);
 	}
 
+<<<<<<< HEAD
+=======
+	public IEnumerator moveRobberForCurrentPlayer() {
+		waitingForPlayer = true;
+
+		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (boardManager.getLandTiles(true)));
+		EventTransferManager.instance.OnMoveGamePiece (0, players [currentPlayerTurn].lastGameTileSelection.id);
+
+		List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
+		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
+			if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
+				opponentUnits.Add (intersection.occupier);
+			}
+		}
+
+		List<Player> stealableOpponents = new List<Player> ();
+		foreach (IntersectionUnit opponentUnit in opponentUnits) {
+			if (!stealableOpponents.Contains (opponentUnit.owner) && !opponentUnit.owner.hasZeroAssets()) {
+				stealableOpponents.Add (opponentUnit.owner);
+			}
+		}
+
+		if (stealableOpponents.Count == 1) { 
+			// If you steal 2 things if you have a city, then the argument here would be 2 etc.
+			AssetTuple randomStolenAsset = stealableOpponents [0].getRandomSufficientAsset (1);
+
+			//stealableOpponents [0].spendAssets (randomStolenAsset);
+			//players [currentPlayerTurn].receiveAssets (randomStolenAsset);
+			EventTransferManager.instance.OnTradeWithBank(stealableOpponents [0].playerNumber - 1, false, randomStolenAsset);
+			EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
+			
+		} else if (stealableOpponents.Count > 1) {
+			uiManager.robberStealPanel.displayPanelForChoices (stealableOpponents);
+			bool selectionMade = false;
+
+			while (!selectionMade) {
+				if (!uiManager.robberStealPanel.selectionMade) {
+					yield return StartCoroutine (uiManager.robberStealPanel.waitUntilButtonDown());
+				}
+
+				if (uiManager.robberStealPanel.selectionMade) {
+					selectionMade = true;
+				}
+			}
+
+			AssetTuple randomStolenAsset = stealableOpponents [uiManager.robberStealPanel.getSelection()].getRandomSufficientAsset (1);
+			EventTransferManager.instance.OnTradeWithBank(stealableOpponents [uiManager.robberStealPanel.getSelection()].playerNumber - 1, false, randomStolenAsset);
+			EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
+
+			uiManager.robberStealPanel.gameObject.SetActive (false);
+		}
+		// STEAL CARDS FROM OTHERS (RANDOM?) 
+		// Something along the lines of forall intersections at selected tile, if occupied && occupier.owner != plyaer[currentturn]
+		// then steal 1 random resource (generate random num from 0 to resourceTypes.range - 1 (excluding null)
+		// while victimPlayer.resourcetuple[randomNum] == 0 then subtract 1 and add 1 to the player
+
+		waitingForPlayer = false;
+	}
+
+>>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2
 	public void tradeWithBankAttempt(int resourceToGiveForOne) {
 		bool canTrade = resourceManager.canTrade (players [currentPlayerTurn], resourceToGiveForOne);
 

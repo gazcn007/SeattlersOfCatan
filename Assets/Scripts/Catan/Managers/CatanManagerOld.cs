@@ -90,11 +90,16 @@ public class CatanManagerOld : MonoBehaviour {
 		GameObject[] textObjects = GameObject.FindGameObjectsWithTag ("DebugUIText");
 		GameObject currentTurnTextObject = GameObject.FindGameObjectWithTag ("CurrentTurnText");
 
+<<<<<<< HEAD:Assets/Scripts/Catan/Managers/CatanManagerOld.cs
 
 		tradePanel = canvas.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
 		robberStealPanel = canvas.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
+=======
+		tradePanel = canvas.transform.FindChild("TradePanel").GetComponent<TradePanel>();
+		robberStealPanel = canvas.transform.FindChild("RobberStealPanel").GetComponent<RobberStealPanel>();
+>>>>>>> c8db68c02fecad246bd8c2c3ec1e6dc7859899e2:Assets/Scripts/Catan/Managers/CatanManagerOld.cs
 		discardPanel = canvas.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
-		playerHUD = canvas.transform.FindChild("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
+		playerHUD = GameObject.FindGameObjectWithTag("PlayerHUD").gameObject.GetComponent<PlayerHUD>();
 
 		opponent1HUD = GameObject.FindGameObjectsWithTag("OpponentHUD")[0].GetComponent<OpponentHUD>();
 		opponent2HUD = GameObject.FindGameObjectsWithTag("OpponentHUD")[1].GetComponent<OpponentHUD>();
@@ -903,7 +908,7 @@ public class CatanManagerOld : MonoBehaviour {
 		waitingForPlayer = true;
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (boardGenerator.landTiles));
-		gameBoard.MoveRobber (players [currentPlayerTurn].lastGameTileSelection);
+		gameBoard.MoveRobber (players [currentPlayerTurn].lastGameTileSelection.id);
 
 		List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
 		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
