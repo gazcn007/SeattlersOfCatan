@@ -23,9 +23,6 @@ public class CatanManager : MonoBehaviour {
 	public int currentActiveButton;
 	public bool setupPhase;
 	public bool waitingForPlayer;
-	public bool boardLoaded;
-
-	public bool[] readys;
 
 	void Awake() {
 		if (instance == null)
@@ -37,11 +34,9 @@ public class CatanManager : MonoBehaviour {
 		InitializeManagers ();
 
 		players = LevelManager.instance.players;
-		readys = new bool[PhotonNetwork.playerList.Length];
 
 		setupPhase = true;
 		waitingForPlayer = false;
-		boardLoaded = false;
 
 		StartCoroutine(settlePlayersOnBoard ());
 		//StartCoroutine(waitForBoardSync());
@@ -96,19 +91,6 @@ public class CatanManager : MonoBehaviour {
 			yield return new WaitForSeconds(1.0f);
 		} while(board == null);
 
-		boardLoaded = true;
-	}
-
-	public bool CheckIfEveryoneReady() {
-		bool allReady = true;
-
-		for (int i = 0; i < readys.Length; i++) {
-			if (readys [i] == false) {
-				allReady = false;
-			}
-		}
-
-		return allReady;
 	}
 
 	#endregion
@@ -262,7 +244,7 @@ public class CatanManager : MonoBehaviour {
 
 
 	public IEnumerator moveRobberForCurrentPlayer() {
-		waitingForPlayer = true;
+		EventTransferManager.instance.waitingForPlayer = true;
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (boardManager.getLandTiles(true)));
 		EventTransferManager.instance.OnMoveGamePiece (0, players [currentPlayerTurn].lastGameTileSelection.id);
@@ -285,8 +267,6 @@ public class CatanManager : MonoBehaviour {
 			// If you steal 2 things if you have a city, then the argument here would be 2 etc.
 			AssetTuple randomStolenAsset = stealableOpponents [0].getRandomSufficientAsset (1);
 
-			//stealableOpponents [0].spendAssets (randomStolenAsset);
-			//players [currentPlayerTurn].receiveAssets (randomStolenAsset);
 			EventTransferManager.instance.OnTradeWithBank(stealableOpponents [0].playerNumber - 1, false, randomStolenAsset);
 			EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
 			
@@ -310,12 +290,8 @@ public class CatanManager : MonoBehaviour {
 
 			uiManager.robberStealPanel.gameObject.SetActive (false);
 		}
-		// STEAL CARDS FROM OTHERS (RANDOM?) 
-		// Something along the lines of forall intersections at selected tile, if occupied && occupier.owner != plyaer[currentturn]
-		// then steal 1 random resource (generate random num from 0 to resourceTypes.range - 1 (excluding null)
-		// while victimPlayer.resourcetuple[randomNum] == 0 then subtract 1 and add 1 to the player
 
-		waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
 	}
 
 	public void tradeWithBankAttempt(int resourceToGiveForOne) {

@@ -49,6 +49,9 @@ public class UIManager : MonoBehaviour {
 
 		tradePanel = this.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
 		buildPanel = this.transform.FindChild("BuildPanel").gameObject.GetComponent<BuildPanel>();
+		robberStealPanel = this.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
+		discardPanel = this.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
+
 		currentTurnColor = GetComponentsInChildren<Image> () [0];
 		currentTurnAvatar = GetComponentsInChildren<Image> () [1];
 
