@@ -30,3 +30,6 @@ sysinfo.txt
 *.unitypackage
 
 Assets/Prefabs/NumericDice.prefab
+
+# include meta files
+!*.*.meta

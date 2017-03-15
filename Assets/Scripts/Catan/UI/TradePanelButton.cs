@@ -16,7 +16,7 @@ public class TradePanelButton : MonoBehaviour {
 	}
 
 	public void SelectionGetEvent(){
-		instance.getselection =id;
+		instance.getselection = id;
 		instance.setGetGlow (this);
 	}
 	public void SelectionGiveEvent(){

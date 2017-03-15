@@ -6,31 +6,51 @@ using UnityEngine.UI;
 public class TradePanel : MonoBehaviour {
 
 	public Button[] buttonsOnPanel;
-	public ToggleGroup toggleGroup;
-	private Toggle[] toggles;
+	public Button[] givePanel;
+	public Button[] getPanel;
+	public Image getglow;
+	public Image giveglow;
 	public Dropdown spendDropdown;
 	public Dropdown receiveDropdown;
-	//public Slider slider;
-	//private Text numText;
+	public int giveselection;
+	public int getselection;
 	private Text errorText;
 
 	// Use this for initialization
 	void Start () {
 		buttonsOnPanel = GetComponentsInChildren<Button> ();
-		toggleGroup = GetComponentInChildren<ToggleGroup> ();
-		//toggles = toggleGroup.GetComponentsInChildren<Toggle> ();
-		spendDropdown = GetComponentsInChildren<Dropdown> ()[0];
-		receiveDropdown = GetComponentsInChildren<Dropdown> ()[1];
-		//slider = GetComponentInChildren<Slider> ();
-		//numText = slider.GetComponentInChildren<Text> ();
 		GameObject errorTextObject = ComponentFinderExtension.FindChildByName (this.gameObject, "ErrorText");
+
+		//assign buttons for both panels to toggle changes only givepanel same length can do in 1 for loop
+		givePanel = this.transform.FindChild("GivePanel").gameObject.GetComponentsInChildren<Button> ();
+		getPanel = this.transform.FindChild("GetPanel").gameObject.GetComponentsInChildren<Button> ();
+
+		for (int i = 0; i < givePanel.Length; i++) {
+
+			//get instance
+			TradePanelButton giveinstance = givePanel[i].GetComponentInChildren<TradePanelButton>();
+			TradePanelButton getinstance = getPanel [i].GetComponentInChildren<TradePanelButton> ();
+
+			//assign ids and instances
+			giveinstance.id=i;
+			getinstance.id=i;
+			giveinstance.instance=this;
+			getinstance.instance=this;
+
+			//assign listeners
+			getPanel[i].onClick.AddListener (getinstance.SelectionGetEvent);
+			givePanel[i].onClick.AddListener (giveinstance.SelectionGiveEvent);
+		}
+			
 		errorText = errorTextObject.GetComponent<Text> ();
 		errorText.gameObject.SetActive (false);
+		giveglow.gameObject.SetActive (false);
+		getglow.gameObject.SetActive (false);
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		//numText.text = slider.value.ToString ();
+		
 	}
 
 	public ResourceType getTradeChoice() {
@@ -38,28 +58,11 @@ public class TradePanel : MonoBehaviour {
 	}
 
 	public int getTradeChoiceInt() {
-		return spendDropdown.value;
+		return giveselection;
 	}
-
-	public ResourceType getReceiveChoice() {
-		int activeNumber = -1;
-		Toggle activeToggle = ToggleGroupExtension.GetActive(toggleGroup);
-
-		for (int i = 0; i < toggles.Length; i++) {
-			if (activeToggle == toggles [i]) {
-				activeNumber = i;
-			}
-		}
-
-		if (activeNumber == -1) {
-			return ResourceType.Null;
-		} else {
-			return (ResourceType)activeNumber;
-		}
-	}
-
+		
 	public int getReceiveChoiceInt() {
-		return receiveDropdown.value;
+		return getselection;
 	}
 
 	public void showNotEnoughError(int choice) {
@@ -75,5 +78,13 @@ public class TradePanel : MonoBehaviour {
 
 	public void hideErrorText() {
 		errorText.gameObject.SetActive (false);
+	}
+	public void setGiveGlow(TradePanelButton button){
+		giveglow.gameObject.SetActive (true);
+		giveglow.gameObject.transform.position = button.gameObject.transform.position;
+	}
+	public void setGetGlow(TradePanelButton button){
+		getglow.gameObject.SetActive (true);
+		getglow.gameObject.transform.position = button.gameObject.transform.position;
 	}
 }
