@@ -70,9 +70,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public void OnDiceRolled() {
 		if (!diceRolledThisTurn) {
 			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
-			int redDieRoll = Random.Range (1, 7);
-			int yellowDieRoll = Random.Range (1, 7);
-
+			//int redDieRoll = Random.Range (1, 7);
+			//int yellowDieRoll = Random.Range (1, 7);
+			int redDieRoll=3;
+			int yellowDieRoll = 4;
 			print ("Red die rolled: " + redDieRoll);
 			print ("Yellow die rolled: " + yellowDieRoll);
 

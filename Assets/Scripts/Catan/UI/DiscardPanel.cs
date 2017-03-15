@@ -25,7 +25,7 @@ public class DiscardPanel : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		if (!selectionMade) {
-			leftText.text = "Left: " + leftDiscards.ToString ();
+			leftText.text = "Remaining : " + leftDiscards.ToString ();
 
 			/*if (leftDiscards > 0) {
 				int sum = 0;
