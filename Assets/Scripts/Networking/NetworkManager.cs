@@ -57,6 +57,8 @@ public class NetworkManager : MonoBehaviour {
 
 	// Connect: connect to the photon cloud
 	void Connect() {
+		// we don't want join lobby, we need to get a list of rooms first
+//		PhotonNetwork.autoJoinLobby = false;
 
 		// for testing purposes... -- ON PRODUCTION BUILD, REMOVE
 		PhotonNetwork.offlineMode = OFFLINEMODE;
