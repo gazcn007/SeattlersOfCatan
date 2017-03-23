@@ -70,6 +70,7 @@ public class LevelManager : Photon.MonoBehaviour {
 		//HideBoard ();
 		//BoardDecorator decorator = new BoardDecorator (board, hexSettings);
 		addPlayers();
+		//initiate progress cards
 
 		GameObject ETManagerGO = (GameObject)PhotonNetwork.Instantiate("EventTransferManager", Vector3.zero, Quaternion.identity, 0);
 		EventTransferManager ETManager = ETManagerGO.GetComponent<EventTransferManager>();
@@ -80,6 +81,7 @@ public class LevelManager : Photon.MonoBehaviour {
 		DontDestroyOnLoad (ETManagerGO);
 
 		ETManager.OnReadyToPlay ();
+		ETManager.GenerateClientCards ();
 
 		//DontDestroyOnLoad (settingsGO);
 
