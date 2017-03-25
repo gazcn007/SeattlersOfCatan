@@ -48,7 +48,9 @@ public class ChatPanel : MonoBehaviour, IChatClientListener {
 	}
 
 	public void sendMsg(){
-		this.chatClient.PublishMessage (worldChat, msgInput.text);
+		if (msgInput.text != "") {
+			this.chatClient.PublishMessage (worldChat, msgInput.text);
+		}
 		msgInput.text = "";
 	}
 

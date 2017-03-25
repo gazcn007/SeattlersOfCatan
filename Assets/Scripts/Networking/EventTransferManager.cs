@@ -17,6 +17,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public bool waitingForPlayer = false;
 	public bool diceRolledThisTurn = false;
 
+	public GameObject diceRollerPrefab;
+	private GameObject diceRoller;
+
+
 	void Awake() {
 		if (instance == null)
 			instance = this;
@@ -76,6 +80,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			print ("Red die rolled: " + redDieRoll);
 			print ("Yellow die rolled: " + yellowDieRoll);
 
+			GetComponent<PhotonView> ().RPC ("RollDice", PhotonTargets.All, new object[] {redDieRoll, redDieRoll, redDieRoll});
 
 			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
 				//StartCoroutine(diceRollSevenEvents());
@@ -94,6 +99,27 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				}
 			}
 			diceRolledThisTurn = true;
+		}
+	}
+
+	[PunRPC]
+	void RollDice(int number, int number1, int number2){
+		diceRoller = Instantiate(diceRollerPrefab , new Vector3(-1.0f,0,-5.7f),Quaternion.identity);
+		GameObject[] lists = GameObject.FindGameObjectsWithTag ("Dice");
+		foreach(GameObject go in lists ) {
+			DiePhysics physics = go.GetComponent<DiePhysics> ();
+			Debug.Log ("vector is " + number + " " + number1 + " " + number2);
+			physics.init (new Vector3 ((float)number+1, (float)number1+1, (float)number2+1));
+		}
+		StartCoroutine (ShowDiceResult ());
+	}
+
+	IEnumerator ShowDiceResult(){
+		yield return new WaitForSeconds (3.0f);
+		GameObject[] lists = GameObject.FindGameObjectsWithTag ("Dice");
+		foreach(GameObject go in lists ) {
+			FaceDetection faceDetection = go.GetComponent<FaceDetection> ();
+			faceDetection.showNumber ();
 		}
 	}
 
@@ -315,6 +341,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		clientCatanManager.currentPlayerTurn = (clientCatanManager.currentPlayerTurn + 1) % PhotonNetwork.playerList.Length;
 		//clientCatanManager.unitManager.destroyCancelledUnits ();
+		Destroy(diceRoller);
 	}
 
 	[PunRPC]
