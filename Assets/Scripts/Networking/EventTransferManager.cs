@@ -10,12 +10,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public GameObject settingsPrefab;
 	public GameObject playerPrefab;
 	public GameObject canvasPrefab;
+	public GameObject ProgressCardsStackManagerPrefab;
 
 	public int currentPlayerTurn = 0;
 	public int currentActiveButton = -1;
 	public bool setupPhase = true;
 	public bool waitingForPlayer = false;
 	public bool diceRolledThisTurn = false;
+	public bool waitingforcards=true;
 
 	public GameObject diceRollerPrefab;
 	private GameObject diceRoller;
@@ -33,7 +35,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	public void OnReadyToPlay() {
 		GetComponent<PhotonView> ().RPC ("GenerateBoardForClient", PhotonTargets.All, new object[] { });
-
+		GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
 		//GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
 		StartCoroutine (CatanSetupPhase());
 	}
@@ -74,9 +76,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public void OnDiceRolled() {
 		if (!diceRolledThisTurn) {
 			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
-			int redDieRoll = Random.Range (1, 7);
-			int yellowDieRoll = Random.Range (1, 7);
-
+			//int redDieRoll = Random.Range (1, 7);
+			//int yellowDieRoll = Random.Range (1, 7);
+			int redDieRoll=3;
+			int yellowDieRoll = 4;
 			print ("Red die rolled: " + redDieRoll);
 			print ("Yellow die rolled: " + yellowDieRoll);
 
@@ -700,6 +703,55 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	void HandleOperationFailure() {
 		EventTransferManager.instance.waitingForPlayer = false;
 		EventTransferManager.instance.currentActiveButton = -1;
+	}
+
+	[PunRPC]
+	void GenerateProgressCards(){
+		GameObject clientcardsStackGO = Instantiate (ProgressCardsStackManagerPrefab);
+		ProgressCardStackManager clientcards = clientcardsStackGO.GetComponent<ProgressCardStackManager> ();
+		//master sets everyones card orders
+		if (PhotonNetwork.isMasterClient) {
+			clientcards.shuffleCards ();
+			for (int i = 0; i < clientcards.yellowCards.Length; i++) {
+				GetComponent<PhotonView> ().RPC ("SetProgressCard", PhotonTargets.Others, new object[] {
+					(int) ProgressCardColor.Yellow,
+					(int) clientcards.yellowCards [i],
+					i
+				});
+			}
+			for (int i = 0; i < clientcards.blueCards.Length; i++) {
+				GetComponent<PhotonView> ().RPC ("SetProgressCard", PhotonTargets.Others, new object[] {
+					(int) ProgressCardColor.Blue,
+					(int) clientcards.blueCards [i],
+					i
+				});
+			}
+			for (int i = 0; i < clientcards.greenCards.Length; i++) {
+				GetComponent<PhotonView> ().RPC ("SetProgressCard", PhotonTargets.Others, new object[] {
+					(int) ProgressCardColor.Green,
+					(int) clientcards.greenCards [i],
+					i
+				});
+			}
+		}
+	}
+	[PunRPC]
+	void SetProgressCard(int color, int type, int position) {
+		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+
+		if (clientcards != null) {
+			switch ((ProgressCardColor)color) {
+			case ProgressCardColor.Yellow:
+				clientcards.yellowCards [position] = (ProgressCardType)type;
+				break;
+			case ProgressCardColor.Blue:
+				clientcards.blueCards [position] = (ProgressCardType)type;
+				break;
+			case ProgressCardColor.Green:
+				clientcards.greenCards [position] = (ProgressCardType)type;
+				break;
+			}
+		}
 	}
 }
 

@@ -6,16 +6,18 @@ using UnityEngine.UI;
 public class RobberStealPanel : MonoBehaviour {
 
 	public GameObject panel;
-	public Dropdown opponentChoicesDropdown;
 	public Button selectionMadeButton;
-
-	public List<Player> choices;
-
+	public Image selectionGlow;
+	public int selection;
+	public List<Button> optionsPanel;
+	//public Button[] optionsPanel;
 	public bool selectionMade = false;
 
 	// Use this for initialization
 	void Start () {
 		selectionMadeButton.onClick.AddListener (confirmSelection);
+		//optionsPanel = this.transform.FindChild("optionsPanel").gameObject.GetComponentsInChildren<Button> ();
+		selectionGlow.gameObject.SetActive (false);
 	}
 	
 	// Update is called once per frame
@@ -24,14 +26,28 @@ public class RobberStealPanel : MonoBehaviour {
 	}
 
 	public void displayPanelForChoices(List<Player> opponents) {
-		opponentChoicesDropdown.ClearOptions ();
+		selectionGlow.gameObject.SetActive (false);
 
-		List<string> playerNames = new List<string> ();
-		for (int i = 0; i < opponents.Count; i++) {
-			playerNames.Add (opponents [i].playerName);
+		for (int i = 0; i<3; i++) {
+			Debug.Log ("i:"+i);
+			if ((i+1)>opponents.Count) {
+				Debug.Log ("i");
+				optionsPanel [i].gameObject.SetActive (false);
+			} else {
+				optionsPanel [i].gameObject.SetActive (true);
+				optionsPanel [i].image.color = opponents [i].playerColor;
+				RobberStealPanelButton current= optionsPanel [i].GetComponentInChildren<RobberStealPanelButton>();
+
+				//set values for the buttons 
+				current.instance = this;
+				current.playernumber = i;
+				current.avatar.sprite = opponents [i].avatar;
+
+				//set button
+				optionsPanel[i].onClick.AddListener (current.UpdateSelection);
+			}
 		}
-
-		opponentChoicesDropdown.AddOptions(playerNames);
+		//opponentChoicesDropdown.AddOptions(playerNames);
 		selectionMade = false;
 		this.gameObject.SetActive (true);
 	}
@@ -41,9 +57,12 @@ public class RobberStealPanel : MonoBehaviour {
 	}
 
 	public int getSelection() {
-		return opponentChoicesDropdown.value;
+		return selection;
 	}
-
+	public void setSelectionGlow(RobberStealPanelButton button){
+		selectionGlow.gameObject.SetActive (true);
+		selectionGlow.gameObject.transform.position = button.gameObject.transform.position;
+	}
 	public IEnumerator waitUntilButtonDown() {
 		yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
 	

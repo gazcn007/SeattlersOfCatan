@@ -22,6 +22,8 @@ public class UIManager : MonoBehaviour {
 	public RobberStealPanel robberStealPanel;
 	public DiscardPanel discardPanel;
 
+	public GameObject progressCardPrefab;
+
 	void Awake() {
 		if (instance == null)
 			instance = this;
