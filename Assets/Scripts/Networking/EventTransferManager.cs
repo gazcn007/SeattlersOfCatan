@@ -32,7 +32,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public void OnReadyToPlay() {
 		GetComponent<PhotonView> ().RPC ("GenerateBoardForClient", PhotonTargets.All, new object[] { });
 		GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
-		//GetComponent<PhotonView> ().RPC ("GenerateClientCards", PhotonTargets.All, new object[] { });
 		//GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
 		StartCoroutine (CatanSetupPhase());
 	}
@@ -427,7 +426,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	[PunRPC]
 	void GenerateBoardForClient() {
-		Debug.LogError ("TWICE");
 		GameObject clientBoardGO = Instantiate (boardPrefab);
 		//GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 		GameBoard clientBoard = clientBoardGO.GetComponent<GameBoard>();
@@ -682,7 +680,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	[PunRPC]
 	void GenerateProgressCards(){
-		Debug.LogError ("TWICE Progress");
 		GameObject clientcardsStackGO = Instantiate (ProgressCardsStackManagerPrefab);
 		ProgressCardStackManager clientcards = clientcardsStackGO.GetComponent<ProgressCardStackManager> ();
 		//master sets everyones card orders
@@ -709,10 +706,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 					i
 				});
 			}
-
-			//GetComponent<PhotonView> ().RPC ("GenerateClientCards", PhotonTargets.All, new object[] { });
 		}
-		//clientcards.generateCards ();
 	}
 	[PunRPC]
 	void SetProgressCard(int color, int type, int position) {
@@ -731,10 +725,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				break;
 			}
 		}
-	}
-	public void GenerateClientCards() {
-		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
-		clientcards.generateCards ();
 	}
 }
 

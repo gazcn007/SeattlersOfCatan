@@ -9,7 +9,8 @@ public class RobberStealPanel : MonoBehaviour {
 	public Button selectionMadeButton;
 	public Image selectionGlow;
 	public int selection;
-	public Button[] optionsPanel;
+	public List<Button> optionsPanel;
+	//public Button[] optionsPanel;
 	public bool selectionMade = false;
 
 	// Use this for initialization
@@ -25,8 +26,8 @@ public class RobberStealPanel : MonoBehaviour {
 	}
 
 	public void displayPanelForChoices(List<Player> opponents) {
+		selectionGlow.gameObject.SetActive (false);
 
-		Debug.Log (opponents.Count);
 		for (int i = 0; i<3; i++) {
 			Debug.Log ("i:"+i);
 			if ((i+1)>opponents.Count) {

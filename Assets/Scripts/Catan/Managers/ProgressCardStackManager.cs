@@ -5,9 +5,6 @@ using UnityEngine.UI;
 
 public class ProgressCardStackManager : MonoBehaviour {
 
-
-	public GameObject progressCardPrefab;
-
 	public ProgressCardType[] yellowCards;
 	public ProgressCardType[] blueCards;
 	public ProgressCardType[] greenCards;
@@ -19,7 +16,7 @@ public class ProgressCardStackManager : MonoBehaviour {
 	void Start () {
 
 	}
-	public void generateCards () {
+	/*public void generateCards () {
 		//mix the 3 arrays if this is client otherwise spawn order is already defined
 		//instantiate the 3 queues with their cards
 		for (int i = 0; i < yellowCards.Length; i++) {
@@ -56,7 +53,7 @@ public class ProgressCardStackManager : MonoBehaviour {
 			greenCardsQueue.Add (curr);
 		}
 		
-	}
+	}*/
 
 	//used by masterclient to shuffled the cards
 	public void shuffleCards(){

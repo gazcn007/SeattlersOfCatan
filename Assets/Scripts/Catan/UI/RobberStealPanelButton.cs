@@ -11,7 +11,7 @@ public class RobberStealPanelButton : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		avatar= GetComponentsInChildren<Image> () [0];
+		//avatar= GetComponentsInChildren<Image> () [1];
 	}
 	
 	// Update is called once per frame

@@ -81,7 +81,7 @@ public class LevelManager : Photon.MonoBehaviour {
 		DontDestroyOnLoad (ETManagerGO);
 
 		ETManager.OnReadyToPlay ();
-		ETManager.GenerateClientCards ();
+
 
 		//DontDestroyOnLoad (settingsGO);
 
