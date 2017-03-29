@@ -5,48 +5,43 @@ using System.Collections.Generic;
 public class FaceDetection : MonoBehaviour {
 
 	public List<Vector3> directions;
-	public List<int> sideValues;
+	public List<int> faceValues;
 
 	void Awake() {
+
+		// Pre-defined direction and face values
+		// This is based on D6's material, @todo number will need to be reassigned if change material
 		if (directions.Count == 0) {
-			// Pre-defined direction and reference values
 			directions.Add(Vector3.up);
-			sideValues.Add(5); // up
+			faceValues.Add(5);
 			directions.Add(Vector3.down);
-			sideValues.Add(2); // down
-
+			faceValues.Add(2); 
 			directions.Add(Vector3.left);
-			sideValues.Add(3); // left
+			faceValues.Add(3);
 			directions.Add(Vector3.right);
-			sideValues.Add(4); // right
-
+			faceValues.Add(4); 
 			directions.Add(Vector3.forward);
-			sideValues.Add (1); // fw
+			faceValues.Add (1); 
 			directions.Add(Vector3.back);
-			sideValues.Add(6); // back
-		}
-
-		if (directions.Count != sideValues.Count) {
-			Debug.LogError("Not consistent list sizes");
+			faceValues.Add(6); 
 		}
 	}
 
 	public void showNumber() {
 		string name = transform.name;
-		Debug.Log("The "+name+" has value: " + GetNumber(Vector3.up, 30f));
+		//prints number that is facing up to the console
+		Debug.Log("The "+name+" has value: " + getNumber(Vector3.up, 30f));
 	}
 
-	// Gets the number of the side pointing in the same direction as the reference vector,
-	// allowing epsilon degrees error.
-	public int GetNumber(Vector3 referenceVectorUp, float epsilonDeg = 5f) {
-		// here I would assert lookup is not empty, epsilon is positive and larger than smallest possible float etc
-		// Transform reference up to object space
+	public int getNumber(Vector3 referenceVectorUp, float epsilonDeg) {
+		// use reference of object transformation
 		Vector3 referenceObjectSpace = transform.InverseTransformDirection(referenceVectorUp);
 
-		// Find smallest difference to object space direction
+		// Use delta to find the most possible face that is facing up
 		float min = float.MaxValue;
 		int mostSimilarDirectionIndex = -1;
 		for (int i=0; i < directions.Count; ++i) {
+			// compare angles
 			float a = Vector3.Angle(referenceObjectSpace, directions[i]);
 			if (a <= epsilonDeg && a < min) {
 				min = a;
@@ -54,7 +49,7 @@ public class FaceDetection : MonoBehaviour {
 			}
 		}
 
-		// -1 as error code for not within bounds
-		return (mostSimilarDirectionIndex >= 0) ? sideValues[mostSimilarDirectionIndex] : -1; 
+		// return -1 for corner cases
+		return (mostSimilarDirectionIndex >= 0) ? faceValues[mostSimilarDirectionIndex] : -1; 
 	}
 }

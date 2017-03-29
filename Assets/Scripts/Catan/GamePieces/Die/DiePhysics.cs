@@ -13,11 +13,6 @@ public class DiePhysics : MonoBehaviour {
 		GetComponent<Rigidbody>().AddForce (randomVector * forceAmount, forceMode);
 		GetComponent<Rigidbody>().AddTorque (randomVector * torqueAmount, forceMode);
 	}
-//	//Update is called once per frame
-//	void Update(){
-//		if (Input.GetKeyDown (KeyCode.Space)) {
-//			GetComponent<Rigidbody>().AddForce (Random.onUnitSphere * forceAmount, forceMode);
-//			GetComponent<Rigidbody>().AddTorque (Random.onUnitSphere * torqueAmount, forceMode);
-//		}
-//	}
+
+	//@todo : maybe add another feature to hold space to fire the dice
 }

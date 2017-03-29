@@ -342,6 +342,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		clientCatanManager.currentPlayerTurn = (clientCatanManager.currentPlayerTurn + 1) % PhotonNetwork.playerList.Length;
 		//clientCatanManager.unitManager.destroyCancelledUnits ();
+		Destroy(diceRoller);
 	}
 
 	[PunRPC]
