@@ -9,6 +9,7 @@ public class ProgressCard: MonoBehaviour  {
 	public ProgressCardColor color;
 	public Sprite cardSprite;
 	public Image DisplayCard;
+	public UIManager UIinstance;
 
 	//mouseover effect functions
 	public void OnMouseEnter(){
@@ -16,8 +17,7 @@ public class ProgressCard: MonoBehaviour  {
 			DisplayCard.gameObject.SetActive (true);
 		}
 
-		float height = DisplayCard.GetComponent<RectTransform> ().rect.height;
-		Vector3 position = new Vector3 (this.transform.position.x, this.transform.position.y+200, 0);
+		Vector3 position = new Vector3 (this.transform.position.x, DisplayCard.transform.position.y, 0);
 		DisplayCard.transform.position = position;
 		DisplayCard.sprite = cardSprite;
 	}
@@ -25,6 +25,11 @@ public class ProgressCard: MonoBehaviour  {
 		if (DisplayCard.isActiveAndEnabled == true) {
 			DisplayCard.gameObject.SetActive (false);
 		}
+	}
+	//handler for triggering cards
+	public void OnMouseClick(){
+		DisplayCard.gameObject.SetActive (false);
+		UIinstance.progressCardPanel.SubmitCard (color, type);
 	}
 }
 public enum ProgressCardColor{

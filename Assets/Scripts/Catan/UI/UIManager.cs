@@ -16,7 +16,9 @@ public class UIManager : MonoBehaviour {
 	public OpponentHUD[] opponentHUDs;
 
 	public Button[] uiButtons;
+
 	public ProgressCardHolder progressCardHolder;
+	public ProgressCardPanel progressCardPanel;
 
 	public BuildPanel buildPanel;
 	public TradePanel tradePanel;
@@ -45,7 +47,12 @@ public class UIManager : MonoBehaviour {
 	void InitializeUIManager() {
 		playerHUD = GetComponentInChildren<PlayerHUD> ();
 		opponentHUDs = GameObject.FindGameObjectWithTag ("OpponentHUDSPanel").GetComponentsInChildren<OpponentHUD> ();
-		progressCardHolder = GameObject.FindGameObjectWithTag ("ProgressCardHolder").GetComponentInChildren<ProgressCardHolder> ();
+
+		//progress card initiators
+		//progressCardHolder = GameObject.FindGameObjectWithTag ("ProgressCardHolder").GetComponentInChildren<ProgressCardHolder> ();
+		progressCardHolder.UIinstance = this;
+		//progressCardPanel = GameObject.FindGameObjectWithTag ("ProgressCardPanel").GetComponentInChildren<ProgressCardPanel> ();
+		progressCardPanel.cardHolder = progressCardHolder;
 
 		//a few progress card tests
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Alchemist);

@@ -7,13 +7,10 @@ public class ProgressCardHolder : MonoBehaviour {
 	public GameObject progressCardPrefab;	
 	public Image DisplayCardref;
 	public List<ProgressCard> progressCardList;
+	public UIManager UIinstance;
 
 
-	// Use this for initialization
-	void Start () {
-
-
-	}
+	//adds new cards to the ui
 	public void SpawnCard(ProgressCardColor color,ProgressCardType type){
 
 		//spawn gameobject
@@ -26,12 +23,12 @@ public class ProgressCardHolder : MonoBehaviour {
 		newcard.color = color;
 		newcard.cardSprite=Resources.Load<Sprite> ("ProgressCards/"+type.ToString());
 		newcard.DisplayCard = DisplayCardref;
+		newcard.UIinstance = UIinstance;
 		cardImage.sprite=newcard.cardSprite;
 		card.name = type.ToString ();
-		//setactive
+
 		card.transform.parent=this.transform;
 		card.gameObject.SetActive (true);
-
 
 		//add to list
 		progressCardList.Add(newcard);
