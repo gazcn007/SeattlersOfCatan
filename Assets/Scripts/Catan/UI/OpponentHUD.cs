@@ -38,7 +38,7 @@ public class OpponentHUD : MonoBehaviour {
 
 	private void UpdateUIForPlayer() { 
 		if(displayingPlayer != null) {
-			resourcesText.text = displayingPlayer.getNumResources ().ToString();
+			resourcesText.text = displayingPlayer.getNumAssets ().ToString();
 			//cardsText.text = Player.METHODTOGTNUMRESOURCECARDSLOL ();
 			roadsText.text = (displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count
 				+ displayingPlayer.getOwnedUnitsOfType(typeof(Ship)).Count).ToString();

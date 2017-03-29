@@ -242,6 +242,18 @@ public class CatanManager : MonoBehaviour {
 		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelectionId);
 	}
 
+	public IEnumerator discardResourcesForPlayers() {
+		int numDiscards = players [PhotonNetwork.player.ID - 1].getNumDiscardsNeeded ();
+
+		if (numDiscards > 0) {
+			uiManager.discardPanel.displayPanelForAssets (players [PhotonNetwork.player.ID - 1].getCurrentAssets (), numDiscards);
+			yield return StartCoroutine (uiManager.discardPanel.waitUntilButtonDown ());
+
+			//players [currentPlayerTurn].spendAssets (uiManager.discardPanel.discardTuple);
+			EventTransferManager.instance.OnTradeWithBank(players [PhotonNetwork.player.ID - 1].playerNumber - 1, false, uiManager.discardPanel.discardTuple);
+			uiManager.discardPanel.gameObject.SetActive (false);
+		}
+	}
 
 	public IEnumerator moveRobberForCurrentPlayer() {
 		EventTransferManager.instance.waitingForPlayer = true;
