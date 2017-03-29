@@ -86,12 +86,11 @@ public class ChatPanel : MonoBehaviour, IChatClientListener {
 	{}
 
 	public void openPanel(){
-		MessagePanel.SetActive (true);
-		OpenPanelButton.SetActive (false);
-	}
+		if (MessagePanel.activeSelf == true) {
+			MessagePanel.SetActive (false);
+		} else {
+			MessagePanel.SetActive (true);
+		}
 
-	public void closePanel(){
-		MessagePanel.SetActive (false);
-		OpenPanelButton.SetActive (true);
 	}
 }
