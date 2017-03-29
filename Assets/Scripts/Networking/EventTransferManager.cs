@@ -17,13 +17,18 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public bool setupPhase = true;
 	public bool waitingForPlayer = false;
 	public bool diceRolledThisTurn = false;
-	public bool waitingforcards=true;
+	public bool waitingforcards = true;
 	public GameObject diceRollerPrefab;
 	private GameObject diceRoller;
+
+	public bool waitingForPlayers = false;
+	public bool[] playerChecks;
 
 	void Awake() {
 		if (instance == null)
 			instance = this;
+
+		playerChecks = new bool[LevelManager.instance.players.Count];
 	}
 
 	// Update is called once per frame
@@ -76,7 +81,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 			//int redDieRoll = Random.Range (1, 7);
 			//int yellowDieRoll = Random.Range (1, 7);
-			int redDieRoll=3;
+			GameObject[] dice = GameObject.FindGameObjectsWithTag ("Dice");
+			//int redDieRoll = dice[0].GetComponent<FaceDetection>().getNumber;
+			int redDieRoll = 3;
 			int yellowDieRoll = 4;
 			print ("Red die rolled: " + redDieRoll);
 			print ("Yellow die rolled: " + yellowDieRoll);
@@ -84,8 +91,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			GetComponent<PhotonView> ().RPC ("RollDice", PhotonTargets.All, new object[] {redDieRoll, redDieRoll, redDieRoll});
 
 			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
-				//StartCoroutine(diceRollSevenEvents());
-				StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
+				//StartCoroutine(clientCatanManager.discardResourcesForPlayers());
+				//StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
+				GetComponent<PhotonView> ().RPC ("EnforceDiceRollEvents", PhotonTargets.All, new object[] {});
 			} else {
 				GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
 					redDieRoll + yellowDieRoll
@@ -104,10 +112,24 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
+	void EnforceDiceRollEvents() {
+		StartCoroutine(DiceRollSevenEvents());
+	}
+
+	IEnumerator DiceRollSevenEvents() {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		yield return StartCoroutine(clientCatanManager.discardResourcesForPlayers());
+
+		if (PhotonNetwork.player.ID - 1 == clientCatanManager.currentPlayerTurn) {
+			yield return StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
+		}
+	}
+
+	[PunRPC]
 	void RollDice(int number, int number1, int number2){
 		diceRoller = Instantiate(diceRollerPrefab , new Vector3(-1.0f,0,-5.7f),Quaternion.identity);
-		GameObject[] lists = GameObject.FindGameObjectsWithTag ("Dice");
-		foreach(GameObject go in lists ) {
+		GameObject[] dice = GameObject.FindGameObjectsWithTag ("Dice");
+		foreach(GameObject go in dice) {
 			DiePhysics physics = go.GetComponent<DiePhysics> ();
 			Debug.Log ("vector is " + number + " " + number1 + " " + number2);
 			physics.init (new Vector3 ((float)number+1, (float)number1+1, (float)number2+1));
@@ -117,8 +139,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	IEnumerator ShowDiceResult(){
 		yield return new WaitForSeconds (3.0f);
-		GameObject[] lists = GameObject.FindGameObjectsWithTag ("Dice");
-		foreach(GameObject go in lists ) {
+		GameObject[] dices = GameObject.FindGameObjectsWithTag ("Dice");
+		foreach(GameObject go in dices) {
 			FaceDetection faceDetection = go.GetComponent<FaceDetection> ();
 			faceDetection.showNumber ();
 		}

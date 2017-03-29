@@ -65,7 +65,7 @@ public class PlayerHUD : MonoBehaviour {
 
 			//resourcesText.text = displayingPlayer.getNumResources ().ToString();
 
-			resourcesText.text = displayingPlayer.getNumResources ().ToString();
+			resourcesText.text = displayingPlayer.getNumAssets ().ToString();
 
 			//cardsText.text = Player.METHODTOGTNUMRESOURCECARDSLOL ();
 			roadsText.text = (displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count
