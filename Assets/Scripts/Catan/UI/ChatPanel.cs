@@ -31,6 +31,9 @@ public class ChatPanel : MonoBehaviour, IChatClientListener {
 		if (chatClient == null) {
 			return; 
 		}
+		if (Input.GetKeyDown (KeyCode.Return)) {
+			sendMsg ();
+		}
 		this.chatClient.Service ();
 	}
 
