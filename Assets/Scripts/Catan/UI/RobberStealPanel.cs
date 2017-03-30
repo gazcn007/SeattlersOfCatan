@@ -10,7 +10,6 @@ public class RobberStealPanel : MonoBehaviour {
 	public Image selectionGlow;
 	public int selection;
 	public List<Button> optionsPanel;
-	//public Button[] optionsPanel;
 	public bool selectionMade = false;
 
 	// Use this for initialization

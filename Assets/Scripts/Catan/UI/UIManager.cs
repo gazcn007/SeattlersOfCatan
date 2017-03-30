@@ -19,6 +19,7 @@ public class UIManager : MonoBehaviour {
 
 	public ProgressCardHolder progressCardHolder;
 	public ProgressCardPanel progressCardPanel;
+	public TradePlayerPanel tradePlayerPanel;
 
 	public BuildPanel buildPanel;
 	public TradePanel tradePanel;
@@ -49,9 +50,7 @@ public class UIManager : MonoBehaviour {
 		opponentHUDs = GameObject.FindGameObjectWithTag ("OpponentHUDSPanel").GetComponentsInChildren<OpponentHUD> ();
 
 		//progress card initiators
-		//progressCardHolder = GameObject.FindGameObjectWithTag ("ProgressCardHolder").GetComponentInChildren<ProgressCardHolder> ();
 		progressCardHolder.UIinstance = this;
-		//progressCardPanel = GameObject.FindGameObjectWithTag ("ProgressCardPanel").GetComponentInChildren<ProgressCardPanel> ();
 		progressCardPanel.cardHolder = progressCardHolder;
 
 		//a few progress card tests
@@ -96,8 +95,7 @@ public class UIManager : MonoBehaviour {
 
 		tradePanel.gameObject.SetActive (false);
 		buildPanel.gameObject.SetActive (false);
-		//robberStealPanel.gameObject.SetActive (false);
-		//discardPanel.gameObject.SetActive (false);
+
 	}
 
 	void SetupPlayers() {

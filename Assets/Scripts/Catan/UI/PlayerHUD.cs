@@ -9,6 +9,7 @@ public class PlayerHUD : MonoBehaviour {
 	public Text goldText;
 	public Text VpText;
 
+
 	// Resources
 	public Text bricktxt;
 	public Text graintxt;
@@ -29,6 +30,16 @@ public class PlayerHUD : MonoBehaviour {
 	public Image avatarpanel;
 	public Image avatar;
 	public Player displayingPlayer;
+
+	//fish
+	public Text oneFishText;
+	public Text twoFishText;
+	public Text threeFishText;
+
+	public Button FishDisplay;
+	public Button ResourceDisplay;
+	public GameObject fishpanel;
+	public GameObject resourcepanel;
 
 	private bool foundAvatar;
 
@@ -87,4 +98,18 @@ public class PlayerHUD : MonoBehaviour {
 		//avatar.sprite = p.avatar;
 
 	}
+	public void SetResources(){
+		FishDisplay.gameObject.SetActive (true);
+		ResourceDisplay.gameObject.SetActive (false);
+		resourcepanel.gameObject.SetActive (true);
+		fishpanel.gameObject.SetActive (false);
+		
+	}
+	public void SetFish(){
+		FishDisplay.gameObject.SetActive (false);
+		ResourceDisplay.gameObject.SetActive (true);
+		resourcepanel.gameObject.SetActive (false);
+		fishpanel.gameObject.SetActive (true);
+	}
+
 }
