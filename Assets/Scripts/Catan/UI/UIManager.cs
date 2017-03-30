@@ -17,12 +17,14 @@ public class UIManager : MonoBehaviour {
 
 	public Button[] uiButtons;
 
+	public ProgressCardHolder progressCardHolder;
+	public ProgressCardPanel progressCardPanel;
+
 	public BuildPanel buildPanel;
 	public TradePanel tradePanel;
 	public RobberStealPanel robberStealPanel;
 	public DiscardPanel discardPanel;
 
-	public GameObject progressCardPrefab;
 
 	void Awake() {
 		if (instance == null)
@@ -45,6 +47,26 @@ public class UIManager : MonoBehaviour {
 	void InitializeUIManager() {
 		playerHUD = GetComponentInChildren<PlayerHUD> ();
 		opponentHUDs = GameObject.FindGameObjectWithTag ("OpponentHUDSPanel").GetComponentsInChildren<OpponentHUD> ();
+
+		//progress card initiators
+		//progressCardHolder = GameObject.FindGameObjectWithTag ("ProgressCardHolder").GetComponentInChildren<ProgressCardHolder> ();
+		progressCardHolder.UIinstance = this;
+		//progressCardPanel = GameObject.FindGameObjectWithTag ("ProgressCardPanel").GetComponentInChildren<ProgressCardPanel> ();
+		progressCardPanel.cardHolder = progressCardHolder;
+
+		//a few progress card tests
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Alchemist);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Diplomat);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Merchant);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Crane);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.ResourceMonopoly);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Smith);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Deserter);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Engineer);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.MasterMerchant);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Wedding);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Warlord);
+		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.CommercialHarbor);
 
 		robberStealPanel = GetComponentInChildren<RobberStealPanel>();
 		discardPanel = GetComponentInChildren<DiscardPanel>();
