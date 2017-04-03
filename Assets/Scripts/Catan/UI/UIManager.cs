@@ -19,12 +19,13 @@ public class UIManager : MonoBehaviour {
 
 	public ProgressCardHolder progressCardHolder;
 	public ProgressCardPanel progressCardPanel;
+	public TradePlayerPanel tradePlayerPanel;
 
 	public BuildPanel buildPanel;
 	public TradePanel tradePanel;
 	public RobberStealPanel robberStealPanel;
 	public DiscardPanel discardPanel;
-
+	public FishTradePanel fishTradePanel;
 
 	void Awake() {
 		if (instance == null)
@@ -45,13 +46,11 @@ public class UIManager : MonoBehaviour {
 	#region Initializers
 
 	void InitializeUIManager() {
-		playerHUD = GetComponentInChildren<PlayerHUD> ();
-		opponentHUDs = GameObject.FindGameObjectWithTag ("OpponentHUDSPanel").GetComponentsInChildren<OpponentHUD> ();
+		//playerHUD = GetComponentInChildren<PlayerHUD> ();
+		//opponentHUDs = GameObject.FindGameObjectWithTag ("OpponentHUDSPanel").GetComponentsInChildren<OpponentHUD> ();
 
 		//progress card initiators
-		//progressCardHolder = GameObject.FindGameObjectWithTag ("ProgressCardHolder").GetComponentInChildren<ProgressCardHolder> ();
 		progressCardHolder.UIinstance = this;
-		//progressCardPanel = GameObject.FindGameObjectWithTag ("ProgressCardPanel").GetComponentInChildren<ProgressCardPanel> ();
 		progressCardPanel.cardHolder = progressCardHolder;
 
 		//a few progress card tests
@@ -68,23 +67,23 @@ public class UIManager : MonoBehaviour {
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Warlord);
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.CommercialHarbor);
 
-		robberStealPanel = GetComponentInChildren<RobberStealPanel>();
-		discardPanel = GetComponentInChildren<DiscardPanel>();
+		//robberStealPanel = GetComponentInChildren<RobberStealPanel>();
+		//discardPanel = GetComponentInChildren<DiscardPanel>();
 
-		tradePanel = this.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
-		buildPanel = this.transform.FindChild("BuildPanel").gameObject.GetComponent<BuildPanel>();
-		robberStealPanel = this.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
-		discardPanel = this.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
+		//tradePanel = this.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
+		//buildPanel = this.transform.FindChild("BuildPanel").gameObject.GetComponent<BuildPanel>();
+		//robberStealPanel = this.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
+		//discardPanel = this.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
 
-		currentTurnColor = GetComponentsInChildren<Image> () [0];
-		currentTurnAvatar = GetComponentsInChildren<Image> () [1];
+		//currentTurnColor = GetComponentsInChildren<Image> () [0];
+		//currentTurnAvatar = GetComponentsInChildren<Image> () [1];
 
-
-		uiButtons = GetComponentsInChildren<Button> ();
-		uiButtons[0].onClick.AddListener (endTurn);
-		uiButtons[1].onClick.AddListener (diceRollEvent);
-		uiButtons[2].onClick.AddListener (tradeWithBankEvent);
-		uiButtons[3].onClick.AddListener (toggleBuild);
+		//buttons are now automatically assigned in inspector
+		/*uiButtons = GetComponentsInChildren<Button> ();
+		uiButtons[1].onClick.AddListener (endTurn);
+		uiButtons[2].onClick.AddListener (diceRollEvent);
+		uiButtons[3].onClick.AddListener (tradeWithBankEvent);
+		uiButtons[4].onClick.AddListener (toggleBuild);
 
 		buildPanel.buttonsOnPanel[0].onClick.AddListener (buildSettlementEvent);
 		buildPanel.buttonsOnPanel[1].onClick.AddListener (buildRoadEvent);
@@ -92,12 +91,13 @@ public class UIManager : MonoBehaviour {
 		buildPanel.buttonsOnPanel[3].onClick.AddListener (upgradeSettlementEvent);
 
 		tradePanel.buttonsOnPanel [0].onClick.AddListener (tradeDone);
-		tradePanel.buttonsOnPanel [1].onClick.AddListener (tradeCancelled);
+		tradePanel.buttonsOnPanel [1].onClick.AddListener (tradeCancelled);*/
 
+
+		//just in case due to constant editing
 		tradePanel.gameObject.SetActive (false);
 		buildPanel.gameObject.SetActive (false);
-		//robberStealPanel.gameObject.SetActive (false);
-		//discardPanel.gameObject.SetActive (false);
+
 	}
 
 	void SetupPlayers() {
@@ -130,7 +130,7 @@ public class UIManager : MonoBehaviour {
 
 	#region Button Action Listener Methods
 
-	void buildSettlementEvent() {
+	public void buildSettlementEvent() {
 		int buttonId = 1;
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
 			if (!EventTransferManager.instance.waitingForPlayer) {
@@ -151,7 +151,7 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 
-	void buildRoadEvent() {
+	public void buildRoadEvent() {
 		int buttonId = 2;
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
 			if (!EventTransferManager.instance.waitingForPlayer) {
@@ -172,7 +172,7 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 
-	void buildShipEvent() {
+	public void buildShipEvent() {
 		int buttonId = 3;
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
 			if (!EventTransferManager.instance.waitingForPlayer) {
@@ -194,7 +194,7 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 
-	void diceRollEvent() {
+	public void diceRollEvent() {
 		Debug.Log ("diceRollEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
 			if (!EventTransferManager.instance.waitingForPlayer) {
@@ -203,7 +203,7 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 
-	void upgradeSettlementEvent() {
+	public void upgradeSettlementEvent() {
 		int buttonId = 5;
 		Debug.Log ("upgradeSettlementEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
@@ -224,8 +224,8 @@ public class UIManager : MonoBehaviour {
 			}
 		}
 	}
-
-	void toggleBuild() {
+	//depreciated due to ui changes
+	/*public void toggleBuild() {
 		Debug.Log ("toggleBuild()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
 			if (buildPanel.isActiveAndEnabled == true) {
@@ -234,9 +234,16 @@ public class UIManager : MonoBehaviour {
 				buildPanel.gameObject.SetActive (true);
 			}
 		}
-	}
+	}*/
+	public void toggleFishTradePanel(){
+		if (fishTradePanel.isActiveAndEnabled == false) {
+			fishTradePanel.gameObject.SetActive (true);
+		}
 
-	void tradeWithBankEvent() {
+		//nehir add however you need to call this eventtransfer manager
+		//fishTradePanel.OpenPanel ();
+	}
+	public void tradeWithBankEvent() {
 		int buttonId = 7;
 		Debug.Log ("tradeWithBankEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
@@ -271,7 +278,7 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 
-	void tradeDone() {
+	public void tradeDone() {
 		AssetTuple assetsToSpend = GameAsset.getAssetOfIndex (tradePanel.getTradeChoiceInt (), 4);
 		AssetTuple assetsToReceive = GameAsset.getAssetOfIndex (tradePanel.getReceiveChoiceInt (), 1);
 
@@ -293,7 +300,7 @@ public class UIManager : MonoBehaviour {
 
 	}
 
-	void tradeCancelled() {
+	public void tradeCancelled() {
 		StopAllCoroutines();
 
 		if (tradePanel.enabled) {

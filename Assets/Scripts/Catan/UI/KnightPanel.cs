@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class BuildPanel : MonoBehaviour {
-	public Button buildbutton;
+public class KnightPanel : MonoBehaviour {
+	public Button Knightbutton;
 	public Button[] buttonsOnPanel;
 
 	// Use this for initialization
 	void Start () {
 
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
-		
+
 	}
 
 	//used for ui movement element

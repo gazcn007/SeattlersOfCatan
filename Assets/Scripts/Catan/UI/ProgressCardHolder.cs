@@ -9,7 +9,14 @@ public class ProgressCardHolder : MonoBehaviour {
 	public List<ProgressCard> progressCardList;
 	public UIManager UIinstance;
 
-
+	//ui method
+	public void togglePanel(){
+		if (this.isActiveAndEnabled == true) {
+			this.gameObject.SetActive (false);
+		} else {
+			this.gameObject.SetActive (true);
+		}
+	}
 	//adds new cards to the ui
 	public void SpawnCard(ProgressCardColor color,ProgressCardType type){
 
