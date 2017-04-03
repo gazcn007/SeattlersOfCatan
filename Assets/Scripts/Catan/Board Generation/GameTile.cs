@@ -7,6 +7,7 @@ public class GameTile : Tile {
 	public int diceValue = -1;
 	public TileType tileType;
 	public int id;
+	public bool atIslandLayer = false;
 
 	public List<int> edges  = new List<int> ();
 	public List<int> intersections = new List<int> ();
@@ -63,11 +64,47 @@ public class GameTile : Tile {
 		return cornerNum;
 	}
 
+	public List<GameTile> getNeighborTiles() {
+		List<GameTile> neighborTiles = new List<GameTile> ();
+		List<Intersection> intersectionsList = new List<Intersection> ();
+
+		GameObject[] boards = GameObject.FindGameObjectsWithTag ("Board");
+
+		for (int k = 0; k < boards.Length; k++) {
+			if (boards [k].GetComponent<GameBoard> ().Intersections.Count != 0) {
+				foreach (int intersectionID in intersections) {
+					intersectionsList.Add(boards [k].GetComponent<GameBoard> ().Intersections[intersectionID]);
+				}
+
+				List<GameTile> potentialNeighbors = new List<GameTile>();
+
+				foreach (Intersection corner in intersectionsList) {
+					foreach (int neighborID in corner.adjacentTiles) {
+						potentialNeighbors.Add(boards [k].GetComponent<GameBoard> ().GameTiles[neighborID]);
+					}
+				}
+
+				foreach (GameTile neighborTile in potentialNeighbors) {
+					if (neighborTile != this && !neighborTiles.Contains(neighborTile)) {
+						neighborTiles.Add (neighborTile);
+					}
+				}
+			}
+		}
+
+
+		return neighborTiles;
+	}
+
 	public void setTileType(int tileType) {
 		this.tileType = (TileType)tileType;
 		Material newMaterial = GameObject.FindGameObjectWithTag ("TileSettings").GetComponent<TileTypeSettings> ().
 			getMaterialsDictionary () [(TileType)tileType];
 		this.GetComponent<Renderer> ().material = newMaterial;
+
+		if (this.tileType == TileType.Desert || this.tileType == TileType.Ocean) {
+			this.transform.FindChild ("Dice Value").gameObject.SetActive (false);
+		} 
 	}
 
 	public void setDiceValue(int diceValue) {
@@ -103,6 +140,20 @@ public class GameTile : Tile {
 			Debug.Log (this.name + " can not produce resource/commodities because it is blocked by robber");
 			return false;
 		}
+	}
+
+	public bool isPossibleIslandTile() {
+		if (this.tileType != TileType.Ocean) {
+			return false;
+		}
+
+		foreach (GameTile neighborTile in getNeighborTiles()) {
+			if (!neighborTile.atIslandLayer) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }
 

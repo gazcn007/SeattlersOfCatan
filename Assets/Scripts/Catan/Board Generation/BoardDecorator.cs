@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BoardDecorator {
@@ -34,8 +35,12 @@ public class BoardDecorator {
 		hexSettings.setDiceProbabilitiesByTotalNumberOfHexes (landTiles.Count);
 		setTileIDsBySettings (landTiles, hexSettings);
 
-
 		board.placeRobberOnTile (desertTile.id);
+
+		generateIslands ();
+
+		List<GameTile> pirateTiles = getTilesForPirate ();
+		board.placePirateOnTile (pirateTiles [Random.Range(0, pirateTiles.Count)].id);
 	}
 
 	public List<GameTile> findLandTiles(List<GameTile> allTiles) {
@@ -48,6 +53,16 @@ public class BoardDecorator {
 		}
 
 		return landTiles;
+	}
+
+	public List<GameTile> getTilesForPirate() {
+		//List<GameTile> pirateTiles = 
+		int maxMapDimension = Mathf.Max (mapWidth, mapHeight);
+		int difference = maxMapDimension - hexSettings.oceanLayers;
+
+		List<GameTile> possiblePirateTiles = gameBoard.GameTiles.Values.Where (tile => 
+			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) == ((difference + 2) * 2)).ToList();
+		return possiblePirateTiles;
 	}
 
 	private void decorateTilesBySettings(List<GameTile> tiles, TileTypeSettings settings) {
@@ -84,13 +99,148 @@ public class BoardDecorator {
 		}
 	}
 
+	private void generateIslands() {
+		int maxMapDimension = Mathf.Max (mapWidth, mapHeight);
+		int difference = maxMapDimension - hexSettings.oceanLayers;
+
+		if (difference < 2) {
+			return;
+		}
+
+		int randomLayer = Random.Range (difference + 2, difference + 4);
+		 List<GameTile> possibleIslandTiles = gameBoard.GameTiles.Values.Where (tile => 
+			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) >= ((difference + 3) * 2) &&
+			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) <= ((difference + 4) * 2)).ToList();
+		//List<GameTile> possibleIslandTiles = gameBoard.GameTiles.Values.Where (tile =>
+		//	(tile.index.x + tile.index.y + tile.index.z) == (randomLayer + 1 * 2)).ToList();
+
+		int islandsLeft = hexSettings.numIslands;
+
+		while (islandsLeft > 0) {
+			int randomIndex;
+			do {
+				randomIndex = Random.Range (0, possibleIslandTiles.Count);
+			} while(!possibleIslandTiles [randomIndex].isPossibleIslandTile ());
+
+			List<GameTile> islandTiles = new List<GameTile> ();
+			islandTiles.Add (possibleIslandTiles [randomIndex]);
+			int islandTilesIndex = 0;
+
+			if (possibleIslandTiles [randomIndex].tileType == TileType.Ocean) {
+				possibleIslandTiles [randomIndex].setTileType(Random.Range(0, 5));
+
+				int randDiceValue;
+				if (Random.Range (0.0f, 1.0f) < 0.5f) {
+					randDiceValue = Random.Range (2, 7);
+				} else {
+					randDiceValue = Random.Range (8, 13);
+				}
+				possibleIslandTiles [randomIndex].setDiceValue(randDiceValue);
+			}
+
+			int islandSize = Random.Range (3, 7);
+
+			GameTile currentTile = possibleIslandTiles [randomIndex];
+
+			while (islandSize > 0) {
+				int randomIndexChild;
+				List<GameTile> neighborTiles = new List<GameTile>();
+				bool goBackToParent = true;
+
+				while (islandTilesIndex >= 0 && goBackToParent) {
+					foreach (var neighbor in currentTile.getNeighborTiles ()) {
+						if (possibleIslandTiles.Contains (neighbor) && neighbor.tileType == TileType.Ocean
+							&& !islandTiles.Contains(neighbor) && neighbor.isPossibleIslandTile()) {
+							goBackToParent = false;
+						}
+					}
+
+					if(goBackToParent) {
+						islandTilesIndex--;
+
+						if (islandTilesIndex < 0) {
+							break;
+						}
+						currentTile = islandTiles [islandTilesIndex];
+						neighborTiles = currentTile.getNeighborTiles ();
+						//neighborTiles = possibleIslandTiles [randomIndex].getNeighborTiles ();
+					}
+					else{
+						currentTile = islandTiles [islandTilesIndex];
+						neighborTiles = currentTile.getNeighborTiles ();
+					}
+				}
+
+				if (islandTilesIndex < 0) {
+					foreach (var failedIslandTile in islandTiles) {
+						failedIslandTile.setTileType ((int)TileType.Ocean);
+					}
+					islandSize = 0;
+					continue;
+				}
+
+				do {
+					randomIndexChild = Random.Range (0, neighborTiles.Count);
+				} while(!neighborTiles [randomIndexChild].isPossibleIslandTile () || 
+					!possibleIslandTiles.Contains(neighborTiles [randomIndexChild]) ||
+					neighborTiles[randomIndexChild].tileType != TileType.Ocean ||
+					islandTiles.Contains(neighborTiles[randomIndexChild]));
+
+				currentTile = neighborTiles [randomIndexChild];
+				currentTile.setTileType(Random.Range(0, 5));
+				islandTiles.Add (currentTile);
+				islandTilesIndex = islandTiles.Count - 1;
+
+				int randDiceValue;
+				if (Random.Range (0.0f, 1.0f) < 0.5f) {
+					randDiceValue = Random.Range (2, 7);
+				} else {
+					randDiceValue = Random.Range (8, 13);
+				}
+				currentTile.setDiceValue(randDiceValue);
+
+				islandSize--;
+			}
+			islandsLeft--;
+		}
+
+		/*foreach (GameTile islandTile in islandTiles) {
+			int islandSize = Random.Range (3, 7);
+			GameTile currentTile = islandTile;
+
+			while (islandSize > 0) {
+				int randomIndex;
+				List<GameTile> neighborTiles = currentTile.getNeighborTiles ();
+
+				do {
+					randomIndex = Random.Range (0, neighborTiles.Count);
+				} while(!neighborTiles [randomIndex].isPossibleIslandTile () || 
+					!possibleIslandTiles.Contains(neighborTiles [randomIndex]));
+
+				currentTile = neighborTiles [randomIndex];
+				currentTile.setTileType(Random.Range(0, 5));
+
+				int randDiceValue;
+				if (Random.Range (0.0f, 1.0f) < 0.5f) {
+					randDiceValue = Random.Range (0, 7);
+				} else {
+					randDiceValue = Random.Range (8, 13);
+				}
+				currentTile.setDiceValue(randDiceValue);
+
+				islandSize--;
+			}
+		}*/
+
+	}
+
 	private int paintOceanTiles(List<GameTile> tiles, TileTypeSettings settings) {
 		int numOceanTiles = 0;
 		for (int i = 0; i < tiles.Count; i++) {
 			if (settings.IsOceanTileBySettings (tiles [i])) {
 				hexSettings.assignTileTypeToHex (tiles[i], TileType.Ocean);
-				//MonoBehaviour.Destroy (tiles[i].transform.FindChild ("Dice Value").gameObject);
 				tiles[i].transform.FindChild ("Dice Value").gameObject.SetActive(false);
+				tiles [i].atIslandLayer = true;
 				numOceanTiles++;
 			}
 		}

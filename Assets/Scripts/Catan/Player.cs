@@ -11,7 +11,7 @@ public class Player : MonoBehaviour {
 	public Color playerColor;
 
 	public int playerNumber;
-	public int goldCoins;
+	public int goldCoins = 2;
 	public int victoryPoints;
 
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
@@ -413,6 +413,61 @@ public class Player : MonoBehaviour {
 	}
 
 	#endregion
+
+	public int getMinimumTradeValue(int demandedInt) {
+		if (demandedInt < 0 || demandedInt > 7) {
+			return 4;
+		} else {
+			int minimum = 4;
+			if (demandedInt < 5) {
+				ResourceType typeDemanded = (ResourceType)demandedInt;
+				int settlementsMin = findMinTradeValue (ownedUnits [typeof(Settlement)].Cast<IntersectionUnit>().ToList(), typeDemanded);
+				int citiesMin = findMinTradeValue (ownedUnits [typeof(City)].Cast<IntersectionUnit>().ToList(), typeDemanded);
+				minimum = Math.Min (settlementsMin, citiesMin);
+			} else {
+				CommodityType typeDemanded = (CommodityType)(demandedInt - 5);
+				int settlementsMin = findMinTradeValue (ownedUnits [typeof(Settlement)].Cast<IntersectionUnit>().ToList(), typeDemanded);
+				int citiesMin = findMinTradeValue (ownedUnits [typeof(City)].Cast<IntersectionUnit>().ToList(), typeDemanded);
+				minimum = Math.Min (settlementsMin, citiesMin);
+			}
+
+			return minimum;
+		}
+	}
+
+	public int findMinTradeValue(List<IntersectionUnit> units, ResourceType resourceType) {
+		int min = 4;
+		for (int i = 0; i < units.Count; i++) {
+			Debug.Log ("Units[" + units.Count + "] intersection = " + units [i].locationIntersection + " with harbor = " + units [i].locationIntersection.harbor);
+			if (units [i].locationIntersection.harbor != null) {
+				Debug.Log ("harbor found of type: " + units [i].locationIntersection.harbor.resourceType);
+				if (units [i].locationIntersection.harbor.resourceType == resourceType ||
+					units [i].locationIntersection.harbor.resourceType == ResourceType.Null) {
+					if (units [i].locationIntersection.harbor.tradeRatio < min) {
+						min = units [i].locationIntersection.harbor.tradeRatio;
+					}
+				}
+			}
+		}
+		return min;
+	}
+
+	public int findMinTradeValue(List<IntersectionUnit> units, CommodityType commodityType) {
+		int min = 4;
+		for (int i = 0; i < units.Count; i++) {
+			Debug.Log ("Units[" + units.Count + "] intersection = " + units [i].locationIntersection + " with harbor = " + units [i].locationIntersection.harbor);
+			if (units [i].locationIntersection.harbor != null) {
+				Debug.Log ("Commodity:  harbor found of type: " + units [i].locationIntersection.harbor.resourceType);
+				if (units [i].locationIntersection.harbor.commodityType == commodityType ||
+					units [i].locationIntersection.harbor.resourceType == ResourceType.Null) {
+					if (units [i].locationIntersection.harbor.tradeRatio < min) {
+						min = units [i].locationIntersection.harbor.tradeRatio;
+					}
+				}
+			}
+		}
+		return min;
+	}
 
 	public void playTurn() {
 

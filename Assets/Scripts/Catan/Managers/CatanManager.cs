@@ -307,14 +307,14 @@ public class CatanManager : MonoBehaviour {
 	}
 
 	public void tradeWithBankAttempt(int resourceToGiveForOne) {
-		bool canTrade = resourceManager.canTrade (players [currentPlayerTurn], resourceToGiveForOne);
+		/*bool canTrade = resourceManager.canTrade (players [currentPlayerTurn], resourceToGiveForOne);
 
 		if (!canTrade) {
 			print (players [currentPlayerTurn].playerName + " can not trade with bank for " + resourceToGiveForOne + ":1! Insufficient resources!");
 
 			EventTransferManager.instance.OnOperationFailure ();
 			return;
-		}
+		}*/
 
 		uiManager.tradePanel.gameObject.SetActive (true);
 	}

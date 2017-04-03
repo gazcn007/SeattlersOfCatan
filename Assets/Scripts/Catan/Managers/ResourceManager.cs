@@ -85,7 +85,6 @@ public class ResourceManager : MonoBehaviour {
 
 		print ("Red die rolled: " + redDieRoll);
 		print ("Yellow die rolled: " + yellowDieRoll);
-		//return 7;
 		return redDieRoll + yellowDieRoll;
 	}
 

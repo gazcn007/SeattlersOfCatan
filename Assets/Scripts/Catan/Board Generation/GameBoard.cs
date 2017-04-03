@@ -49,6 +49,8 @@ public class GameBoard : MonoBehaviour {
 	private Dictionary<TupleInt, Edge> edgesDictionary = new Dictionary<TupleInt, Edge> ();
 	private static Dictionary<int, Edge> edgesByIdDictionary = new Dictionary<int, Edge> ();
 
+	private static Dictionary<int, Harbor> harborsByIdDictionary = new Dictionary<int, Harbor> ();
+
 	private CubeIndex[] directions = 
 		new CubeIndex[] {
 		new CubeIndex(1, -1, 0), 
@@ -75,6 +77,10 @@ public class GameBoard : MonoBehaviour {
 
 	public Dictionary<int, Edge> Edges {
 		get {return edgesByIdDictionary;}
+	}
+
+	public Dictionary<int, Harbor> Harbors {
+		get {return harborsByIdDictionary;}
 	}
 	#endregion
 
@@ -207,13 +213,12 @@ public class GameBoard : MonoBehaviour {
 		//storeEdgeInformation ();
 	}
 
-	public void GenerateHarbors() {
+	public void GenerateHarbors(Transform parent) {
 		List<Tuple<Intersection, Intersection>> harborIntersectionPairsList = new List<Tuple<Intersection, Intersection>> ();
 		List<Intersection> shoreIntersections = new List<Intersection>();
-		GameObject parentObject = GameObject.FindGameObjectWithTag ("Harbors");
 
-		foreach (Intersection intersection in intersectionsList) {
-			if (intersection.isShoreIntersection ()) {
+		foreach (Intersection intersection in Intersections.Values) {
+			if (intersection.isShoreIntersection () && intersection.isMainIslandIntersection()) {
 				shoreIntersections.Add (intersection);
 			}
 		}
@@ -223,9 +228,7 @@ public class GameBoard : MonoBehaviour {
 		int randNum = Random.Range (0, 3);
 
 		for (int i = 0; i < shoreIntersections.Count; i++) {
-			Debug.Log ("Shore[" + i + "] = " + shoreIntersections [i].name);
-
-			if (i % segmentLength == randNum && shoreIntersections[i].harbor == null) {
+			if (i % segmentLength == 0 && shoreIntersections[i].harbor == null) {
 				List<Intersection> neighbors = shoreIntersections [i].getNeighborIntersections();
 				Intersection neighbor = null;
 
@@ -235,8 +238,19 @@ public class GameBoard : MonoBehaviour {
 					}
 				}
 
+				if (harborID == 1 || harborID == 5 || harborID == 6 || harborID == 8 || harborID == 9 || harborID == 12) {
+					harborID++;
+					continue;
+				}
+ 
 				int randomNum = Random.Range (0, harborPrefabs.Length);
-				GameObject harborGO = Instantiate(harborPrefabs[randomNum], parentObject.transform);
+				int harborIndex = harborID % harborPrefabs.Length;
+
+				if (harborID == 10) {
+					harborIndex = 5;
+				}
+				GameObject harborGO = Instantiate(harborPrefabs[harborIndex], parent);
+				//GameObject harborGO = Instantiate(harborPrefabs[randomNum], parent);
 				Harbor harbor = harborGO.GetComponent<Harbor> ();
 				harbor.id = harborID++;
 
@@ -263,36 +277,15 @@ public class GameBoard : MonoBehaviour {
 				arrows[2].transform.Rotate(new Vector3(90f, 270f, 0.0f));*/
 
 				int cornerNum1 = shoreIntersections [i].getCommonTileWith (neighbor, TileType.Ocean).getCornerNumberOfIntersection (shoreIntersections [i]);
-				arrows[1].transform.Rotate(new Vector3(0.0f, 0.0f, Intersection.AngleOfCorner(cornerNum1, hexOrientation)));
-				arrows[1].transform.Translate(Vector3.right * (float)(hexRadius / 2), Space.Self);
-
-
+				arrows [1].transform.rotation = Quaternion.Euler(new Vector3 (90.0f, 0.0f, 30.0f + 60.0f * cornerNum1));
+				arrows[1].transform.Translate(Vector3.right * (float)(5 * hexRadius / 8), Space.Self);
 
 				int cornerNum2 = shoreIntersections [i].getCommonTileWith (neighbor, TileType.Ocean).getCornerNumberOfIntersection (neighbor);
-				arrows[2].transform.Rotate(new Vector3(0.0f, 0.0f, Intersection.AngleOfCorner(cornerNum2, hexOrientation)));
-				arrows[2].transform.Translate(Vector3.right * (float)(hexRadius / 2), Space.Self);
-
-				if (cornerNum1 < 3 && cornerNum2 < 3) {
-					harborGO.transform.Rotate (new Vector3 (0.0f, 120.0f, 0.0f));
-					arrows [0].transform.Rotate (new Vector3 (0.0f, -120.0f, 0.0f));
-				}
-
-
-				/*Vector3 direction = shoreIntersections [i].transform.position - arrows [1].transform.position;
-				float angle = Mathf.Atan2 (direction.y, direction.x) * 180f / Mathf.PI;
-				arrows [1].transform.rotation = Quaternion.AngleAxis (angle, Vector3.forward);
-				arrows[1].transform.Rotate(new Vector3(90f, 90f, 0.0f));
-				arrows[1].transform.Translate(Vector3.up * 0.1f);
-
-				direction = neighbor.transform.position - arrows [2].transform.position;
-				angle = Mathf.Atan2 (direction.y, direction.x) * 180f / Mathf.PI;
-				arrows [2].transform.rotation = Quaternion.AngleAxis (angle, Vector3.forward);
-				arrows[2].transform.Rotate(new Vector3(90f, 90f, 0.0f));
-				arrows[2].transform.Translate(Vector3.up * 0.1f);
-				*/
-
+				arrows [2].transform.rotation = Quaternion.Euler(new Vector3 (90.0f, 0.0f, 30.0f + 60.0f * cornerNum2));
+				arrows[2].transform.Translate(Vector3.right * (float)(5 * hexRadius / 8), Space.Self);
 
 				harbors.Add (harbor);
+				harborsByIdDictionary.Add (harborID - 1, harbor);
 			}
 		}
 	}
@@ -474,11 +467,19 @@ public class GameBoard : MonoBehaviour {
 		edgesDictionary.Clear ();
 		edgesByIdDictionary.Clear ();
 
+		harborsByIdDictionary.Clear ();
+
 		tilesList.Clear ();
 
 		tileID = 0;
 		intersectionID = 0;
 		edgeID = 0;
+		harborID = 0;
+	}
+
+	public void ClearHarbors() {
+		harborID = 0;
+		harborsByIdDictionary.Clear ();
 	}
 
 	public GameTile GameTileAt(CubeIndex index){

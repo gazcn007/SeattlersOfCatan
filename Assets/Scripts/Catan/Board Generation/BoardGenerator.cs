@@ -52,7 +52,7 @@ public class BoardGenerator : MonoBehaviour {
 		allTiles = boardDecorator.allTiles;
 		landTiles = boardDecorator.landTiles;
 
-		board.GenerateHarbors ();
+		//board.GenerateHarbors ();
 	}
 
 	public void paintBoard() {

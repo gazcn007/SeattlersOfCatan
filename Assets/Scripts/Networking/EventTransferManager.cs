@@ -38,6 +38,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	public void OnReadyToPlay() {
 		GetComponent<PhotonView> ().RPC ("GenerateBoardForClient", PhotonTargets.All, new object[] { });
+		GetComponent<PhotonView> ().RPC ("GenerateHarborsForClient", PhotonTargets.All, new object[] { });
 		GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
 		//GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
 		StartCoroutine (CatanSetupPhase());
@@ -425,7 +426,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-
 	void CollectResources(int playerNum) {
 		if (PhotonNetwork.player.ID == playerNum + 1) {
 			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
@@ -473,8 +473,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	[PunRPC]
 	void GenerateBoardForClient() {
+		/*GameObject[] boards = GameObject.FindGameObjectsWithTag ("Board");
+
+		if (boards != null) {
+			for (int i = 0; i < boards.Length; i++) {
+				Destroy (boards[i].gameObject);
+			}
+		}*/
 		GameObject clientBoardGO = Instantiate (boardPrefab);
-		//GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 		GameBoard clientBoard = clientBoardGO.GetComponent<GameBoard>();
 
 		GameObject clientSettingsGO = Instantiate (settingsPrefab);
@@ -492,35 +498,110 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				GetComponent<PhotonView> ().RPC ("PaintTile", PhotonTargets.Others, new object[] {
 					tile.id,
 					tile.diceValue,
-					(int)tile.tileType
+					(int)tile.tileType,
+					tile.atIslandLayer
 				});
 			}
 
-
 			int robberTileID = clientBoard.robber.occupyingTile.id;
-			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.Others, new object[] {
+			int pirateTileID = clientBoard.pirate.occupyingTile.id;
+			//clientBoard.robber.occupyingTile.occupier = null;
+			//clientBoard.robber = null;
+			//Destroy (clientBoard.robber.gameObject);
+
+			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 				0,
 				robberTileID
+			});
+			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
+				1,
+				pirateTileID
 			});
 		}
 	}
 
 	[PunRPC]
-	void PaintTile(int id, int diceValue, int tileTypeNum) {
+	void PaintTile(int id, int diceValue, int tileTypeNum, bool islandLayer) {
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 
 		if (clientBoard != null) {
 			GameTile tileToPaint = clientBoard.GameTiles [id];
 			tileToPaint.setTileType (tileTypeNum);
 			tileToPaint.setDiceValue (diceValue);
+			tileToPaint.atIslandLayer = islandLayer;
+		}
+	}
+
+	[PunRPC]
+	void ClearHarborsDictionary() {
+		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		clientBoard.Harbors.Clear ();
+	}
+
+	[PunRPC]
+	void GenerateHarbor(int harborType, int harborID, int intersection1ID, int intersection2ID) {
+		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		//if (!clientBoard.Harbors.ContainsKey (harborID)) {
+			int index = 0;
+
+			for (int i = 0; i < clientBoard.harborPrefabs.Length; i++) {
+				if (clientBoard.harborPrefabs [i].GetComponent<Harbor> ().resourceType == (ResourceType)harborType) {
+					Debug.Log ("Found " + (ResourceType)harborType + " at array index " + i);
+					index = i;
+				}
+			}
+
+			GameObject harborGO = Instantiate(clientBoard.harborPrefabs[index], clientBoard.transform.GetChild(3));
+			Harbor harbor = harborGO.GetComponent<Harbor> ();
+			harbor.id = harborID;
+
+			Intersection intersection1 = clientBoard.Intersections [intersection1ID];
+			Intersection intersection2 = clientBoard.Intersections [intersection2ID];
+			intersection1.harbor = harbor;
+			intersection2.harbor = harbor;
+
+			harborGO.transform.position = intersection1.getCommonTileWith (intersection2, TileType.Ocean).transform.position
+				+ 0.01f * Vector3.up;
+			harborGO.transform.localScale *= 1.25f;
+			harborGO.name = "Harbor " + harbor.id;
+
+			Debug.Log("Creating harbor" + harborGO.name + " with resource type " + harbor.resourceType);
+			foreach (var pair in clientBoard.Harbors) {
+				Debug.Log ("Client dictionary already contains " + pair.Key + " , val = " + pair.Value);
+			}
+
+			harbor.locations.Add (intersection1);
+			harbor.locations.Add (intersection2);
+
+			SpriteRenderer[] arrows = harbor.GetComponentsInChildren<SpriteRenderer> ();
+
+			int cornerNum1 = intersection1.getCommonTileWith (intersection2, TileType.Ocean).getCornerNumberOfIntersection (intersection1);
+			arrows [1].transform.rotation = Quaternion.Euler(new Vector3 (90.0f, 0.0f, 30.0f + 60.0f * cornerNum1));
+			arrows[1].transform.Translate(Vector3.right * (float)(5 * clientBoard.hexRadius / 8), Space.Self);
+
+			int cornerNum2 = intersection1.getCommonTileWith (intersection2, TileType.Ocean).getCornerNumberOfIntersection (intersection2);
+			arrows [2].transform.rotation = Quaternion.Euler(new Vector3 (90.0f, 0.0f, 30.0f + 60.0f * cornerNum2));
+			arrows[2].transform.Translate(Vector3.right * (float)(5 * clientBoard.hexRadius / 8), Space.Self);
+
+			clientBoard.Harbors.Add (harbor.id, harbor);
+		//}
+	}
+
+	[PunRPC]
+	void GenerateHarborsForClient() {
+		Harbor[] previousHarbors = GameObject.FindObjectsOfType<Harbor> ();
+		for (int i = 0; i < previousHarbors.Length; i++) {
+			Destroy (previousHarbors [i].gameObject);
 		}
 
+		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		clientBoard.ClearHarbors ();
+		clientBoard.GenerateHarbors (clientBoard.transform.GetChild (3));
 	}
 
 	[PunRPC]
 	void PlaceBoardPieces(int boardPieceNum, int tileID) {
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
-		GameObject robber = GameObject.FindGameObjectWithTag ("Robber");
 
 		if (clientBoard != null) {
 			GameTile tileToPlace = clientBoard.GameTiles [tileID];
@@ -531,12 +612,33 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			// 2 -> Move Merchant
 			switch (boardPieceNum) {
 			case 0:
+				Robber[] robbers = GameObject.FindObjectsOfType<Robber> ();
+				if (robbers != null) {
+					for (int i = 0; i < robbers.Length; i++) {
+						Destroy (robbers [i].gameObject);
+					}
+				}
+				clientBoard.robber = null;
 				clientBoard.MoveRobber (tileID);
 				break;
 			case 1:
+				Pirate[] pirates = GameObject.FindObjectsOfType<Pirate> ();
+				if (pirates != null) {
+					for (int i = 0; i < pirates.Length; i++) {
+						Destroy (pirates [i].gameObject);
+					}
+				}
+				clientBoard.pirate = null;
 				clientBoard.MovePirate (tileID);
 				break;
 			case 2:
+				Merchant[] merchants = GameObject.FindObjectsOfType<Merchant> ();
+				if (merchants != null) {
+					for (int i = 0; i < merchants.Length; i++) {
+						Destroy (merchants [i].gameObject);
+					}
+				}
+				clientBoard.merchant = null;
 				clientBoard.MoveMerchant (tileID);
 				break;
 			default:
