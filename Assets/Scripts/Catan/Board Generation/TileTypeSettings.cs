@@ -24,7 +24,7 @@ public class TileTypeSettings : MonoBehaviour {
 	[Range(0,20)]
 	public int oceanLayers = 1;
 
-	[Range(0, 4)]
+	[Range(0, 7)]
 	public int numIslands = 3;
 
 	public Material brickMaterial;

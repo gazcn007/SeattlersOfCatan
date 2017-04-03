@@ -101,6 +101,10 @@ public class GameTile : Tile {
 		Material newMaterial = GameObject.FindGameObjectWithTag ("TileSettings").GetComponent<TileTypeSettings> ().
 			getMaterialsDictionary () [(TileType)tileType];
 		this.GetComponent<Renderer> ().material = newMaterial;
+
+		if (this.tileType == TileType.Desert || this.tileType == TileType.Ocean) {
+			this.transform.FindChild ("Dice Value").gameObject.SetActive (false);
+		} 
 	}
 
 	public void setDiceValue(int diceValue) {

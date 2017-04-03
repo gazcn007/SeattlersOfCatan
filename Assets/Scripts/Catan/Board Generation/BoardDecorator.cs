@@ -61,7 +61,7 @@ public class BoardDecorator {
 		int difference = maxMapDimension - hexSettings.oceanLayers;
 
 		List<GameTile> possiblePirateTiles = gameBoard.GameTiles.Values.Where (tile => 
-			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) == ((difference + 1) * 2)).ToList();
+			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) == ((difference + 2) * 2)).ToList();
 		return possiblePirateTiles;
 	}
 
@@ -107,10 +107,10 @@ public class BoardDecorator {
 			return;
 		}
 
-		int randomLayer = Random.Range (difference + 1, difference + 3);
+		int randomLayer = Random.Range (difference + 2, difference + 4);
 		 List<GameTile> possibleIslandTiles = gameBoard.GameTiles.Values.Where (tile => 
-			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) >= ((difference + 1) * 2) &&
-			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) <= ((difference + 3) * 2)).ToList();
+			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) >= ((difference + 3) * 2) &&
+			(Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) <= ((difference + 4) * 2)).ToList();
 		//List<GameTile> possibleIslandTiles = gameBoard.GameTiles.Values.Where (tile =>
 		//	(tile.index.x + tile.index.y + tile.index.z) == (randomLayer + 1 * 2)).ToList();
 

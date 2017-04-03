@@ -238,8 +238,18 @@ public class GameBoard : MonoBehaviour {
 					}
 				}
 
+				if (harborID == 1 || harborID == 5 || harborID == 6 || harborID == 8 || harborID == 9 || harborID == 12) {
+					harborID++;
+					continue;
+				}
+ 
 				int randomNum = Random.Range (0, harborPrefabs.Length);
-				GameObject harborGO = Instantiate(harborPrefabs[harborID % harborPrefabs.Length], parent);
+				int harborIndex = harborID % harborPrefabs.Length;
+
+				if (harborID == 10) {
+					harborIndex = 5;
+				}
+				GameObject harborGO = Instantiate(harborPrefabs[harborIndex], parent);
 				//GameObject harborGO = Instantiate(harborPrefabs[randomNum], parent);
 				Harbor harbor = harborGO.GetComponent<Harbor> ();
 				harbor.id = harborID++;
