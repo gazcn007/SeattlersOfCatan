@@ -24,6 +24,9 @@ public class TileTypeSettings : MonoBehaviour {
 	[Range(0,20)]
 	public int oceanLayers = 1;
 
+	[Range(0, 4)]
+	public int numIslands = 3;
+
 	public Material brickMaterial;
 	public Material grainMaterial;
 	public Material lumberMaterial;

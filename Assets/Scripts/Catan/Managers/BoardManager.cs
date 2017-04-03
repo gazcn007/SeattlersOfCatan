@@ -149,7 +149,7 @@ public class BoardManager : MonoBehaviour {
 				bool validIntersection = true;
 
 				for (int j = 0; j < neighborsOfIntersection.Count; j++) {
-					if (!allIntersections[i].isSettleable() || neighborsOfIntersection [j].occupier != null) {// && neighborsOfIntersection [j].occupier.owner != player) {
+					if (!allIntersections[i].isSettleable() || neighborsOfIntersection [j].occupier != null || !allIntersections[i].isMainIslandIntersection()) {// && neighborsOfIntersection [j].occupier.owner != player) {
 						validIntersection = false;
 					}
 				}
@@ -211,6 +211,10 @@ public class BoardManager : MonoBehaviour {
 		}
 
 		return landTiles;
+	}
+
+	public GameBoard getBoard() {
+		return GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 	}
 
 	#endregion

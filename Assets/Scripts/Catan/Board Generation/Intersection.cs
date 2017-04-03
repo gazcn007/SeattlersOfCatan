@@ -97,6 +97,28 @@ public class Intersection : MonoBehaviour {
 		}
 	}
 
+	public bool isMainIslandIntersection() {
+		bool atMainIsland = false;
+		List<GameTile> adjacentTilesList = new List<GameTile>();
+
+		GameObject[] boards = GameObject.FindGameObjectsWithTag ("Board");
+		for (int k = 0; k < boards.Length; k++) {
+			if (boards [k].GetComponent<GameBoard> ().Intersections.Count != 0) {
+				foreach (int neighborID in adjacentTiles) {
+					adjacentTilesList.Add(boards [k].GetComponent<GameBoard> ().GameTiles[neighborID]);
+				}
+			}
+		}
+
+		foreach (GameTile adjacentTile in adjacentTilesList) {
+			if (!adjacentTile.atIslandLayer) {
+				atMainIsland = true;
+			}
+		}
+
+		return atMainIsland;
+	}
+
 	public void addTile(GameTile tile) {
 		adjacentTiles.Add (tile.id);
 	}
