@@ -46,8 +46,6 @@ public class UIManager : MonoBehaviour {
 	#region Initializers
 
 	void InitializeUIManager() {
-		//playerHUD = GetComponentInChildren<PlayerHUD> ();
-		//opponentHUDs = GameObject.FindGameObjectWithTag ("OpponentHUDSPanel").GetComponentsInChildren<OpponentHUD> ();
 
 		//progress card initiators
 		progressCardHolder.UIinstance = this;
@@ -67,31 +65,6 @@ public class UIManager : MonoBehaviour {
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Warlord);
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.CommercialHarbor);
 
-		//robberStealPanel = GetComponentInChildren<RobberStealPanel>();
-		//discardPanel = GetComponentInChildren<DiscardPanel>();
-
-		//tradePanel = this.transform.FindChild("TradePanel").gameObject.GetComponent<TradePanel>();
-		//buildPanel = this.transform.FindChild("BuildPanel").gameObject.GetComponent<BuildPanel>();
-		//robberStealPanel = this.transform.FindChild("RobberStealPanel").gameObject.GetComponent<RobberStealPanel>();
-		//discardPanel = this.transform.FindChild("DiscardPanel").gameObject.GetComponent<DiscardPanel>();
-
-		//currentTurnColor = GetComponentsInChildren<Image> () [0];
-		//currentTurnAvatar = GetComponentsInChildren<Image> () [1];
-
-		//buttons are now automatically assigned in inspector
-		/*uiButtons = GetComponentsInChildren<Button> ();
-		uiButtons[1].onClick.AddListener (endTurn);
-		uiButtons[2].onClick.AddListener (diceRollEvent);
-		uiButtons[3].onClick.AddListener (tradeWithBankEvent);
-		uiButtons[4].onClick.AddListener (toggleBuild);
-
-		buildPanel.buttonsOnPanel[0].onClick.AddListener (buildSettlementEvent);
-		buildPanel.buttonsOnPanel[1].onClick.AddListener (buildRoadEvent);
-		buildPanel.buttonsOnPanel[2].onClick.AddListener (buildShipEvent);
-		buildPanel.buttonsOnPanel[3].onClick.AddListener (upgradeSettlementEvent);
-
-		tradePanel.buttonsOnPanel [0].onClick.AddListener (tradeDone);
-		tradePanel.buttonsOnPanel [1].onClick.AddListener (tradeCancelled);*/
 
 
 		//just in case due to constant editing
@@ -224,22 +197,14 @@ public class UIManager : MonoBehaviour {
 			}
 		}
 	}
-	//depreciated due to ui changes
-	/*public void toggleBuild() {
-		Debug.Log ("toggleBuild()");
-		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (buildPanel.isActiveAndEnabled == true) {
-				buildPanel.gameObject.SetActive (false);
-			} else {
-				buildPanel.gameObject.SetActive (true);
-			}
-		}
-	}*/
-	public void toggleFishTradePanel(){
-		if (fishTradePanel.isActiveAndEnabled == false) {
-			fishTradePanel.gameObject.SetActive (true);
-		}
+	public void moveShipEvent(){
 
+	}
+	public void togglerPlayerTradePanel(){
+		//nehir add however you need to call this eventtransfer manager
+		//tradePlayerPanel.OpenPanel ();
+	}
+	public void toggleFishTradePanel(){
 		//nehir add however you need to call this eventtransfer manager
 		//fishTradePanel.OpenPanel ();
 	}

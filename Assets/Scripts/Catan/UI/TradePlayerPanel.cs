@@ -11,6 +11,10 @@ public class TradePlayerPanel : MonoBehaviour {
 	public int playerSelection;
 	public List<Button> optionsPanel;
 	public bool selectionMade;
+	public Button cancel;
+	public Button counter;
+	public Text confirmtext;
+	public Text canceltext;
 
 
 	//slider holders
@@ -29,7 +33,11 @@ public class TradePlayerPanel : MonoBehaviour {
 	}
 
 	public void OpenPanel (List<Player> opponents,AssetTuple playerAssets){
-		
+		this.gameObject.SetActive (true);
+		confirmtext.text = "Send Offer";
+		canceltext.text = "Cancel";
+		counter.gameObject.SetActive (false);
+		cancel.onClick.AddListener (Cancel);
 		selectionGlow.gameObject.SetActive (false);
 
 		for (int i = 0; i<3; i++) {
@@ -66,6 +74,35 @@ public class TradePlayerPanel : MonoBehaviour {
 		this.gameObject.SetActive (true);
 		selectionMade = false;
 		this.gameObject.SetActive (true);
+
+	}
+	public void OpenCounter(){
+		confirmtext.text = "Send Offer";
+		canceltext.text = "Cancel";
+		counter.gameObject.SetActive (false);
+		cancel.onClick.AddListener (Cancel);
+		selectionGlow.gameObject.SetActive (false);
+
+	}
+
+	public void OpenRespond(){
+		confirmtext.text = "Accept Offer";
+		canceltext.text = "Reject Offer";
+		counter.gameObject.SetActive (true);
+		cancel.onClick.AddListener (Reject);
+		selectionGlow.gameObject.SetActive (false);
+
+	}
+	public void sendTrade(){
+
+	}
+	public void Cancel(){
+		this.gameObject.SetActive (false);
+	}
+	public void Reject(){
+		this.gameObject.SetActive (false);
+	}
+	public void Counter(){
 
 	}
 	//setting player selection glow
