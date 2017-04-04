@@ -264,6 +264,7 @@ public class CatanManager : MonoBehaviour {
 	}
 
 	public IEnumerator discardResourcesForPlayers() {
+		EventTransferManager.instance.waitingForPlayer = true;
 		int numDiscards = players [PhotonNetwork.player.ID - 1].getNumDiscardsNeeded ();
 
 		if (numDiscards > 0) {
@@ -274,6 +275,10 @@ public class CatanManager : MonoBehaviour {
 			EventTransferManager.instance.OnTradeWithBank(players [PhotonNetwork.player.ID - 1].playerNumber - 1, false, uiManager.discardPanel.discardTuple);
 			uiManager.discardPanel.gameObject.SetActive (false);
 		}
+
+		EventTransferManager.instance.waitingForPlayer = false;
+		//EventTransferManager.instance.playerChecks [PhotonNetwork.player.ID - 1] = true;
+		EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
 	}
 
 	public IEnumerator moveRobberForCurrentPlayer() {
@@ -338,6 +343,20 @@ public class CatanManager : MonoBehaviour {
 		}*/
 
 		uiManager.tradePanel.gameObject.SetActive (true);
+	}
+
+	public void tradeWithPlayerAttempt(int resourceToGiveForOne) {
+		bool canTrade = resourceManager.canTrade (players [currentPlayerTurn], resourceToGiveForOne);
+
+		if (!canTrade) {
+			print (players [currentPlayerTurn].playerName + " can not trade with any player due to insufficient resources!");
+
+			EventTransferManager.instance.OnOperationFailure ();
+			return;
+		}
+
+		List<Player> opponents = players.Where (player => player != players [currentPlayerTurn]).ToList ();
+		uiManager.tradePlayerPanel.OpenPanel (opponents, players [currentPlayerTurn].assets);
 	}
 
 	void handleBuildFailure(string errorMessage, Button[] cancelledButton) {

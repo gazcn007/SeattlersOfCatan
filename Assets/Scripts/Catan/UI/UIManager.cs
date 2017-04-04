@@ -110,7 +110,7 @@ public class UIManager : MonoBehaviour {
 	public void buildSettlementEvent() {
 		int buttonId = 1;
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (!EventTransferManager.instance.waitingForPlayer) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
 
@@ -131,7 +131,7 @@ public class UIManager : MonoBehaviour {
 	public void buildRoadEvent() {
 		int buttonId = 2;
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (!EventTransferManager.instance.waitingForPlayer) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
 
@@ -152,7 +152,7 @@ public class UIManager : MonoBehaviour {
 	public void buildShipEvent() {
 		int buttonId = 3;
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (!EventTransferManager.instance.waitingForPlayer) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
 
@@ -184,7 +184,7 @@ public class UIManager : MonoBehaviour {
 		int buttonId = 5;
 		Debug.Log ("upgradeSettlementEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (!EventTransferManager.instance.waitingForPlayer) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
 
@@ -201,15 +201,39 @@ public class UIManager : MonoBehaviour {
 			}
 		}
 	}
+
 	public void robberPirateSelection(int selection){
 		robberOrPiratePanel.SetActive (false);
 		//nehir this will be called by panel 0=robber 1=pirate
 	}
+
+	public void fishResourceSelection(){
+		//stub for method in fish resource panel bindings already done
+	}
+
+	public void toggleFishTradePanel(){
+		//nehir add however you need to call this eventtransfer manager
+		//fishTradePanel.OpenPanel ();
+	}
+
+	public void tradeWithBankEvent() {
+		int buttonId = 7;
+		Debug.Log ("tradeWithBankEvent()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
+				EventTransferManager.instance.currentActiveButton = buttonId;
+				//tradePanel.gameObject.SetActive (true);
+				EventTransferManager.instance.ClientTradeBank(PhotonNetwork.player.ID - 1);
+			}
+		}
+	}
+
 	public void moveShipEvent(){
 		int buttonId = 8;
 		Debug.Log ("moveShipEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (!EventTransferManager.instance.waitingForPlayer) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
 
@@ -226,25 +250,11 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 
-	public void fishResourceSelection(){
-		//stub for method in fish resource panel bindings already done
-	}
-
 	public void togglePlayerTradePanel(){
-		//nehir add however you need to call this eventtransfer manager
-		//tradePlayerPanel.OpenPanel ();
-	}
-
-	public void toggleFishTradePanel(){
-		//nehir add however you need to call this eventtransfer manager
-		//fishTradePanel.OpenPanel ();
-	}
-
-	public void tradeWithBankEvent() {
-		int buttonId = 7;
-		Debug.Log ("tradeWithBankEvent()");
+		int buttonId = 9;
+		Debug.Log ("tradeWithPlayerEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (!EventTransferManager.instance.waitingForPlayer) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
 				//tradePanel.gameObject.SetActive (true);
@@ -256,7 +266,7 @@ public class UIManager : MonoBehaviour {
 
 	public void endTurn() {
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
-			if (!EventTransferManager.instance.waitingForPlayer) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				//CatanManager.instance.currentPlayerTurn = (CatanManager.instance.currentPlayerTurn + 1) % PhotonNetwork.playerList.Length;
 				//UnitManager.instance.destroyCancelledUnits ();
 				EventTransferManager.instance.OnEndTurn();
@@ -276,7 +286,8 @@ public class UIManager : MonoBehaviour {
 	}
 
 	public void tradeDone() {
-		AssetTuple assetsToSpend = GameAsset.getAssetOfIndex (tradePanel.getTradeChoiceInt (), 4);
+		int tradeRatio = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getMinimumTradeValue (tradePanel.getTradeChoiceInt ());
+		AssetTuple assetsToSpend = GameAsset.getAssetOfIndex (tradePanel.getTradeChoiceInt (), tradeRatio);
 		AssetTuple assetsToReceive = GameAsset.getAssetOfIndex (tradePanel.getReceiveChoiceInt (), 1);
 
 		if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].hasAvailableAssets (assetsToSpend)) { 
@@ -294,6 +305,9 @@ public class UIManager : MonoBehaviour {
 			print ("Insufficient resources! Please try again...");
 			tradePanel.showNotEnoughError (tradePanel.getTradeChoiceInt ());
 		}
+	}
+
+	public void offerTrade() {
 
 	}
 

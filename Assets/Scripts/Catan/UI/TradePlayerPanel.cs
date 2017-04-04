@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public class TradePlayerPanel : MonoBehaviour {
 
-
 	//attributes for getting the player selection
 	public Image selectionGlow;
 	public int playerSelection;
@@ -24,15 +23,14 @@ public class TradePlayerPanel : MonoBehaviour {
 	public Text[] getAssetNumTexts;
 	private AssetTuple currentTuple;
 
-	void Update(){
-		
+	void Update() {
 		for (int i = 0; i < giveAssetSliders.Length; i++) {
 			giveAssetNumTexts [i].text = giveAssetSliders [i].value.ToString ();
 			getAssetNumTexts [i].text = getAssetSliders [i].value.ToString ();
 		}
 	}
 
-	public void OpenPanel (List<Player> opponents,AssetTuple playerAssets){
+	public void OpenPanel (List<Player> opponents, AssetTuple playerAssets){
 		this.gameObject.SetActive (true);
 		confirmtext.text = "Send Offer";
 		canceltext.text = "Cancel";
@@ -40,13 +38,13 @@ public class TradePlayerPanel : MonoBehaviour {
 		cancel.onClick.AddListener (Cancel);
 		selectionGlow.gameObject.SetActive (false);
 
-		for (int i = 0; i<3; i++) {
-			if ((i+1)>opponents.Count) {
+		for (int i = 0; i < 3; i++) {
+			if ((i+1) > opponents.Count) {
 				optionsPanel [i].gameObject.SetActive (false);
 			} else {
 				optionsPanel [i].gameObject.SetActive (true);
 				optionsPanel [i].image.color = opponents [i].playerColor;
-				TradePlayerPanelButton current= optionsPanel [i].GetComponentInChildren<TradePlayerPanelButton>();
+				TradePlayerPanelButton current = optionsPanel [i].GetComponentInChildren<TradePlayerPanelButton>();
 
 				//set values for the buttons 
 				current.instance = this;
@@ -82,7 +80,6 @@ public class TradePlayerPanel : MonoBehaviour {
 		counter.gameObject.SetActive (false);
 		cancel.onClick.AddListener (Cancel);
 		selectionGlow.gameObject.SetActive (false);
-
 	}
 
 	public void OpenRespond(){
@@ -91,17 +88,30 @@ public class TradePlayerPanel : MonoBehaviour {
 		counter.gameObject.SetActive (true);
 		cancel.onClick.AddListener (Reject);
 		selectionGlow.gameObject.SetActive (false);
-
 	}
+
 	public void sendTrade(){
+		AssetTuple getAsset = new AssetTuple ();
+		AssetTuple giveAsset = new AssetTuple ();
+
+		for (int i = 0; i < giveAssetSliders.Length; i++) {
+			getAsset.SetValueAtIndex (i, (int)getAssetSliders [i].value);
+		}
+		for (int i = 0; i < giveAssetSliders.Length; i++) {
+			giveAsset.SetValueAtIndex (i, (int)giveAssetSliders [i].value);
+		}
+
 
 	}
+
 	public void Cancel(){
 		this.gameObject.SetActive (false);
 	}
+
 	public void Reject(){
 		this.gameObject.SetActive (false);
 	}
+
 	public void Counter(){
 
 	}

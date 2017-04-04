@@ -29,7 +29,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		if (instance == null)
 			instance = this;
 
-		playerChecks = new bool[LevelManager.instance.players.Count];
+		playerChecks = new bool[PhotonNetwork.playerList.Length];
 	}
 
 	// Update is called once per frame
@@ -69,6 +69,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			assetsTraded.commodities.commodityTuple[CommodityType.Coin],
 			assetsTraded.commodities.commodityTuple[CommodityType.Cloth]
 		});
+	}
+
+	public void OnTradeOffer(int senderNumber, int receiverNumber, AssetTuple offer, AssetTuple receive) {
+
 	}
 
 
@@ -121,11 +125,61 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	IEnumerator DiceRollSevenEvents() {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		int[] allPlayers = { 0, 1, 2, 3 };
+
+		//EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
+		EventTransferManager.instance.OnWaitForAllPlayers();
 		yield return StartCoroutine(clientCatanManager.discardResourcesForPlayers());
+
+		while (EventTransferManager.instance.waitingForPlayers) {
+			CheckIfPlayersReady ();
+			yield return new WaitForEndOfFrame ();
+		}
 
 		if (PhotonNetwork.player.ID - 1 == clientCatanManager.currentPlayerTurn) {
 			yield return StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
 		}
+	}
+
+	[PunRPC]
+	void BeginWaitForPlayers(int[] playerNums) {
+		for (int i = 0; i < playerChecks.Length; i++) {
+			EventTransferManager.instance.playerChecks [i] = true;
+		}
+		for (int i = 0; i < playerNums.Length; i++) {
+			if (playerNums [i] < playerChecks.Length) {
+				EventTransferManager.instance.playerChecks [playerNums [i]] = false;
+			}
+		}
+		EventTransferManager.instance.waitingForPlayers = true;
+	}
+
+	void OnWaitForPlayers(int[] playerNums) {
+		GetComponent<PhotonView> ().RPC ("BeginWaitForPlayers", PhotonTargets.All, new object[] {
+			playerNums
+		});
+	}
+
+	void OnWaitForAllPlayers() {
+		int[] allPlayers = new int[PhotonNetwork.playerList.Length];
+
+		for (int i = 0; i < allPlayers.Length; i++) {
+			allPlayers [i] = i;
+		}
+
+		GetComponent<PhotonView> ().RPC ("BeginWaitForPlayers", PhotonTargets.All, new object[] {
+			allPlayers
+		});
+	}
+
+	void CheckIfPlayersReady() {
+		bool ready = true;
+		for (int i = 0; i < playerChecks.Length; i++) {
+			if (!playerChecks [i]) {
+				ready = false;
+			}
+		}
+		EventTransferManager.instance.waitingForPlayers = !ready;
 	}
 
 	[PunRPC]
@@ -147,6 +201,18 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			FaceDetection faceDetection = go.GetComponent<FaceDetection> ();
 			faceDetection.showNumber ();
 		}
+	}
+
+	public void OnPlayerReady(int playerNum, bool ready) {
+		GetComponent<PhotonView> ().RPC ("SignalReady", PhotonTargets.All, new object[] {
+			playerNum,
+			ready
+		});
+	}
+
+	[PunRPC]
+	void SignalReady(int playerNumber, bool ready) {
+		EventTransferManager.instance.playerChecks [playerNumber] = ready;
 	}
 
 	public void OnHighlightForUser(int highlightTypeNumber, int playerNum, bool highlight, int[] ids) {
@@ -263,6 +329,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			case MoveType.MoveShip:
 				StartCoroutine(clientCatanManager.unitManager.moveShip ());
 				break;
+			case MoveType.TradePlayer:
+				clientCatanManager.tradeWithPlayerAttempt (1);
+				break;
 			default:
 				break;
 			}
@@ -362,6 +431,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
 			playerNumber,
 			(int)MoveType.TradeBank
+		});
+	}
+
+	public void ClientTradePlayer(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.TradePlayer
 		});
 	}
 
@@ -938,6 +1015,7 @@ public enum MoveType {
 	UpgradeSettlement,
 	BuildShip,
 	TradeBank,
-	MoveShip
+	MoveShip,
+	TradePlayer
 }
 

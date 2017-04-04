@@ -49,7 +49,9 @@ public class TradePanel : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		int tradeRatio = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getMinimumTradeValue (giveselection);
+		Text giveText = GetComponentsInChildren<Text> () [0];
+		giveText.text = "Give " + tradeRatio + ":";
 	}
 
 	public int getTradeChoiceInt() {
