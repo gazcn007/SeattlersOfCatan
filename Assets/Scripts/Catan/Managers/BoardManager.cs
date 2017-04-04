@@ -138,6 +138,51 @@ public class BoardManager : MonoBehaviour {
 		return validEdgeIDs;
 	}
 
+	public List<Edge> getValidEdgesForPlayerShipMove(Player player, Ship shipToMove) {
+		List<Edge> validEdges = new List<Edge> ();
+		List<Ship> ownedShips = player.getOwnedUnitsOfType (UnitType.Ship).Where(ship => ship != shipToMove).Cast<Ship>().ToList();
+
+		for (int i = 0; i < ownedShips.Count; i++) {
+			Ship currentShip = ownedShips [i];
+			Edge locationEdge = currentShip.locationEdge;
+
+			List<Intersection> connectedIntersections = locationEdge.getLinkedIntersections ();
+			for (int j = 0; j < connectedIntersections.Count; j++) {
+				if (connectedIntersections [j].occupier == null || connectedIntersections [j].occupier.owner == player) {
+					List<Edge> connectedEdges = connectedIntersections [j].getLinkedEdges ();
+
+					for (int k = 0; k < connectedEdges.Count; k++) {
+						if (connectedEdges [k].occupier == null && !connectedEdges [k].isLandEdge()) {
+							//if (relatedEdge.occupier.isRoad () == roadBuilt || (connectedIntersections [j].occupier != null && connectedIntersections [j].occupier.owner == player)) {
+								validEdges.Add (connectedEdges [k]);
+							//}
+						}
+					}
+				}
+			}
+		}
+
+		if (validEdges.Contains (shipToMove.locationEdge)) {
+			validEdges.Remove (shipToMove.locationEdge);
+		}
+		for (int i = 0; i < validEdges.Count; i++) {
+			Debug.Log ("Valid edge to move ship: validEdge[ " + i + "] = " + validEdges [i].name);
+		}
+
+		return validEdges;
+	}
+
+	public int[] getValidEdgeIDsForPlayerShipMove(Player player, Ship shipToMove) {
+		List<Edge> validEdges = getValidEdgesForPlayerShipMove(player, shipToMove);
+		int[] validEdgeIDs = new int[validEdges.Count];
+
+		for (int i = 0; i < validEdges.Count; i++) {
+			validEdgeIDs [i] = validEdges [i].id;
+		}
+
+		return validEdgeIDs;
+	}
+
 
 	public List<Intersection> getValidIntersectionsForPlayer(Player player) {
 		List<Intersection> allIntersections = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().Intersections.Values.ToList ();

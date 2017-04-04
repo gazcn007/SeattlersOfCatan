@@ -48,6 +48,22 @@ public class Edge : MonoBehaviour {
 		return linkIntersections;
 	}
 
+	public List<Edge> getNeighborEdges() {
+		List<Intersection> linkIntersections = getLinkedIntersections ();
+		List<Edge> neighborEdges = new List<Edge> ();
+
+		foreach (var intersection in linkIntersections) {
+			List<Edge> edgesOfIntersection = intersection.getLinkedEdges ();
+			foreach (var possibleNeighborEdge in edgesOfIntersection) {
+				if (possibleNeighborEdge != this && !neighborEdges.Contains (possibleNeighborEdge)) {
+					neighborEdges.Add (possibleNeighborEdge);
+				}
+			}
+		}
+
+		return neighborEdges;
+	}
+
 	public void setID(int id) {
 		if (id >= 0) {
 			this.id = id;

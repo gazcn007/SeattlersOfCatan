@@ -471,7 +471,7 @@ public class CatanManagerOld : MonoBehaviour {
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedSettlements.Cast<Unit> ().ToList ()));//new Road(unitID++)));
 
-		Settlement settlementToUpgrade = (Settlement)unitsInPlay [players [currentPlayerTurn].lastUnitSelectionId];
+		Settlement settlementToUpgrade = (Settlement)unitsInPlay [players [currentPlayerTurn].lastUnitSelection.id];
 		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
 		print("Found settlement with id#: " + settlementToUpgrade.id + ". Residing on intersection id#: " + settlementToUpgrade.locationIntersection.id);
 

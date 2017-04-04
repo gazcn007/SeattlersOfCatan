@@ -94,6 +94,10 @@ public class UnitManager : MonoBehaviour {
 		yield return StartCoroutine (CatanManager.instance.upgradeSettlement());
 	}
 
+	public IEnumerator moveShip() {
+		yield return StartCoroutine (CatanManager.instance.moveShip());
+	}
+
 }
 
 public enum UnitType {

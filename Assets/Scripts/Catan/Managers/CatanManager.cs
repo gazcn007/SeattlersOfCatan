@@ -239,7 +239,28 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightUnitsWithColor (ownedSettlements.Cast<Unit> ().ToList (), true, Color.black);
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedSettlements.Cast<Unit> ().ToList ()));//new Road(unitID++)));
-		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelectionId);
+		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id);
+	}
+
+	public IEnumerator moveShip() {
+		if (EventTransferManager.instance.shipMovedThisTurn) {
+			handleBuildFailure ("Can not move ships twice per turn!", uiManager.uiButtons);
+			yield break;
+		}
+		List<Ship> ownedShips = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Ship).Cast<Ship> ().ToList ();
+		List<Ship> moveableShips = ownedShips.Where (ship => ship.canMove ()).Cast<Ship> ().ToList ();
+
+		boardManager.highlightUnitsWithColor (moveableShips.Cast<Unit> ().ToList (), true, Color.black);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (moveableShips.Cast<Unit> ().ToList ()));
+		boardManager.highlightUnitsWithColor (players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Ship), true, players [currentPlayerTurn].playerColor);
+
+		List<Edge> validEdgesToMoveShip = boardManager.getValidEdgesForPlayerShipMove (players [currentPlayerTurn], players [currentPlayerTurn].lastUnitSelection as Ship);
+		int[] validEdgeIDsToMoveShip = boardManager.getValidEdgeIDsForPlayerShipMove (players [currentPlayerTurn], players [currentPlayerTurn].lastUnitSelection as Ship);
+		EventTransferManager.instance.OnHighlightForUser(1, currentPlayerTurn, true, validEdgeIDsToMoveShip);
+		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToMoveShip));
+		boardManager.highlightAllEdges(false);
+
+		EventTransferManager.instance.OnMoveShipForUser (currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, players [currentPlayerTurn].lastEdgeSelection.id);
 	}
 
 	public IEnumerator discardResourcesForPlayers() {

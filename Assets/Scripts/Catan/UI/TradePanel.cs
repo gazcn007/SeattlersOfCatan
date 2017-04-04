@@ -10,8 +10,7 @@ public class TradePanel : MonoBehaviour {
 	public Button[] getPanel;
 	public Image getglow;
 	public Image giveglow;
-	public Dropdown spendDropdown;
-	public Dropdown receiveDropdown;
+
 	public int giveselection;
 	public int getselection;
 	private Text errorText;
@@ -51,10 +50,6 @@ public class TradePanel : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		
-	}
-
-	public ResourceType getTradeChoice() {
-		return (ResourceType)spendDropdown.value;
 	}
 
 	public int getTradeChoiceInt() {

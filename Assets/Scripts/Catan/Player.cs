@@ -21,7 +21,7 @@ public class Player : MonoBehaviour {
 	public GameTile lastGameTileSelection;
 	public Edge lastEdgeSelection;
 	public Intersection lastIntersectionSelection;
-	public int lastUnitSelectionId;
+	public Unit lastUnitSelection;
 
 
 	public bool collectedThisTurn;
@@ -659,7 +659,7 @@ public class Player : MonoBehaviour {
 
 					if (selectedUnit != null && possibleUnits.Contains(selectedUnit)) {
 						selectionMade = true;
-						lastUnitSelectionId = selectedUnit.id;
+						lastUnitSelection = selectedUnit;
 					}
 				}
 			} 

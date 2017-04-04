@@ -17,6 +17,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public bool setupPhase = true;
 	public bool waitingForPlayer = false;
 	public bool diceRolledThisTurn = false;
+	public bool shipMovedThisTurn = false;
 	public bool waitingforcards = true;
 	public GameObject diceRollerPrefab;
 	private GameObject diceRoller;
@@ -48,6 +49,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		GetComponent<PhotonView> ().RPC ("EndTurn", PhotonTargets.All, new object[] { });
 		currentPlayerTurn = (currentPlayerTurn + 1) % PhotonNetwork.playerList.Length;
 		diceRolledThisTurn = false;
+		shipMovedThisTurn = false;
 	}
 
 	public void OnOperationFailure() {
@@ -200,6 +202,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 	}
 
+	public void OnMoveShipForUser(int playerNumber, int shipID, int newLocationEdgeID) {
+		GetComponent<PhotonView> ().RPC ("MoveShip", PhotonTargets.All, new object[] {
+			playerNumber,
+			shipID,
+			newLocationEdgeID
+		});
+	}
+
 
 	IEnumerator CatanSetupPhase() {
 		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
@@ -249,6 +259,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				break;
 			case MoveType.TradeBank:
 				clientCatanManager.tradeWithBankAttempt (4);
+				break;
+			case MoveType.MoveShip:
+				StartCoroutine(clientCatanManager.unitManager.moveShip ());
 				break;
 			default:
 				break;
@@ -350,6 +363,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			playerNumber,
 			(int)MoveType.TradeBank
 		});
+	}
+
+	public IEnumerator ClientMoveShip(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.MoveShip
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
 	}
 
 	[PunRPC]
@@ -774,6 +798,30 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
+	void MoveShip(int playerNumber, int shipID, int newLocationEdgeID) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		Ship ship = clientCatanManager.unitManager.Units [shipID] as Ship;
+
+		ship.transform.position = clientGameBoard.Edges[newLocationEdgeID].transform.position;
+		ship.transform.rotation = clientGameBoard.Edges[newLocationEdgeID].transform.rotation;
+		ship.transform.parent = clientGameBoard.Edges[newLocationEdgeID].transform;
+
+		ship.locationEdge.occupier = null;
+		clientGameBoard.Edges [newLocationEdgeID].occupier = ship;
+		ship.locationEdge = clientGameBoard.Edges [newLocationEdgeID];
+
+		ship.transform.localScale = clientGameBoard.Edges[newLocationEdgeID].transform.localScale;
+		ship.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+		EventTransferManager.instance.shipMovedThisTurn = true;
+	}
+
+	[PunRPC]
 	void BuildEdgeUnit(int userNum, int unitType, int edgeID) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
@@ -787,14 +835,20 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		case UnitType.Road:
 			edgeUnitGo = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Road));
 			edgeUnit = edgeUnitGo.GetComponent<EdgeUnit> ();
+			edgeUnit.id = clientCatanManager.unitManager.unitID++;
+			edgeUnit.name = "Road " + edgeUnit.id;
 			break;
 		case UnitType.Ship:
 			edgeUnitGo = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Ship));
 			edgeUnit = edgeUnitGo.GetComponent<EdgeUnit> ();
+			edgeUnit.id = clientCatanManager.unitManager.unitID++;
+			edgeUnit.name = "Ship " + edgeUnit.id;
 			break;
 		default:
 			break;
 		}
+
+		clientCatanManager.unitManager.unitsInPlay.Add (edgeUnit.id, edgeUnit);
 
 		clientGameBoard.Edges[edgeID].occupier = edgeUnit;
 		edgeUnit.locationEdge = clientGameBoard.Edges[edgeID];
@@ -883,6 +937,7 @@ public enum MoveType {
 	BuildCity,
 	UpgradeSettlement,
 	BuildShip,
-	TradeBank
+	TradeBank,
+	MoveShip
 }
 

@@ -26,6 +26,10 @@ public class UIManager : MonoBehaviour {
 	public RobberStealPanel robberStealPanel;
 	public DiscardPanel discardPanel;
 	public FishTradePanel fishTradePanel;
+	public FishResourcePanel fishresourcepanel;
+	//no script needed for this
+	public GameObject robberOrPiratePanel;
+
 
 	void Awake() {
 		if (instance == null)
@@ -197,17 +201,45 @@ public class UIManager : MonoBehaviour {
 			}
 		}
 	}
-	public void moveShipEvent(){
-
+	public void robberPirateSelection(int selection){
+		robberOrPiratePanel.SetActive (false);
+		//nehir this will be called by panel 0=robber 1=pirate
 	}
-	public void togglerPlayerTradePanel(){
+	public void moveShipEvent(){
+		int buttonId = 8;
+		Debug.Log ("moveShipEvent()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer) {
+				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
+				EventTransferManager.instance.currentActiveButton = buttonId;
+
+				StartCoroutine (EventTransferManager.instance.ClientMoveShip(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					BoardManager.instance.highlightUnitsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Ship)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
+					BoardManager.instance.highlightAllEdges (false);
+					EventTransferManager.instance.OnOperationFailure ();
+				}
+			}
+		}
+	}
+
+	public void fishResourceSelection(){
+		//stub for method in fish resource panel bindings already done
+	}
+
+	public void togglePlayerTradePanel(){
 		//nehir add however you need to call this eventtransfer manager
 		//tradePlayerPanel.OpenPanel ();
 	}
+
 	public void toggleFishTradePanel(){
 		//nehir add however you need to call this eventtransfer manager
 		//fishTradePanel.OpenPanel ();
 	}
+
 	public void tradeWithBankEvent() {
 		int buttonId = 7;
 		Debug.Log ("tradeWithBankEvent()");
