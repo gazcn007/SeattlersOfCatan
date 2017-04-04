@@ -355,7 +355,8 @@ public class CatanManager : MonoBehaviour {
 			return;
 		}
 
-		List<Player> opponents = players.Where (player => player != players [currentPlayerTurn]).ToList ();
+		List<Player> opponents = new List<Player> (players);
+		opponents.Remove(players[currentPlayerTurn]);
 		uiManager.tradePlayerPanel.OpenPanel (opponents, players [currentPlayerTurn].assets);
 	}
 

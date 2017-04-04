@@ -72,9 +72,63 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	public void OnTradeOffer(int senderNumber, int receiverNumber, AssetTuple offer, AssetTuple receive) {
-
+		Debug.Log (LevelManager.instance.players [senderNumber].playerName + " sends a trade offer to " + LevelManager.instance.players [receiverNumber].playerName);
+		StartCoroutine (TradeOffer (senderNumber, receiverNumber, offer, receive));
 	}
 
+	public IEnumerator TradeOffer(int senderNumber, int receiverNumber, AssetTuple offer, AssetTuple receive) {
+		int[] offerArray = new int[offer.resources.resourceTuple.Values.Count + offer.commodities.commodityTuple.Values.Count];
+		int[] receiveArray = new int[offer.resources.resourceTuple.Values.Count + offer.commodities.commodityTuple.Values.Count];
+
+		for (int i = 0; i < offerArray.Length; i++) {
+			offerArray [i] = offer.GetValueAtIndex (i);
+		}
+		for (int i = 0; i < offerArray.Length; i++) {
+			receiveArray [i] = receive.GetValueAtIndex (i);
+		}
+
+		Debug.Log ("sending trade to: " + receiverNumber);
+		GetComponent<PhotonView> ().RPC ("SignalTrade", PhotonTargets.All, new object[] {
+			senderNumber,
+			receiverNumber,
+			offerArray,
+			receiveArray
+		});
+
+		int[] waitingForPlayersArray = new int[1];
+		waitingForPlayersArray [0] = receiverNumber;
+		OnWaitForPlayers (waitingForPlayersArray);
+
+		for (int i = 0; i < playerChecks.Length; i++) {
+			Debug.Log ("playerchecks[" + i + "] = " + playerChecks [i]);
+		}
+
+		while (EventTransferManager.instance.waitingForPlayers) {
+			Debug.Log ("waiting..");
+			CheckIfPlayersReady ();
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	[PunRPC]
+	void SignalTrade(int senderNum, int receiverNum, int[] offer, int[] receive) {
+		Debug.Log ("Receiver number is " + receiverNum);
+		if(PhotonNetwork.player.ID - 1 == receiverNum) {
+			Debug.Log ("Receiver true number: " + receiverNum);
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			AssetTuple offerTuple = new AssetTuple();
+			AssetTuple receiveTuple = new AssetTuple ();
+
+			for (int i = 0; i < offer.Length; i++) {
+				offerTuple.SetValueAtIndex (i, offer [i]);
+			}
+			for (int i = 0; i < receive.Length; i++) {
+				receiveTuple.SetValueAtIndex (i, receive [i]);
+			}
+
+			clientCatanManager.uiManager.tradePlayerPanel.OpenRespond(clientCatanManager.players[senderNum], receiveTuple, offerTuple);
+		}
+	}
 
 	public void OnMoveGamePiece(int boardPieceNum, int tileID) {
 		GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
@@ -90,7 +144,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			//int yellowDieRoll = Random.Range (1, 7);
 			GameObject[] dice = GameObject.FindGameObjectsWithTag ("Dice");
 			//int redDieRoll = dice[0].GetComponent<FaceDetection>().getNumber;
-			int redDieRoll = 3;
+			int redDieRoll = 4;
 			int yellowDieRoll = 4;
 			print ("Red die rolled: " + redDieRoll);
 			print ("Yellow die rolled: " + yellowDieRoll);

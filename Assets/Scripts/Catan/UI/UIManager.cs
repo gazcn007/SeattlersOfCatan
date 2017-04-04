@@ -250,7 +250,7 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 
-	public void togglePlayerTradePanel(){
+	public void togglerPlayerTradePanel(){
 		int buttonId = 9;
 		Debug.Log ("tradeWithPlayerEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
@@ -258,7 +258,7 @@ public class UIManager : MonoBehaviour {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
 				//tradePanel.gameObject.SetActive (true);
-				EventTransferManager.instance.ClientTradeBank(PhotonNetwork.player.ID - 1);
+				EventTransferManager.instance.ClientTradePlayer(PhotonNetwork.player.ID - 1);
 			}
 		}
 	}
@@ -308,7 +308,7 @@ public class UIManager : MonoBehaviour {
 	}
 
 	public void offerTrade() {
-
+		tradePlayerPanel.sendTrade ();
 	}
 
 	public void tradeCancelled() {
