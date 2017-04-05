@@ -150,11 +150,16 @@ public class ResourceManager : MonoBehaviour {
 
 	public FishTuple getFishTokenForTile(GameTile tile, int numCollected) {
 		FishTuple fishTokensCollected = new FishTuple ();
-		if (tile.tileType != TileType.Desert || tile.tileType != TileType.Ocean) {
+		if (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean) {
+			Debug.Log ("Tile is not fish, returning!");
 			return fishTokensCollected;
 		}
 
 		if (numFishTokensLeft () < numCollected) {
+			Debug.Log ("numFishTokensLeft () < numCollected");
+			foreach (var pair in fishTokensAvailable) {
+				Debug.Log ("Key = " + pair.Key + ", Value = " + pair.Value);
+			}
 			return fishTokensCollected;
 		}
 
@@ -163,10 +168,10 @@ public class ResourceManager : MonoBehaviour {
 			int randomNum;
 			do {
 				randomNum = Random.Range (0, fishTokensAvailable.Values.Count);
+				Debug.Log("RandomNUm = " + randomNum);
 			} while(fishTokensAvailable [(FishTokenType)randomNum] == 0);
 
 			fishTokensCollected.addFishTokenWithType ((FishTokenType)randomNum, 1);
-			fishTokensAvailable [(FishTokenType)randomNum]--;
 			collectionLeft--;
 		}
 

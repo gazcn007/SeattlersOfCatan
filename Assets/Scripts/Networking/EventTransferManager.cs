@@ -175,8 +175,16 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			//int yellowDieRoll = Random.Range (1, 7);
 			GameObject[] dice = GameObject.FindGameObjectsWithTag ("Dice");
 			//int redDieRoll = dice[0].GetComponent<FaceDetection>().getNumber;
-			int redDieRoll = 4;
-			int yellowDieRoll = 4;
+			int redDieRoll;
+			int yellowDieRoll;
+			if (Random.Range (0.0f, 1.0f) < 0.5f) {
+				redDieRoll = 4;
+				yellowDieRoll = 4;
+			} else {
+				redDieRoll = 5;
+				yellowDieRoll = 6;
+			}
+
 			print ("Red die rolled: " + redDieRoll);
 			print ("Yellow die rolled: " + yellowDieRoll);
 
@@ -611,21 +619,26 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
-							Debug.Log ("In Ocean tile");
 							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
-								Debug.Log ("Ocean tile yields fish!");
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+								fishTokens.printFishTuple ();
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
 						}
-						// NEVER HOLDS, MUST DIRECTLY CHECK THE LAKE TILE ITSELF
-						/*if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
-							Debug.Log ("In Lake tile");
-							if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
-								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+					}
+				}
+
+				if (PhotonNetwork.player.ID - 1 == i) {
+					if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
+						GameTile lakeTile = clientBoard.GameTiles [clientCatanManager.boardManager.getLakeTileID ()];
+
+						foreach (var intersection in lakeTile.getIntersections()) {
+							if (intersection.occupier != null && intersection.occupier.owner == clientCatanManager.players [i]) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
+								fishTokens.printFishTuple ();
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
-						}*/
+						}
 					}
 				}
 			}
@@ -677,21 +690,26 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
-							Debug.Log ("In Ocean tile");
 							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
-								Debug.Log ("Ocean tile yields fish!");
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+								fishTokens.printFishTuple ();
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
 						}
-						// NEVER HOLDS, MUST DIRECTLY CHECK THE LAKE TILE ITSELF
-						/*if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
-							Debug.Log ("In Lake tile");
-							if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
-								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+					}
+				}
+
+				if (PhotonNetwork.player.ID - 1 == i) {
+					if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
+						GameTile lakeTile = clientBoard.GameTiles [clientCatanManager.boardManager.getLakeTileID ()];
+
+						foreach (var intersection in lakeTile.getIntersections()) {
+							if (intersection.occupier != null && intersection.occupier.owner == clientCatanManager.players [i]) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
+								fishTokens.printFishTuple ();
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
-						}*/
+						}
 					}
 				}
 			}

@@ -64,6 +64,25 @@ public class BoardManager : MonoBehaviour {
 		return eligibleTiles;
 	}
 
+	public GameTile getLakeTile() {
+		List<GameTile> allTiles = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().GameTiles.Values.ToList ();
+
+		GameTile lakeTile = null;
+
+		foreach (GameTile tile in allTiles) {
+			if (tile.tileType == TileType.Desert) {
+				lakeTile = tile;
+			}
+		}
+
+		return lakeTile;
+	}
+
+	public int getLakeTileID() {
+		GameTile lakeTile = getLakeTile ();
+		return lakeTile.id;
+	}
+
 	public int[] getTileIDsWithDiceValue(int playerID, int valueRolled, bool isCommodity) {
 		List<GameTile> eligibleTiles = getTilesWithDiceValue(playerID, valueRolled, isCommodity);
 		int[] eligibleTileIDs = new int[eligibleTiles.Count];
