@@ -82,13 +82,20 @@ public class TileTypeSettings : MonoBehaviour {
 		tile.tileType = tileType;
 	}
 
-	public TileType getRandomTileType() {
+	public TileType getRandomTileType(bool canBeLake) {
 		int randomNumber;
 		randomNumber = Random.Range (0, landTileTypesList.Count);
 
-		do {
-			randomNumber = Random.Range (0, landTileTypesList.Count);
-		} while(availableLandPiecesDictionary [(TileType)randomNumber] == 0);
+		if (!canBeLake) {
+			do {
+				randomNumber = Random.Range (0, landTileTypesList.Count);
+			} while(availableLandPiecesDictionary [(TileType)randomNumber] == 0 || (TileType)randomNumber == TileType.Desert);
+		} else {
+			do {
+				randomNumber = Random.Range (0, landTileTypesList.Count);
+			} while(availableLandPiecesDictionary [(TileType)randomNumber] == 0);
+		}
+
 
 		availableLandPiecesDictionary [(TileType)randomNumber]--;
 		return (TileType)randomNumber;

@@ -5,9 +5,9 @@ using UnityEngine;
 [System.Serializable]
 public class CommodityTuple {
 
-	public int numPapers;
-	public int numCoins;
 	public int numCloths;
+	public int numCoins;
+	public int numPapers;
 
 	public Dictionary<CommodityType, int> commodityTuple = new Dictionary<CommodityType, int>();
 
@@ -20,12 +20,12 @@ public class CommodityTuple {
 		commodityTuple.Add (CommodityType.Coin, numCoins);
 		commodityTuple.Add (CommodityType.Cloth, numCloths);}
 
-	public CommodityTuple(int papers, int coins, int cloths) {
+	public CommodityTuple(int cloths, int coins, int papers) {
 		commodityTuple = new Dictionary<CommodityType, int>();
 
-		numPapers = papers;
-		numCoins = coins;
 		numCloths = cloths;
+		numCoins = coins;
+		numPapers = papers;
 
 		commodityTuple.Add (CommodityType.Paper, numPapers);
 		commodityTuple.Add (CommodityType.Coin, numCoins);

@@ -9,9 +9,12 @@ public class GameTile : Tile {
 	public int id;
 	public bool atIslandLayer = false;
 
+	public bool hasHarbor = false;
+
 	public List<int> edges  = new List<int> ();
 	public List<int> intersections = new List<int> ();
 
+	public FishTile fishTile;
 	public GamePiece occupier;
 
 	// Use this for initialization
@@ -130,7 +133,6 @@ public class GameTile : Tile {
 			this.diceValue = diceValue;
 			//Debug.Log ("I set " + this.name + "'s dice vallue to " + this.diceValue);
 		}
-
 	}
 
 	public bool canProduce() {

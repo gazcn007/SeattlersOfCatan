@@ -22,6 +22,8 @@ public class ResourceManager : MonoBehaviour {
 	private Dictionary<System.Type, ResourceTuple> costsChart = new Dictionary<System.Type, ResourceTuple>();
 	private Dictionary<UnitType, AssetTuple> resourceCostsChart = new Dictionary<UnitType, AssetTuple>();
 
+	private Dictionary<FishTokenType, int> fishTokensAvailable = new Dictionary<FishTokenType, int> ();
+
 	//Die eventDie;
 	//ResourceCostManager resourceCostManager;
 
@@ -35,6 +37,7 @@ public class ResourceManager : MonoBehaviour {
 
 		PopulateCostsDictionary ();
 		PopulateResoureCostsDictionary ();
+		PopulateFishTokensDictionary ();
 		//resourceCostManager = GetComponent<ResourceCostManager> ();
 	}
 
@@ -60,6 +63,12 @@ public class ResourceManager : MonoBehaviour {
 		resourceCostsChart.Add (UnitType.Ship, new AssetTuple(shipCost.numBricks, shipCost.numGrains, shipCost.numLumbers, shipCost.numOres, shipCost.numWools, 0, 0, 0));
 
 		resourceCostsChart.Add (UnitType.Knight, new AssetTuple(knightCost.numBricks, knightCost.numGrains, knightCost.numLumbers, knightCost.numOres, knightCost.numWools, 0, 0, 0));
+	}
+
+	public void PopulateFishTokensDictionary() {
+		fishTokensAvailable.Add (FishTokenType.One, 11);
+		fishTokensAvailable.Add (FishTokenType.Two, 10);
+		fishTokensAvailable.Add (FishTokenType.Three, 8);
 	}
 
 	public ResourceTuple getCostOfUnit(System.Type unitType) {
@@ -125,6 +134,53 @@ public class ResourceManager : MonoBehaviour {
 		}
 
 		return commodityCollected;
+	}
+
+	public void receiveFishTokens(FishTuple fishTokensUsed) {
+		foreach (var pair in fishTokensUsed.fishTuple) {
+			fishTokensAvailable [pair.Key] += pair.Value;
+		}
+	}
+
+	public void giveFishTokens(FishTuple fishTokensGiven) {
+		foreach (var pair in fishTokensGiven.fishTuple) {
+			fishTokensAvailable [pair.Key] -= pair.Value;
+		}
+	}
+
+	public FishTuple getFishTokenForTile(GameTile tile, int numCollected) {
+		FishTuple fishTokensCollected = new FishTuple ();
+		if (tile.tileType != TileType.Desert || tile.tileType != TileType.Ocean) {
+			return fishTokensCollected;
+		}
+
+		if (numFishTokensLeft () < numCollected) {
+			return fishTokensCollected;
+		}
+
+		int collectionLeft = numCollected;
+		while (collectionLeft > 0) {
+			int randomNum;
+			do {
+				randomNum = Random.Range (0, fishTokensAvailable.Values.Count);
+			} while(fishTokensAvailable [(FishTokenType)randomNum] == 0);
+
+			fishTokensCollected.addFishTokenWithType ((FishTokenType)randomNum, 1);
+			fishTokensAvailable [(FishTokenType)randomNum]--;
+			collectionLeft--;
+		}
+
+		return fishTokensCollected;
+	}
+
+	public int numFishTokensLeft() {
+		int sum = 0;
+		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(fishTokensAvailable.Keys);
+
+		for (int i = 0; i < fishTokenKeys.Count; i++) {
+			sum += fishTokensAvailable [fishTokenKeys [i]];
+		}
+		return sum;
 	}
 
 	public AssetTuple getAssetTupleForTile(GameTile tile, int numCollected) {

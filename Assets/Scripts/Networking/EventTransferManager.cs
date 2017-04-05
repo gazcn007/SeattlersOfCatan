@@ -67,7 +67,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			assetsTraded.resources.resourceTuple[ResourceType.Wool],
 			assetsTraded.commodities.commodityTuple[CommodityType.Paper],
 			assetsTraded.commodities.commodityTuple[CommodityType.Coin],
-			assetsTraded.commodities.commodityTuple[CommodityType.Cloth]
+			assetsTraded.commodities.commodityTuple[CommodityType.Cloth],
+			assetsTraded.fishTokens.fishTuple[FishTokenType.One],
+			assetsTraded.fishTokens.fishTuple[FishTokenType.Two],
+			assetsTraded.fishTokens.fishTuple[FishTokenType.Three]
 		});
 	}
 
@@ -568,15 +571,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void ResourceChangeEvent(int playerNum, bool gained, int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth) {
+	void ResourceChangeEvent(int playerNum, bool gained, int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneFish, int twoFish, int threeFish) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 
-		AssetTuple delta = new AssetTuple (brick, grain, lumber, ore, wool, paper, coin, cloth);
+		AssetTuple delta = new AssetTuple (brick, grain, lumber, ore, wool, paper, coin, cloth, oneFish, twoFish, threeFish);
 
 		if (gained) {
 			clientCatanManager.players [playerNum].receiveAssets (delta);
+			clientCatanManager.resourceManager.giveFishTokens (delta.fishTokens);
 		} else {
 			clientCatanManager.players [playerNum].spendAssets (delta);
+			clientCatanManager.resourceManager.receiveFishTokens (delta.fishTokens);
 		}
 	}
 
@@ -603,6 +608,21 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						clientCatanManager.players [i].receiveResources (resources);
 						//OnTradeWithBank(i, true, new AssetTuple(resources, commodities));
 					}
+
+					if (PhotonNetwork.player.ID - 1 == i) {
+						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
+							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+							}
+						}
+						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
+							if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+							}
+						}
+					}
 				}
 			}
 		}
@@ -621,7 +641,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (tile.canProduce ()) {
 						ResourceTuple resources = clientCatanManager.resourceManager.getResourceForTile (tile, 1);
-						OnTradeWithBank (playerNum, true, new AssetTuple (resources, new CommodityTuple (0, 0, 0)));
+						FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (tile, 1);
+						OnTradeWithBank (playerNum, true, new AssetTuple (resources, new CommodityTuple (0, 0, 0), fishTokens));
 						clientCatanManager.players [playerNum].collectedThisTurn = true;
 					}
 				}
@@ -648,6 +669,21 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						CommodityTuple commodities = clientCatanManager.resourceManager.getCommodityForTile (clientBoard.GameTiles [tileIDs [j]], 1);
 						clientCatanManager.players [i].receiveCommodities (commodities);
 						//OnTradeWithBank(i, true, new AssetTuple(resources, commodities));
+					}
+
+					if (PhotonNetwork.player.ID - 1 == i) {
+						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
+							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+							}
+						}
+						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
+							if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
+								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+							}
+						}
 					}
 				}
 			}
@@ -686,7 +722,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				});
 			}
 
-			int robberTileID = clientBoard.robber.occupyingTile.id;
+			/*int robberTileID = clientBoard.robber.occupyingTile.id;
 			int pirateTileID = clientBoard.pirate.occupyingTile.id;
 			//clientBoard.robber.occupyingTile.occupier = null;
 			//clientBoard.robber = null;
@@ -699,7 +735,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 				1,
 				pirateTileID
-			});
+			});*/
 		}
 	}
 
@@ -710,10 +746,34 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		if (clientBoard != null) {
 			GameTile tileToPaint = clientBoard.GameTiles [id];
 			tileToPaint.setTileType (tileTypeNum);
-			tileToPaint.setDiceValue (diceValue);
+			if (tileToPaint.tileType != TileType.Desert) {
+				tileToPaint.setDiceValue (diceValue);
+				tileToPaint.transform.FindChild ("Dice Values").gameObject.SetActive (false);
+			} else {
+				tileToPaint.transform.FindChild ("Dice Values").gameObject.SetActive (true);
+			}
+
 			tileToPaint.atIslandLayer = islandLayer;
 		}
 	}
+
+	[PunRPC]
+	void PaintFishTile(int fishTileID, int diceValue) {
+		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		Debug.Log("Fishtiles dictionary count = " + clientBoard.FishTiles.Values.Count);
+
+		foreach (var key in clientBoard.FishTiles.Keys) {
+			Debug.Log ("key = " + key);
+		}
+		if (clientBoard != null) {
+			if (clientBoard.FishTiles.ContainsKey (fishTileID)) {
+				FishTile fishTileToPaint = clientBoard.FishTiles [fishTileID];
+				fishTileToPaint.setDiceValue (diceValue);
+				fishTileToPaint.locationTile.diceValue = diceValue;
+			}
+		}
+	}
+
 
 	[PunRPC]
 	void ClearHarborsDictionary() {
@@ -780,6 +840,23 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 		clientBoard.ClearHarbors ();
 		clientBoard.GenerateHarbors (clientBoard.transform.GetChild (3));
+
+		clientBoard.ClearFishTiles ();
+		clientBoard.GenerateFishGroundTiles ();
+
+		if (PhotonNetwork.isMasterClient) {
+			List<int> fishDiceValues = new List<int> { 4, 5, 6, 8, 9, 10 };
+			foreach (var fishtile in clientBoard.FishTiles.Values) {
+				int randomDiceValue = fishDiceValues[Random.Range (0, fishDiceValues.Count)];
+
+				GetComponent<PhotonView> ().RPC ("PaintFishTile", PhotonTargets.All, new object[] {
+					fishtile.id,
+					randomDiceValue
+				});
+
+				fishDiceValues.Remove (randomDiceValue);
+			}
+		}
 	}
 
 	[PunRPC]

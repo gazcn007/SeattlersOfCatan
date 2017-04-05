@@ -36,7 +36,8 @@ public class BoardManager : MonoBehaviour {
 
 			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
 			foreach(GameTile tile in adjacentTiles) {
-				if ((tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
+				//if ((tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
+				if (tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) {
 					eligibleTiles.Add (tile);
 
 					Debug.Log ("Added " + tile.name);
@@ -50,7 +51,8 @@ public class BoardManager : MonoBehaviour {
 
 				List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
 				foreach(GameTile tile in adjacentTiles) {
-					if ((tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
+					//if ((tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
+					if (tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) {
 						eligibleTiles.Add (tile);
 
 						Debug.Log ("Added " + tile.name);

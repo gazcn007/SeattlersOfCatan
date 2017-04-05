@@ -35,12 +35,12 @@ public class BoardDecorator {
 		hexSettings.setDiceProbabilitiesByTotalNumberOfHexes (landTiles.Count);
 		setTileIDsBySettings (landTiles, hexSettings);
 
-		board.placeRobberOnTile (desertTile.id);
+		//board.placeRobberOnTile (desertTile.id);
 
 		generateIslands ();
 
-		List<GameTile> pirateTiles = getTilesForPirate ();
-		board.placePirateOnTile (pirateTiles [Random.Range(0, pirateTiles.Count)].id);
+		//List<GameTile> pirateTiles = getTilesForPirate ();
+		//board.placePirateOnTile (pirateTiles [Random.Range(0, pirateTiles.Count)].id);
 	}
 
 	public List<GameTile> findLandTiles(List<GameTile> allTiles) {
@@ -75,21 +75,34 @@ public class BoardDecorator {
 		List<GameTile> gameTiles = new List<GameTile> (landTiles);
 		Debug.Log ("GAMETILES.COUNT = " + gameTiles.Count);
 		int randomNum;
+		int maxMapDimension = Mathf.Max (mapWidth, mapHeight);
+		int difference = maxMapDimension - hexSettings.oceanLayers;
+
+		bool canBeLake;
+		do {
+			randomNum = Random.Range (0, gameTiles.Count);
+			canBeLake = (Mathf.Abs (gameTiles[randomNum].index.x) + Mathf.Abs (gameTiles[randomNum].index.y) + Mathf.Abs (gameTiles[randomNum].index.z)) < (difference * 2);
+		} while(!canBeLake);
+
+		Renderer renderer = gameTiles [randomNum].GetComponent<Renderer> ();
+		renderer.material = materials [TileType.Desert];
+
+		gameTiles[randomNum].tileType = TileType.Desert;
+		gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (false);
+		gameTiles [randomNum].transform.FindChild ("Dice Values").gameObject.SetActive (true);
+		desertTile = gameTiles[randomNum];
+
+		gameTiles.RemoveAt (randomNum);
+		availableLandPieces [TileType.Desert]--;
 
 		foreach (var pair in availableLandPieces) {
 			for (int i = 0; i < pair.Value; i++) {
 				randomNum = Random.Range (0, gameTiles.Count);
-				Renderer renderer = gameTiles [randomNum].GetComponent<Renderer> ();
+				renderer = gameTiles [randomNum].GetComponent<Renderer> ();
 				renderer.material = materials [pair.Key];
 
 				gameTiles[randomNum].tileType = pair.Key;
-				if (pair.Key == TileType.Desert) {
-					//MonoBehaviour.Destroy (gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject);
-					gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (false);
-					desertTile = gameTiles[randomNum];
-				} else {
-					gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (true);
-				}
+				gameTiles [randomNum].transform.FindChild ("Dice Value").gameObject.SetActive (true);
 				gameTiles.RemoveAt (randomNum);
 
 				if (gameTiles.Count == 0) {
@@ -293,7 +306,12 @@ public class BoardDecorator {
 			MonoBehaviour.Destroy (tile.transform.FindChild ("Dice Value").gameObject);
 			hexSettings.assignTileTypeToHex (tile, TileType.Ocean);
 		} else {
-			TileType randomType = hexSettings.getRandomTileType ();
+			int maxMapDimension = Mathf.Max (mapWidth, mapHeight);
+			int difference = maxMapDimension - hexSettings.oceanLayers;
+			
+			bool canBeLake = (Mathf.Abs (tile.index.x) + Mathf.Abs (tile.index.y) + Mathf.Abs (tile.index.z)) < (difference * 2);
+			Debug.Log ("Tile index = [" + Mathf.Abs (tile.index.x) + ", " + Mathf.Abs (tile.index.y) + ", " + Mathf.Abs (tile.index.z) + "], difference * 2 = " + (difference * 2) + "canBeLake = " + canBeLake);
+			TileType randomType = hexSettings.getRandomTileType (canBeLake);
 			if (randomType == TileType.Desert) {
 				MonoBehaviour.Destroy (tile.transform.FindChild ("Dice Value").gameObject);
 			}

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,8 @@ public class GameBoard : MonoBehaviour {
 	public GameObject merchantPrefab;
 
 	public GameObject[] harborPrefabs;
+
+	public GameObject fishGroundTilePrefab;
 
 	public Robber robber;
 	public Pirate pirate;
@@ -38,6 +41,7 @@ public class GameBoard : MonoBehaviour {
 	private int intersectionID;
 	private int edgeID;
 	private int harborID;
+	private int fishTileID;
 
 	//Dictionaries for each component
 	private Dictionary<string, GameTile> tilesDictionary = new Dictionary<string, GameTile>();
@@ -50,6 +54,8 @@ public class GameBoard : MonoBehaviour {
 	private static Dictionary<int, Edge> edgesByIdDictionary = new Dictionary<int, Edge> ();
 
 	private static Dictionary<int, Harbor> harborsByIdDictionary = new Dictionary<int, Harbor> ();
+
+	private static Dictionary<int, FishTile> fishTilesByIdDictionary = new Dictionary<int, FishTile> ();
 
 	private CubeIndex[] directions = 
 		new CubeIndex[] {
@@ -66,6 +72,8 @@ public class GameBoard : MonoBehaviour {
 	private static List<Edge> edgesList = new List<Edge>();
 	private static List<Harbor> harbors = new List<Harbor> ();
 
+	private List<FishTile> fishTiles = new List<FishTile>();
+
 	#region Getters and Setters
 	public Dictionary<int, GameTile> GameTiles {
 		get {return tilesByIdDictionary;}
@@ -81,6 +89,10 @@ public class GameBoard : MonoBehaviour {
 
 	public Dictionary<int, Harbor> Harbors {
 		get {return harborsByIdDictionary;}
+	}
+
+	public Dictionary<int, FishTile> FishTiles {
+		get {return fishTilesByIdDictionary;}
 	}
 	#endregion
 
@@ -258,12 +270,14 @@ public class GameBoard : MonoBehaviour {
 				neighbor.harbor = harbor;
 
 				harborGO.transform.position = shoreIntersections [i].getCommonTileWith (neighbor, TileType.Ocean).transform.position
-				+ 0.1f * Vector3.up;
+				+ 0.01f * Vector3.up;
 				harborGO.transform.localScale *= 1.25f;
 				harborGO.name = "Harbor " + harbor.id;
 
 				harbor.locations.Add (shoreIntersections [i]);
 				harbor.locations.Add (neighbor);
+
+				shoreIntersections [i].getCommonTileWith (neighbor, TileType.Ocean).hasHarbor = true;
 
 				SpriteRenderer[] arrows = harbor.GetComponentsInChildren<SpriteRenderer> ();
 
@@ -288,6 +302,102 @@ public class GameBoard : MonoBehaviour {
 				harborsByIdDictionary.Add (harborID - 1, harbor);
 			}
 		}
+	}
+
+	public void GenerateFishGroundTiles() {
+		List<GameTile> allTiles = GameTiles.Values.ToList ();
+		List<GameTile> fishTiles = new List<GameTile> ();
+
+		foreach (var tile in allTiles) {
+			int shoreIntersectionCount = 0;
+			int harborCount = 0;
+
+			List<Intersection> tileIntersections = tile.getIntersections ();
+			foreach (var intersection in tileIntersections) {
+				if (intersection.isShoreIntersection () && intersection.isMainIslandIntersection()) {
+					shoreIntersectionCount++;
+				}
+				//if (intersection.harbor != null) {
+				//	harborCount++;
+				//}
+			}
+
+			if (tile.tileType == TileType.Ocean && shoreIntersectionCount == 3 && !tile.hasHarbor) {//&& harborCount == 1) {
+				fishTiles.Add (tile);
+			}
+		}
+
+		foreach (var tile in fishTiles) {
+			List<Intersection> tileIntersections = tile.getIntersections ();
+
+			List<int> shoreIntersectionCornerNumbers = new List<int> ();
+			for (int i = 0; i < tileIntersections.Count; i++) {
+				if (tileIntersections [i].isShoreIntersection ()) {
+					shoreIntersectionCornerNumbers.Add(tile.getCornerNumberOfIntersection (tileIntersections [i]));
+				}
+			}
+
+			int corner1 = shoreIntersectionCornerNumbers [0];
+			int corner2 = shoreIntersectionCornerNumbers [1];
+			int corner3 = shoreIntersectionCornerNumbers [2];
+
+			int middleCorner = -1;
+
+			if (corner1 > corner2) {
+				if (corner2 > corner3) {
+					middleCorner = corner2;
+				} else if (corner1 > corner3) {
+					middleCorner = corner3;
+				} else {
+					middleCorner = corner1;
+				}
+			} else {
+				if (corner1 > corner3) {
+					middleCorner = corner1;
+				} else if (corner2 > corner3) {
+					middleCorner = corner3;
+				} else {
+					middleCorner = corner2;
+				}
+			}
+
+			if (shoreIntersectionCornerNumbers.Contains (0) && shoreIntersectionCornerNumbers.Contains (5)) {
+				if (shoreIntersectionCornerNumbers.Contains (4)) {
+					middleCorner = 5;
+				} else {
+					middleCorner = 0;
+				}
+			}
+
+			GameObject fishTileGO = Instantiate (fishGroundTilePrefab);
+			fishTileGO.transform.position = tile.transform.position + Vector3.up * 0.015f;
+			fishTileGO.transform.rotation = Quaternion.Euler(new Vector3 (90.0f, 0.0f, 30.0f + 60.0f * middleCorner));
+			fishTileGO.transform.Translate (Vector3.right * 0.38f, Space.Self);
+			Transform diceValue = fishTileGO.transform.FindChild ("Dice Value");
+			diceValue.transform.rotation = Quaternion.Euler (new Vector3 ((-1.0f * fishTileGO.transform.rotation.z)-90.0f, 0.0f, 0.0f));
+			diceValue.transform.Rotate (new Vector3 (90.0f, 0.0f, 0.0f), Space.Self);
+			fishTileGO.transform.parent = tile.transform;
+
+			FishTile fishTile = fishTileGO.GetComponent<FishTile> ();
+			fishTile.locationTile = tile;
+			fishTile.id = fishTileID++;
+
+			fishTileGO.name = "Fish Tile " + fishTile.id;
+
+			int randDiceValue;
+			if (Random.Range (0.0f, 1.0f) < 0.5f) {
+				randDiceValue = Random.Range (2, 7);
+			} else {
+				randDiceValue = Random.Range (8, 13);
+			}
+			fishTile.setDiceValue(randDiceValue);
+
+			tile.fishTile = fishTile;
+			tile.diceValue = fishTile.diceValue;
+
+			fishTilesByIdDictionary.Add (fishTile.id, fishTile);
+		}
+
 	}
 
 	#region GamePiece Place and Move Methods
@@ -469,17 +579,26 @@ public class GameBoard : MonoBehaviour {
 
 		harborsByIdDictionary.Clear ();
 
+		fishTilesByIdDictionary.Clear ();
+
 		tilesList.Clear ();
+		fishTiles.Clear ();
 
 		tileID = 0;
 		intersectionID = 0;
 		edgeID = 0;
 		harborID = 0;
+		fishTileID = 0;
 	}
 
 	public void ClearHarbors() {
 		harborID = 0;
 		harborsByIdDictionary.Clear ();
+	}
+
+	public void ClearFishTiles() {
+		fishTileID = 0;
+		fishTilesByIdDictionary.Clear ();
 	}
 
 	public GameTile GameTileAt(CubeIndex index){

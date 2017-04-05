@@ -212,15 +212,18 @@ public class Player : MonoBehaviour {
 	public void receiveAssets(AssetTuple assetToAdd) {
 		this.receiveResources (assetToAdd.resources);
 		this.receiveCommodities (assetToAdd.commodities);
+		this.receiveFishTokens (assetToAdd.fishTokens);
 	}
 
 	public void spendAssets(AssetTuple assetToSpend) {
 		this.spendResources (assetToSpend.resources);
 		this.spendCommodities (assetToSpend.commodities);
+		this.spendFishTokens (assetToSpend.fishTokens);
 	}
 
 	public bool hasAvailableAssets(AssetTuple assetsNeeded) {
-		return hasAvailableResources (assetsNeeded.resources) && hasAvailableCommodities (assetsNeeded.commodities);
+		return hasAvailableResources (assetsNeeded.resources) && hasAvailableCommodities (assetsNeeded.commodities)
+			&& hasAvailableFishTokens(assetsNeeded.fishTokens);
 	}
 
 	public AssetTuple getCurrentAssets() {
@@ -228,11 +231,11 @@ public class Player : MonoBehaviour {
 	}
 
 	public int getNumAssets() {
-		return getNumResources () + getNumCommodities ();
+		return getNumResources () + getNumCommodities () + getNumFishTokens();
 	}
 
 	public int getNumDiscardsNeeded() {
-		int numAssets = getNumAssets ();
+		int numAssets = getNumAssets () - getNumFishTokens();
 		int numDiscardsNeeded = 0;
 
 		if (numAssets > 7) {
@@ -405,6 +408,79 @@ public class Player : MonoBehaviour {
 		List<CommodityType> commodityKeys = new List<CommodityType>(assets.commodities.commodityTuple.Keys);
 		for (int i = 0; i < commodityKeys.Count; i++) {
 			if (assets.commodities.commodityTuple [commodityKeys [i]] != 0) {
+				zero = false;
+			}
+		}
+
+		return zero;
+	}
+
+	#endregion
+
+	#region Fish Receive/Give Methods
+
+	public void receiveFishTokens(FishTuple fishTokensToAdd) {
+		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(assets.fishTokens.fishTuple.Keys);
+
+		for (int i = 0; i < fishTokenKeys.Count; i++) {
+			if (fishTokensToAdd.fishTuple [fishTokenKeys [i]] >= 0) {
+				print ("Added " + fishTokensToAdd.fishTuple [fishTokenKeys [i]].ToString () + " " + fishTokenKeys [i].ToString () + " to " + this.playerName);
+				assets.fishTokens.fishTuple [fishTokenKeys [i]] += fishTokensToAdd.fishTuple [fishTokenKeys [i]];
+			}
+		}
+	}
+
+	public void spendFishTokens(FishTuple fishTokensToSpend) {
+		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(assets.fishTokens.fishTuple.Keys);
+
+		for (int i = 0; i < fishTokenKeys.Count; i++) {
+			if (assets.fishTokens.fishTuple [fishTokenKeys [i]] >= fishTokensToSpend.fishTuple [fishTokenKeys [i]]) {
+				print ("Subtracted " + fishTokensToSpend.fishTuple [fishTokenKeys [i]].ToString () + " " + fishTokenKeys [i].ToString () + " from " + this.playerName);
+				assets.fishTokens.fishTuple [fishTokenKeys [i]] -= fishTokensToSpend.fishTuple [fishTokenKeys [i]];
+			}
+		}
+	}
+
+	public bool hasAvailableFishTokens(FishTuple fishTokensNeeded) {
+		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(assets.fishTokens.fishTuple.Keys);
+
+		for (int i = 0; i < fishTokenKeys.Count; i++) {
+			if (assets.fishTokens.fishTuple [fishTokenKeys [i]] < fishTokensNeeded.fishTuple [fishTokenKeys [i]]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public void receiveFishTokens(FishTokenType resource, int amount) {
+		if (amount < 0) {
+			//Error
+		} else {
+			assets.fishTokens.fishTuple[resource] += amount;
+		}
+	}
+
+	public FishTuple getCurrentFishTokens() {
+		return assets.fishTokens;
+	}
+
+	public int getNumFishTokens() {
+		int sum = 0;
+		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(assets.fishTokens.fishTuple.Keys);
+
+		for (int i = 0; i < fishTokenKeys.Count; i++) {
+			sum += assets.fishTokens.fishTuple [fishTokenKeys [i]];
+		}
+		return sum;
+	}
+
+	public bool hasZeroFishTokens() {
+		bool zero = true;
+
+		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(assets.fishTokens.fishTuple.Keys);
+		for (int i = 0; i < fishTokenKeys.Count; i++) {
+			if (assets.fishTokens.fishTuple [fishTokenKeys [i]] != 0) {
 				zero = false;
 			}
 		}
