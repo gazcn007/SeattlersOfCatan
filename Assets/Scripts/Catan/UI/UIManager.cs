@@ -29,6 +29,8 @@ public class UIManager : MonoBehaviour {
 	public FishResourcePanel fishresourcepanel;
 	//no script needed for this
 	public GameObject robberOrPiratePanel;
+	public GameObject costspanel;
+	public FlipChartPanel flipchart;
 
 
 	void Awake() {
@@ -201,7 +203,21 @@ public class UIManager : MonoBehaviour {
 			}
 		}
 	}
+	public void toggleFlipChartPanel (){
+		if (flipchart.isActiveAndEnabled == false) {
+			flipchart.openPanel (5, 2, 4);
+		} else {
+			flipchart.gameObject.SetActive (false);
+		}
 
+	}
+	public void togglerCostsPanel(){
+		if(costspanel.activeSelf==true){
+			costspanel.SetActive (false);
+		}else{
+			costspanel.SetActive (true);
+		}
+	}
 	public void robberPirateSelection(int selection){
 		robberOrPiratePanel.SetActive (false);
 		//nehir this will be called by panel 0=robber 1=pirate
@@ -257,12 +273,12 @@ public class UIManager : MonoBehaviour {
 			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
-				//tradePanel.gameObject.SetActive (true);
+
+				//tradePanel.OpenPanel(opponenets, currentplayers assets);
 				EventTransferManager.instance.ClientTradePlayer(PhotonNetwork.player.ID - 1);
 			}
 		}
 	}
-
 
 	public void endTurn() {
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {

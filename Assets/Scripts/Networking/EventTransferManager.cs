@@ -109,7 +109,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			yield return new WaitForEndOfFrame ();
 		}
 	}
-
+		
 	[PunRPC]
 	void SignalTrade(int senderNum, int receiverNum, int[] offer, int[] receive) {
 		Debug.Log ("Receiver number is " + receiverNum);
@@ -128,6 +128,34 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 			clientCatanManager.uiManager.tradePlayerPanel.OpenRespond(clientCatanManager.players[senderNum], receiveTuple, offerTuple);
 		}
+	}
+
+	public void OnTradeRespose(bool active) {
+		GetComponent<PhotonView> ().RPC ("PlayerTradePanelActivation", PhotonTargets.All, new object[] {
+			active
+		});
+	}
+
+	[PunRPC]
+	void PlayerTradePanelActivation(bool active) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		TradePlayerPanel tradePanel = clientCatanManager.uiManager.tradePlayerPanel;
+
+		for (int i = 0; i < tradePanel.getAssetSliders.Length; i++) {
+			tradePanel.getAssetSliders [i].value = 0;
+		}
+		for (int i = 0; i < tradePanel.giveAssetSliders.Length; i++) {
+			tradePanel.giveAssetSliders [i].value = 0;
+		}
+
+		tradePanel.confirm.onClick.RemoveAllListeners ();
+		tradePanel.cancel.onClick.RemoveAllListeners ();
+		tradePanel.counter.onClick.RemoveAllListeners ();
+
+		for (int i = 0; i < tradePanel.optionsPanel.Count; i++) {
+			tradePanel.optionsPanel [i].onClick.RemoveAllListeners ();
+		}
+		clientCatanManager.uiManager.tradePlayerPanel.gameObject.SetActive (false);
 	}
 
 	public void OnMoveGamePiece(int boardPieceNum, int tileID) {
@@ -1009,6 +1037,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	[PunRPC]
 	void HandleOperationFailure() {
 		EventTransferManager.instance.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayers = false;
 		EventTransferManager.instance.currentActiveButton = -1;
 	}
 

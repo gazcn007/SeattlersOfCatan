@@ -355,8 +355,12 @@ public class CatanManager : MonoBehaviour {
 			return;
 		}
 
-		List<Player> opponents = new List<Player> (players);
-		opponents.Remove(players[currentPlayerTurn]);
+		List<Player> opponents = new List<Player> ();
+
+		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+			opponents.Add (players [i]);
+		}
+		opponents.Remove (players [currentPlayerTurn]);
 		uiManager.tradePlayerPanel.OpenPanel (opponents, players [currentPlayerTurn].assets);
 	}
 
@@ -392,5 +396,8 @@ public class CatanManager : MonoBehaviour {
 		currentPlayerTurn = currentTurn % PhotonNetwork.playerList.Length;
 	}
 
+	public void CancelCommand() {
+		StopAllCoroutines ();
+	}
 
 }
