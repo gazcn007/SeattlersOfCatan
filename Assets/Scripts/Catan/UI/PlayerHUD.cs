@@ -74,6 +74,10 @@ public class PlayerHUD : MonoBehaviour {
 			cointxt.text= displayingPlayer.assets.commodities.commodityTuple[CommodityType.Coin].ToString();
 			clothtxt.text= displayingPlayer.assets.commodities.commodityTuple[CommodityType.Cloth].ToString();
 
+			oneFishText.text = displayingPlayer.assets.fishTokens.fishTuple[FishTokenType.One].ToString();
+			twoFishText.text = displayingPlayer.assets.fishTokens.fishTuple[FishTokenType.Two].ToString();
+			threeFishText.text = displayingPlayer.assets.fishTokens.fishTuple[FishTokenType.Three].ToString();
+
 			//resourcesText.text = displayingPlayer.getNumResources ().ToString();
 
 			resourcesText.text = displayingPlayer.getNumAssets ().ToString();

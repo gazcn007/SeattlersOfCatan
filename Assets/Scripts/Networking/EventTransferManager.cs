@@ -611,17 +611,21 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
+							Debug.Log ("In Ocean tile");
 							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
+								Debug.Log ("Ocean tile yields fish!");
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
 						}
-						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
+						// NEVER HOLDS, MUST DIRECTLY CHECK THE LAKE TILE ITSELF
+						/*if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
+							Debug.Log ("In Lake tile");
 							if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
-						}
+						}*/
 					}
 				}
 			}
@@ -673,17 +677,21 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
+							Debug.Log ("In Ocean tile");
 							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
+								Debug.Log ("Ocean tile yields fish!");
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
 						}
-						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
+						// NEVER HOLDS, MUST DIRECTLY CHECK THE LAKE TILE ITSELF
+						/*if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Desert) {
+							Debug.Log ("In Lake tile");
 							if (diceOutcome == 11 || diceOutcome == 12 || diceOutcome == 2 || diceOutcome == 3) {
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
 							}
-						}
+						}*/
 					}
 				}
 			}

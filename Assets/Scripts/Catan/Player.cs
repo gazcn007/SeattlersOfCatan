@@ -16,7 +16,7 @@ public class Player : MonoBehaviour {
 
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	public Dictionary<System.Type, List<Unit>> ownedUnits;
-	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 10, 10, 10);
+	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 10, 10, 10, 5, 3, 2);
 
 	public GameTile lastGameTileSelection;
 	public Edge lastEdgeSelection;
