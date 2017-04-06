@@ -56,9 +56,9 @@ public class FlipChartPanel : MonoBehaviour {
 
 	public void openPanel(int x,int y, int z){
 		//add methods to get lvls from player this needs to be a tuple in asset of lvls from 0 to 5
-		int tradelvl=x;
-		int politicslvl=y;
-		int sciencelvl=z;
+		int tradelvl = x;
+		int politicslvl = y;
+		int sciencelvl = z;
 		this.gameObject.SetActive (true);
 
 		//setting the active levels for each section
@@ -89,7 +89,7 @@ public class FlipChartPanel : MonoBehaviour {
 			}
 			//set cost array
 			int cost = tradelvl + 1;
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < 5; i++) {
 				if (i < cost) {
 					tradeCosts [i].gameObject.SetActive (true);
 				} else {
@@ -127,7 +127,6 @@ public class FlipChartPanel : MonoBehaviour {
 			}
 		}
 		if(politicslvl == 5) {
-
 			blue.gameObject.SetActive (true);
 			for (int i = 0; i < 6; i++) {
 				blueDice [i].gameObject.SetActive (true);
@@ -190,6 +189,7 @@ public class FlipChartPanel : MonoBehaviour {
 				politicsSpecialAbility.gameObject.SetActive (false);
 			}
 		}
+
 		if (sciencelvl == 5) {
 			green.gameObject.SetActive (true);
 			for (int i = 0; i < 6; i++) {
@@ -253,13 +253,55 @@ public class FlipChartPanel : MonoBehaviour {
 		this.gameObject.SetActive (true);
 
 	}
+
 	public void upgradeTrade(){
+		CityImprovementType trade = CityImprovementType.Trade;
 
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].canUpgrade (trade)) {
+			AssetTuple upgradeCost = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.nextImprovementCost (trade);
+
+			EventTransferManager.instance.OnTradeWithBank (CatanManager.instance.currentPlayerTurn, false, upgradeCost);
+			EventTransferManager.instance.OnUpgradeCity (CatanManager.instance.currentPlayerTurn, (int)trade);
+
+			int scienceLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Science];
+			int politicsLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Politics];
+			int tradeLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Trade];
+
+			openPanel (tradeLevel, politicsLevel, scienceLevel);
+		}
 	}
+
 	public void upgradePolitics(){
+		CityImprovementType politics = CityImprovementType.Politics;
 
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].canUpgrade (politics)) {
+			AssetTuple upgradeCost = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.nextImprovementCost (politics);
+
+			EventTransferManager.instance.OnTradeWithBank (CatanManager.instance.currentPlayerTurn, false, upgradeCost);
+			EventTransferManager.instance.OnUpgradeCity (CatanManager.instance.currentPlayerTurn, (int)politics);
+
+			int scienceLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Science];
+			int politicsLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Politics];
+			int tradeLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Trade];
+
+			openPanel (tradeLevel, politicsLevel, scienceLevel);
+		}
 	}
-	public void upgradeScience(){
 
+	public void upgradeScience(){
+		CityImprovementType science = CityImprovementType.Science;
+
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].canUpgrade (science)) {
+			AssetTuple upgradeCost = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.nextImprovementCost (science);
+
+			EventTransferManager.instance.OnTradeWithBank (CatanManager.instance.currentPlayerTurn, false, upgradeCost);
+			EventTransferManager.instance.OnUpgradeCity (CatanManager.instance.currentPlayerTurn, (int)science);
+
+			int scienceLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Science];
+			int politicsLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Politics];
+			int tradeLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Trade];
+
+			openPanel (tradeLevel, politicsLevel, scienceLevel);
+		}
 	}
 }

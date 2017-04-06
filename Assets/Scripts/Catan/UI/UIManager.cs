@@ -205,17 +205,31 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 	public void toggleFlipChartPanel (){
-		if (flipchart.isActiveAndEnabled == false) {
-			flipchart.openPanel (5, 2, 4);
+		int buttonId = 4;
+		Debug.Log ("toggleFlipChartPanel()");
+		if (flipchart.isActiveAndEnabled == false && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				int scienceLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Science];
+				int politicsLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Politics];
+				int tradeLevel = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.cityImprovements [CityImprovementType.Trade];
+
+				EventTransferManager.instance.waitingForPlayer = true;
+				EventTransferManager.instance.currentActiveButton = buttonId;
+				flipchart.openPanel (tradeLevel, politicsLevel, scienceLevel);
+			}
 		} else {
-			flipchart.gameObject.SetActive (false);
+			if (EventTransferManager.instance.currentActiveButton == buttonId) {
+				flipchart.gameObject.SetActive (false);
+				EventTransferManager.instance.OnOperationFailure ();
+			}
 		}
 
 	}
 	public void togglerCostsPanel(){
-		if(costspanel.activeSelf==true){
+		int buttonId = 6;
+		if(costspanel.activeSelf == true){
 			costspanel.SetActive (false);
-		}else{
+		} else{
 			costspanel.SetActive (true);
 		}
 	}

@@ -201,6 +201,20 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		});
 	}
 
+	public void OnUpgradeCity(int playerNum, int upgradeType) {
+		GetComponent<PhotonView> ().RPC ("UpgradeCity", PhotonTargets.All, new object[] {
+			playerNum,
+			upgradeType
+		});
+	}
+
+	[PunRPC]
+	void UpgradeCity(int playerNum, int upgradeType) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+
+		clientCatanManager.players [playerNum].cityImprovements.ImproveCityOfType ((CityImprovementType)upgradeType);
+	}
+
 	public void OnDiceRolled() {
 		if (!diceRolledThisTurn) {
 			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
