@@ -29,6 +29,7 @@ public class PlayerHUD : MonoBehaviour {
 
 	public Image avatarpanel;
 	public Image avatar;
+	public Image oldBoot;
 	public Player displayingPlayer;
 
 	//fish
@@ -57,6 +58,12 @@ public class PlayerHUD : MonoBehaviour {
 				avatar.sprite = displayingPlayer.avatar;
 				foundAvatar = true;
 			}
+		}
+
+		if (displayingPlayer.hasOldBoot ()) {
+			oldBoot.gameObject.SetActive (true);
+		} else {
+			oldBoot.gameObject.SetActive (false);
 		}
 	}
 

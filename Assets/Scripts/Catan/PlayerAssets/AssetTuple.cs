@@ -29,6 +29,12 @@ public class AssetTuple {
 		fishTokens = new FishTuple (oneTokens, twoTokens, threeTokens);
 	}
 
+	public AssetTuple(int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneTokens, int twoTokens, int threeTokens, int oldBoot) {
+		resources = new ResourceTuple (brick, grain, lumber, ore, wool);
+		commodities = new CommodityTuple (paper, coin, cloth);
+		fishTokens = new FishTuple (oneTokens, twoTokens, threeTokens, oldBoot);
+	}
+
 	public AssetTuple(ResourceTuple resourceTuple, CommodityTuple commodityTuple) {
 		this.resources = resourceTuple;
 		this.commodities = commodityTuple;

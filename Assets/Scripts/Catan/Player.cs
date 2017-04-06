@@ -23,7 +23,6 @@ public class Player : MonoBehaviour {
 	public Intersection lastIntersectionSelection;
 	public Unit lastUnitSelection;
 
-
 	public bool collectedThisTurn;
 
 	public Sprite avatar;
@@ -486,6 +485,10 @@ public class Player : MonoBehaviour {
 		}
 
 		return zero;
+	}
+
+	public bool hasOldBoot() {
+		return assets.fishTokens.hasOldBoot ();
 	}
 
 	#endregion

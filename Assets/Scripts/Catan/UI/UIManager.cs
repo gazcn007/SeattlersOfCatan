@@ -230,8 +230,12 @@ public class UIManager : MonoBehaviour {
 
 	public void toggleFishTradePanel(){
 		//nehir add however you need to call this eventtransfer manager
-		EventTransferManager.instance.waitingForPlayer = true;
-		fishTradePanel.OpenPanel (CatanManager.instance.players[CatanManager.instance.currentPlayerTurn].getCurrentAssets());
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				EventTransferManager.instance.waitingForPlayer = true;
+				fishTradePanel.OpenPanel (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getCurrentAssets ());
+			}
+		}
 	}
 
 	public void tradeWithBankEvent() {
@@ -275,8 +279,6 @@ public class UIManager : MonoBehaviour {
 			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
 				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
 				EventTransferManager.instance.currentActiveButton = buttonId;
-
-				//tradePanel.OpenPanel(opponenets, currentplayers assets);
 				EventTransferManager.instance.ClientTradePlayer(PhotonNetwork.player.ID - 1);
 			}
 		}

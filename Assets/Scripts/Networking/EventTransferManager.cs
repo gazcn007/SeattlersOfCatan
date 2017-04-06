@@ -70,16 +70,20 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			assetsTraded.commodities.commodityTuple[CommodityType.Cloth],
 			assetsTraded.fishTokens.fishTuple[FishTokenType.One],
 			assetsTraded.fishTokens.fishTuple[FishTokenType.Two],
-			assetsTraded.fishTokens.fishTuple[FishTokenType.Three]
+			assetsTraded.fishTokens.fishTuple[FishTokenType.Three],
+			assetsTraded.fishTokens.fishTuple[FishTokenType.OldBoot]
 		});
 	}
 
+	public void OnTradeOfferCounter(int senderNumber, int receiverNumber, AssetTuple offer, AssetTuple receive){
+		StartCoroutine (TradeOffer (senderNumber, receiverNumber, offer, receive,true));
+	}
 	public void OnTradeOffer(int senderNumber, int receiverNumber, AssetTuple offer, AssetTuple receive) {
 		Debug.Log (LevelManager.instance.players [senderNumber].playerName + " sends a trade offer to " + LevelManager.instance.players [receiverNumber].playerName);
-		StartCoroutine (TradeOffer (senderNumber, receiverNumber, offer, receive));
+		StartCoroutine (TradeOffer (senderNumber, receiverNumber, offer, receive,false));
 	}
 
-	public IEnumerator TradeOffer(int senderNumber, int receiverNumber, AssetTuple offer, AssetTuple receive) {
+	public IEnumerator TradeOffer(int senderNumber, int receiverNumber, AssetTuple offer, AssetTuple receive,bool counter) {
 		int[] offerArray = new int[offer.resources.resourceTuple.Values.Count + offer.commodities.commodityTuple.Values.Count];
 		int[] receiveArray = new int[offer.resources.resourceTuple.Values.Count + offer.commodities.commodityTuple.Values.Count];
 
@@ -95,7 +99,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			senderNumber,
 			receiverNumber,
 			offerArray,
-			receiveArray
+			receiveArray,
+			counter
 		});
 
 		int[] waitingForPlayersArray = new int[1];
@@ -114,7 +119,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 		
 	[PunRPC]
-	void SignalTrade(int senderNum, int receiverNum, int[] offer, int[] receive) {
+	void SignalTrade(int senderNum, int receiverNum, int[] offer, int[] receive,bool counter) {
 		Debug.Log ("Receiver number is " + receiverNum);
 		if(PhotonNetwork.player.ID - 1 == receiverNum) {
 			Debug.Log ("Receiver true number: " + receiverNum);
@@ -128,8 +133,15 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			for (int i = 0; i < receive.Length; i++) {
 				receiveTuple.SetValueAtIndex (i, receive [i]);
 			}
-
-			clientCatanManager.uiManager.tradePlayerPanel.OpenRespond(clientCatanManager.players[senderNum], receiveTuple, offerTuple);
+			if (counter) {
+				Debug.Log ("Open Counter");
+				clientCatanManager.uiManager.tradePlayerPanel.OpenRespondCounter(clientCatanManager.players[senderNum], offerTuple, receiveTuple);
+				clientCatanManager.uiManager.tradePlayerPanel.waiting.text="Counter Offer Received Please Respond";
+				clientCatanManager.uiManager.tradePlayerPanel.waiting.gameObject.SetActive (true);
+			} else {
+				clientCatanManager.uiManager.tradePlayerPanel.waiting.gameObject.SetActive (false);
+				clientCatanManager.uiManager.tradePlayerPanel.OpenRespond(clientCatanManager.players[senderNum], offerTuple, receiveTuple);
+			}
 		}
 	}
 
@@ -139,6 +151,29 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		});
 	}
 
+	public void OnTradeEnd(int to,bool result){
+		Debug.Log ("sending notification to: " + to);
+		GetComponent<PhotonView> ().RPC ("SignalEnd", PhotonTargets.All, new object[] {
+			to,
+			result
+		});
+	}
+	[PunRPC]
+	void SignalEnd(int to,bool result){
+		if(PhotonNetwork.player.ID - 1 == to) {
+			Debug.Log ("trade notified: " + to);
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			clientCatanManager.uiManager.tradePlayerPanel.notification.gameObject.SetActive (true);
+			if (result) {
+				clientCatanManager.uiManager.tradePlayerPanel.notificationText.text = "Trade Accepted";
+			} else {
+				clientCatanManager.uiManager.tradePlayerPanel.notificationText.text = "Trade Rejected";
+			}
+		}
+		GetComponent<PhotonView> ().RPC ("PlayerTradePanelActivation", PhotonTargets.All, new object[] {
+			false
+		});
+	}
 	[PunRPC]
 	void PlayerTradePanelActivation(bool active) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
@@ -155,9 +190,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		tradePanel.cancel.onClick.RemoveAllListeners ();
 		tradePanel.counter.onClick.RemoveAllListeners ();
 
-		for (int i = 0; i < tradePanel.optionsPanel.Count; i++) {
-			tradePanel.optionsPanel [i].onClick.RemoveAllListeners ();
-		}
 		clientCatanManager.uiManager.tradePlayerPanel.gameObject.SetActive (false);
 	}
 
@@ -422,6 +454,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			case MoveType.TradeBank:
 				clientCatanManager.tradeWithBankAttempt (4);
 				break;
+			case MoveType.TradePlayer:
+				clientCatanManager.tradeWithPlayerAttempt (1);
+				break;
 			case MoveType.MoveShip:
 				StartCoroutine(clientCatanManager.unitManager.moveShip ());
 				break;
@@ -579,10 +614,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void ResourceChangeEvent(int playerNum, bool gained, int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneFish, int twoFish, int threeFish) {
+	void ResourceChangeEvent(int playerNum, bool gained, int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneFish, int twoFish, int threeFish, int oldBoot) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 
-		AssetTuple delta = new AssetTuple (brick, grain, lumber, ore, wool, paper, coin, cloth, oneFish, twoFish, threeFish);
+		AssetTuple delta = new AssetTuple (brick, grain, lumber, ore, wool, paper, coin, cloth, oneFish, twoFish, threeFish, oldBoot);
 
 		if (gained) {
 			clientCatanManager.players [playerNum].receiveAssets (delta);
@@ -619,7 +654,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
-							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
+							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome && clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								fishTokens.printFishTuple ();
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
@@ -634,9 +669,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 						foreach (var intersection in lakeTile.getIntersections()) {
 							if (intersection.occupier != null && intersection.occupier.owner == clientCatanManager.players [i]) {
-								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
-								fishTokens.printFishTuple ();
-								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								if (clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
+									FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
+									fishTokens.printFishTuple ();
+									OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								}
 							}
 						}
 					}
@@ -690,7 +727,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
-							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
+							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome && clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								fishTokens.printFishTuple ();
 								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
@@ -705,9 +742,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 						foreach (var intersection in lakeTile.getIntersections()) {
 							if (intersection.occupier != null && intersection.occupier.owner == clientCatanManager.players [i]) {
-								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
-								fishTokens.printFishTuple ();
-								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								if (clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
+									FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
+									fishTokens.printFishTuple ();
+									OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								}
 							}
 						}
 					}
@@ -748,15 +787,15 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				});
 			}
 
-			int robberTileID = clientBoard.robber.occupyingTile.id;
+			//int robberTileID = clientBoard.robber.occupyingTile.id;
 			//int pirateTileID = clientBoard.pirate.occupyingTile.id;
 
-			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
+			/*GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 				0,
 				robberTileID,
 				false
 			});
-			/*
+
 			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 				1,
 				pirateTileID
@@ -797,6 +836,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				fishTileToPaint.locationTile.diceValue = diceValue;
 			}
 		}
+	}
+
+	[PunRPC]
+	void OldBootReceived(int playerNumber, bool received) {
+
 	}
 
 

@@ -22,7 +22,8 @@ public class ResourceManager : MonoBehaviour {
 	private Dictionary<System.Type, ResourceTuple> costsChart = new Dictionary<System.Type, ResourceTuple>();
 	private Dictionary<UnitType, AssetTuple> resourceCostsChart = new Dictionary<UnitType, AssetTuple>();
 
-	private Dictionary<FishTokenType, int> fishTokensAvailable = new Dictionary<FishTokenType, int> ();
+	//private Dictionary<FishTokenType, int> fishTokensAvailable = new Dictionary<FishTokenType, int> ();
+	private FishTuple fishTokensAvailable;
 
 	//Die eventDie;
 	//ResourceCostManager resourceCostManager;
@@ -66,9 +67,11 @@ public class ResourceManager : MonoBehaviour {
 	}
 
 	public void PopulateFishTokensDictionary() {
-		fishTokensAvailable.Add (FishTokenType.One, 11);
-		fishTokensAvailable.Add (FishTokenType.Two, 10);
-		fishTokensAvailable.Add (FishTokenType.Three, 8);
+		//fishTokensAvailable.Add (FishTokenType.One, 11);
+		//fishTokensAvailable.Add (FishTokenType.Two, 10);
+		//fishTokensAvailable.Add (FishTokenType.Three, 8);
+
+		fishTokensAvailable = new FishTuple (11, 10, 8, 1);
 	}
 
 	public ResourceTuple getCostOfUnit(System.Type unitType) {
@@ -138,13 +141,13 @@ public class ResourceManager : MonoBehaviour {
 
 	public void receiveFishTokens(FishTuple fishTokensUsed) {
 		foreach (var pair in fishTokensUsed.fishTuple) {
-			fishTokensAvailable [pair.Key] += pair.Value;
+			fishTokensAvailable.fishTuple [pair.Key] += pair.Value;
 		}
 	}
 
 	public void giveFishTokens(FishTuple fishTokensGiven) {
 		foreach (var pair in fishTokensGiven.fishTuple) {
-			fishTokensAvailable [pair.Key] -= pair.Value;
+			fishTokensAvailable.fishTuple [pair.Key] -= pair.Value;
 		}
 	}
 
@@ -157,22 +160,29 @@ public class ResourceManager : MonoBehaviour {
 
 		if (numFishTokensLeft () < numCollected) {
 			Debug.Log ("numFishTokensLeft () < numCollected");
-			foreach (var pair in fishTokensAvailable) {
+			foreach (var pair in fishTokensAvailable.fishTuple) {
 				Debug.Log ("Key = " + pair.Key + ", Value = " + pair.Value);
 			}
 			return fishTokensCollected;
 		}
 
 		int collectionLeft = numCollected;
+		List<FishTokenType> tokensAvailable = fishTokensAvailable.listForm ();
 		while (collectionLeft > 0) {
-			int randomNum;
-			do {
-				randomNum = Random.Range (0, fishTokensAvailable.Values.Count);
-				Debug.Log("RandomNUm = " + randomNum);
-			} while(fishTokensAvailable [(FishTokenType)randomNum] == 0);
+			//int randomNum;
+			//do {
+			//	randomNum = Random.Range (0, fishTokensAvailable.fishTuple.Values.Count);
+			//	Debug.Log("RandomNUm = " + randomNum);
+			//} while(fishTokensAvailable [(FishTokenType)randomNum] == 0);
+			int randomNum = Random.Range(0, tokensAvailable.Count);
+			FishTokenType drawnToken = tokensAvailable [randomNum];
 
-			fishTokensCollected.addFishTokenWithType ((FishTokenType)randomNum, 1);
+			fishTokensCollected.addFishTokenWithType (drawnToken, 1);
 			collectionLeft--;
+
+			if (drawnToken == FishTokenType.OldBoot) {
+				Debug.Log (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerName + " draws the Old Boot!");
+			}
 		}
 
 		return fishTokensCollected;
@@ -180,10 +190,10 @@ public class ResourceManager : MonoBehaviour {
 
 	public int numFishTokensLeft() {
 		int sum = 0;
-		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(fishTokensAvailable.Keys);
+		List<FishTokenType> fishTokenKeys = new List<FishTokenType>(fishTokensAvailable.fishTuple.Keys);
 
 		for (int i = 0; i < fishTokenKeys.Count; i++) {
-			sum += fishTokensAvailable [fishTokenKeys [i]];
+			sum += fishTokensAvailable.fishTuple [fishTokenKeys [i]];
 		}
 		return sum;
 	}

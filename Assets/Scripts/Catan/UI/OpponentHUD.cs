@@ -16,6 +16,7 @@ public class OpponentHUD : MonoBehaviour {
 	public Image avatarpanel;
 	public Image avatar;
 	public Player displayingPlayer;
+	public Image oldBoot;
 
 	private bool foundAvatar;
 
@@ -33,6 +34,11 @@ public class OpponentHUD : MonoBehaviour {
 				avatar.sprite = displayingPlayer.avatar;
 				foundAvatar = true;
 			}
+		}
+		if (displayingPlayer.hasOldBoot ()) {
+			oldBoot.gameObject.SetActive (true);
+		} else {
+			oldBoot.gameObject.SetActive (false);
 		}
 	}
 
