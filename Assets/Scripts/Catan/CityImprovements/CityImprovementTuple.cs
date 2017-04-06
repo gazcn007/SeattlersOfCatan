@@ -27,7 +27,10 @@ public class CityImprovementTuple {
 
 	public AssetTuple nextImprovementCost(CityImprovementType improvementType) {
 		CommodityTuple commodityCost = new CommodityTuple ();
-		commodityCost.addCommodityWithType (upgradeCommodityChart [improvementType], cityImprovements [improvementType] + 1);
+
+		if (cityImprovements [improvementType] < 5) {
+			commodityCost.addCommodityWithType (upgradeCommodityChart [improvementType], cityImprovements [improvementType] + 1);
+		}
 
 		return new AssetTuple (new ResourceTuple(), commodityCost);
 	}
@@ -37,4 +40,11 @@ public enum CityImprovementType {
 	Science = 0,
 	Politics,
 	Trade
+}
+
+public enum EventDieFace {
+	Green = 0,
+	Blue,
+	Yellow,
+	Black
 }

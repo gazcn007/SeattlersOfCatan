@@ -17,6 +17,7 @@ public class Player : MonoBehaviour {
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	public Dictionary<System.Type, List<Unit>> ownedUnits;
 	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 10, 10, 10, 0, 0, 0);
+	public List<ProgressCard> progressCards = new List<ProgressCard> ();
 	public CityImprovementTuple cityImprovements;
 
 	public GameTile lastGameTileSelection;
@@ -71,6 +72,26 @@ public class Player : MonoBehaviour {
 			}
 		}
 		return canUpgrade;
+	}
+
+	public bool canDrawProgressCard(EventDieFace faceType, int redDieRoll) {
+		bool canDraw = false;
+
+		switch (faceType) {
+		case EventDieFace.Green:
+			canDraw = redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Science] + 1);
+			break;
+		case EventDieFace.Blue:
+			canDraw = redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Politics] + 1);
+			break;
+		case EventDieFace.Yellow:
+			canDraw = redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Trade] + 1);
+			break;
+		default:
+			break;
+		}
+
+		return canDraw;
 	}
 
 	public bool unlockedTradingHouse() {
