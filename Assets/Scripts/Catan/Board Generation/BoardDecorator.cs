@@ -35,7 +35,7 @@ public class BoardDecorator {
 		hexSettings.setDiceProbabilitiesByTotalNumberOfHexes (landTiles.Count);
 		setTileIDsBySettings (landTiles, hexSettings);
 
-		//board.placeRobberOnTile (desertTile.id);
+		board.placeRobberOnTile (desertTile.id + 1);
 
 		generateIslands ();
 

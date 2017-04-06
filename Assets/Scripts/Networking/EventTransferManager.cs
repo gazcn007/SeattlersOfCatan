@@ -161,10 +161,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		clientCatanManager.uiManager.tradePlayerPanel.gameObject.SetActive (false);
 	}
 
-	public void OnMoveGamePiece(int boardPieceNum, int tileID) {
+	public void OnMoveGamePiece(int boardPieceNum, int tileID, bool remove) {
 		GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 			boardPieceNum,
-			tileID
+			tileID,
+			remove
 		});
 	}
 
@@ -220,17 +221,18 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		int[] allPlayers = { 0, 1, 2, 3 };
 
-		//EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
-		EventTransferManager.instance.OnWaitForAllPlayers();
+		EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
 		yield return StartCoroutine(clientCatanManager.discardResourcesForPlayers());
 
+		Debug.Log ("Waiting for players started");
 		while (EventTransferManager.instance.waitingForPlayers) {
 			CheckIfPlayersReady ();
+			Debug.Log ("Waiting...");
 			yield return new WaitForEndOfFrame ();
 		}
 
 		if (PhotonNetwork.player.ID - 1 == clientCatanManager.currentPlayerTurn) {
-			yield return StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
+			yield return StartCoroutine(clientCatanManager.moveGamePieceForCurrentPlayer(0, false, true));
 		}
 	}
 
@@ -340,12 +342,13 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	}
 
-	public void OnBuildUnitForUser(UnitType unitType, int playerNumber, int id) {
+	public void OnBuildUnitForUser(UnitType unitType, int playerNumber, int id, bool paid) {
 		if (unitType == UnitType.Road || unitType == UnitType.Ship) {
 			GetComponent<PhotonView> ().RPC ("BuildEdgeUnit", PhotonTargets.All, new object[] {
 				playerNumber,
 				(int)unitType,
-				id
+				id,
+				paid
 			});
 		} else if (unitType == UnitType.City && !EventTransferManager.instance.setupPhase) {
 			GetComponent<PhotonView> ().RPC ("UpgradeSettlement", PhotonTargets.All, new object[] {
@@ -405,7 +408,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				StartCoroutine(clientCatanManager.unitManager.buildSettlement ());
 				break;
 			case MoveType.BuildRoad:
-				StartCoroutine(clientCatanManager.unitManager.buildRoad ());
+				StartCoroutine(clientCatanManager.unitManager.buildRoad (true));
 				break;
 			case MoveType.BuildCity:
 				StartCoroutine(clientCatanManager.unitManager.buildCity ());
@@ -421,9 +424,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				break;
 			case MoveType.MoveShip:
 				StartCoroutine(clientCatanManager.unitManager.moveShip ());
-				break;
-			case MoveType.TradePlayer:
-				clientCatanManager.tradeWithPlayerAttempt (1);
 				break;
 			default:
 				break;
@@ -748,16 +748,15 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				});
 			}
 
-			/*int robberTileID = clientBoard.robber.occupyingTile.id;
-			int pirateTileID = clientBoard.pirate.occupyingTile.id;
-			//clientBoard.robber.occupyingTile.occupier = null;
-			//clientBoard.robber = null;
-			//Destroy (clientBoard.robber.gameObject);
+			int robberTileID = clientBoard.robber.occupyingTile.id;
+			//int pirateTileID = clientBoard.pirate.occupyingTile.id;
 
 			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 				0,
-				robberTileID
+				robberTileID,
+				false
 			});
+			/*
 			GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 				1,
 				pirateTileID
@@ -886,12 +885,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void PlaceBoardPieces(int boardPieceNum, int tileID) {
+	void PlaceBoardPieces(int boardPieceNum, int tileID, bool remove) {
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 
 		if (clientBoard != null) {
-			GameTile tileToPlace = clientBoard.GameTiles [tileID];
-
 			// Board Piece Num:
 			// 0 -> Move Robber
 			// 1 -> Move Pirate
@@ -901,36 +898,44 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				Robber[] robbers = GameObject.FindObjectsOfType<Robber> ();
 				if (robbers != null) {
 					for (int i = 0; i < robbers.Length; i++) {
+						robbers [i].occupyingTile.occupier = null;
 						Destroy (robbers [i].gameObject);
 					}
 				}
 				clientBoard.robber = null;
-				clientBoard.MoveRobber (tileID);
+				if (!remove) {
+					clientBoard.MoveRobber (tileID);
+				}
 				break;
 			case 1:
 				Pirate[] pirates = GameObject.FindObjectsOfType<Pirate> ();
 				if (pirates != null) {
 					for (int i = 0; i < pirates.Length; i++) {
+						pirates [i].occupyingTile.occupier = null;
 						Destroy (pirates [i].gameObject);
 					}
 				}
 				clientBoard.pirate = null;
-				clientBoard.MovePirate (tileID);
+				if (!remove) {
+					clientBoard.MovePirate (tileID);
+				}
 				break;
 			case 2:
 				Merchant[] merchants = GameObject.FindObjectsOfType<Merchant> ();
 				if (merchants != null) {
 					for (int i = 0; i < merchants.Length; i++) {
+						merchants [i].occupyingTile.occupier = null;
 						Destroy (merchants [i].gameObject);
 					}
 				}
 				clientBoard.merchant = null;
-				clientBoard.MoveMerchant (tileID);
+				if (!remove) {
+					clientBoard.MoveMerchant (tileID);
+				}
 				break;
 			default:
 				break;
 			}
-
 		}
 	}
 
@@ -1084,7 +1089,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void BuildEdgeUnit(int userNum, int unitType, int edgeID) {
+	void BuildEdgeUnit(int userNum, int unitType, int edgeID, bool paid) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 
@@ -1125,7 +1130,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		edgeUnit.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [userNum].playerColor;
 		edgeUnit.gameObject.SetActive (true);
 
-		if (!EventTransferManager.instance.setupPhase) {
+		if (!EventTransferManager.instance.setupPhase && paid) {
 			clientCatanManager.players [userNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit ((UnitType)unitType));
 
 			//uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";

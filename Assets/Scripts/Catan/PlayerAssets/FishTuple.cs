@@ -32,6 +32,7 @@ public class FishTuple {
 	}
 
 	public void addFishTokenWithType(FishTokenType key, int value) {
+		Debug.Log ("Adding " + value + " of " + key.ToString () + " to this fish tuple");
 		if(fishTuple.ContainsKey(key)) {
 			fishTuple[key] = value;
 		}
@@ -45,7 +46,26 @@ public class FishTuple {
 		foreach (var pair in fishTuple) {
 			MonoBehaviour.print (pair.Key.ToString () + " = " + pair.Value.ToString ());
 		}
+	}
 
+	public int numTotalTokens() {
+		int sum = 0;
+
+		for (int i = 0; i < fishTuple.Values.Count; i++) {
+			sum += (i + 1) * fishTuple [(FishTokenType)i];
+		}
+		return sum;
+	}
+
+	public int nextAvailableLargestIndex() {
+		if (fishTuple [FishTokenType.Three] != 0) {
+			return (int)FishTokenType.Three;
+		} else if (fishTuple [FishTokenType.Two] != 0) {
+			return (int)FishTokenType.Two;
+		} else if (fishTuple [FishTokenType.One] != 0) {
+			return (int)FishTokenType.One;
+		}
+		return 0;
 	}
 }
 

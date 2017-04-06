@@ -8,6 +8,7 @@ public class FishResourcePanel : MonoBehaviour {
 	public Button[] resourceoptions;
 	public Image glow;
 	public int selection;
+	public bool selectionMade = false;
 
 	// Use this for initialization
 	void Start () {
@@ -26,5 +27,21 @@ public class FishResourcePanel : MonoBehaviour {
 	public void setGlow(FishResourcePanelButton button){
 		glow.gameObject.SetActive (true);
 		glow.gameObject.transform.position = button.gameObject.transform.position;
+	}
+
+	public void confirmSelection() {
+		selectionMade = true;
+	}
+
+	public int getSelection() {
+		return selection;
+	}
+
+	public IEnumerator waitUntilButtonDown() {
+		yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
+
+		while (!selectionMade) {
+			yield return new WaitForEndOfFrame ();
+		}
 	}
 }

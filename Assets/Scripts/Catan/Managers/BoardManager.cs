@@ -275,6 +275,42 @@ public class BoardManager : MonoBehaviour {
 				}
 			}
 		}
+		return landTiles;
+	}
+
+	public List<GameTile> getOceanTiles(bool occupierCheck) {
+		List<GameTile> allTiles = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().GameTiles.Values.ToList ();
+		List<GameTile> oceanTiles = new List<GameTile>();
+
+		foreach (GameTile tile in allTiles) {
+			if (occupierCheck) {
+				if (tile.tileType == TileType.Ocean && tile.occupier == null) {
+					oceanTiles.Add (tile);
+				}
+			} else {
+				if (tile.tileType == TileType.Ocean) {
+					oceanTiles.Add (tile);
+				}
+			}
+		}
+		return oceanTiles;
+	}
+
+	public List<GameTile> getMainLandTiles(bool occupierCheck) {
+		List<GameTile> allTiles = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().GameTiles.Values.ToList ();
+		List<GameTile> landTiles = new List<GameTile>();
+
+		foreach (GameTile tile in allTiles) {
+			if (occupierCheck) {
+				if (tile.tileType != TileType.Ocean && tile.occupier == null && !tile.atIslandLayer) {
+					landTiles.Add (tile);
+				}
+			} else {
+				if (tile.tileType != TileType.Ocean && !tile.atIslandLayer) {
+					landTiles.Add (tile);
+				}
+			}
+		}
 
 		return landTiles;
 	}

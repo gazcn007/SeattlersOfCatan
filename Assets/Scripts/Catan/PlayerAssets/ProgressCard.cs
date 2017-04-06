@@ -29,7 +29,7 @@ public class ProgressCard: MonoBehaviour  {
 	//handler for triggering cards
 	public void OnMouseClick(){
 		DisplayCard.gameObject.SetActive (false);
-		UIinstance.progressCardPanel.SubmitCard (color, type);
+		//UIinstance.progressCardPanel.SubmitCard (color, type);
 	}
 }
 public enum ProgressCardColor{

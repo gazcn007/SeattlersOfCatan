@@ -225,11 +225,13 @@ public class UIManager : MonoBehaviour {
 
 	public void fishResourceSelection(){
 		//stub for method in fish resource panel bindings already done
+		fishresourcepanel.gameObject.SetActive(true);
 	}
 
 	public void toggleFishTradePanel(){
 		//nehir add however you need to call this eventtransfer manager
-		//fishTradePanel.OpenPanel ();
+		EventTransferManager.instance.waitingForPlayer = true;
+		fishTradePanel.OpenPanel (CatanManager.instance.players[CatanManager.instance.currentPlayerTurn].getCurrentAssets());
 	}
 
 	public void tradeWithBankEvent() {

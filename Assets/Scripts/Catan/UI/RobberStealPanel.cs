@@ -25,6 +25,7 @@ public class RobberStealPanel : MonoBehaviour {
 	}
 
 	public void displayPanelForChoices(List<Player> opponents) {
+		this.gameObject.SetActive (true);
 		selectionGlow.gameObject.SetActive (false);
 
 		for (int i = 0; i<3; i++) {
@@ -48,7 +49,6 @@ public class RobberStealPanel : MonoBehaviour {
 		}
 		//opponentChoicesDropdown.AddOptions(playerNames);
 		selectionMade = false;
-		this.gameObject.SetActive (true);
 	}
 
 	public void confirmSelection() {
@@ -68,7 +68,6 @@ public class RobberStealPanel : MonoBehaviour {
 		while (!selectionMade) {
 			yield return new WaitForEndOfFrame ();
 		}
-
 	}
 
 }

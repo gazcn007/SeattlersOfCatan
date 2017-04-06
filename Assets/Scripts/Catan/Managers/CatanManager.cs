@@ -123,7 +123,7 @@ public class CatanManager : MonoBehaviour {
 		//boardManager.highlightIntersectionsWithColor (validIntersectionsToBuild, true, players [currentPlayerTurn].playerColor);
 		EventTransferManager.instance.OnHighlightForUser(0, currentPlayerTurn, true, validIntersectionsToBuild);
 		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (validIntersectionsToBuildList));
-		EventTransferManager.instance.OnBuildUnitForUser (unitType, currentPlayerTurn, players [currentPlayerTurn].lastIntersectionSelection.id);
+		EventTransferManager.instance.OnBuildUnitForUser (unitType, currentPlayerTurn, players [currentPlayerTurn].lastIntersectionSelection.id, true);
 	}
 
 	public IEnumerator buildIntersectionUnit(IntersectionUnit intersectionUnit, System.Type unitType) {
@@ -184,7 +184,7 @@ public class CatanManager : MonoBehaviour {
 		waitingForPlayer = false;
 	}
 
-	public IEnumerator buildEdgeUnit(UnitType unitType) {
+	public IEnumerator buildEdgeUnit(UnitType unitType, bool paid) {
 		waitingForPlayer = true;
 		List<Edge> validEdgesToBuildList = boardManager.getValidEdgesForPlayer (players[currentPlayerTurn], unitType == UnitType.Road);
 		int[] validEdgesToBuild = boardManager.getValidEdgeIDsForPlayer (players[currentPlayerTurn], unitType == UnitType.Road);
@@ -215,7 +215,7 @@ public class CatanManager : MonoBehaviour {
 			unitTypeToBuild = UnitType.Ship;
 		}
 
-		EventTransferManager.instance.OnBuildUnitForUser(unitTypeToBuild, currentPlayerTurn, players [currentPlayerTurn].lastEdgeSelection.id);
+		EventTransferManager.instance.OnBuildUnitForUser(unitTypeToBuild, currentPlayerTurn, players [currentPlayerTurn].lastEdgeSelection.id, paid);
 	}
 
 	public IEnumerator upgradeSettlement() {
@@ -238,9 +238,10 @@ public class CatanManager : MonoBehaviour {
 
 		boardManager.highlightUnitsWithColor (ownedSettlements.Cast<Unit> ().ToList (), true, Color.black);
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
-		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedSettlements.Cast<Unit> ().ToList ()));//new Road(unitID++)));
-		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedSettlements.Cast<Unit> ().ToList ()));
+		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, true);
 	}
+
 
 	public IEnumerator moveShip() {
 		if (EventTransferManager.instance.shipMovedThisTurn) {
@@ -277,37 +278,86 @@ public class CatanManager : MonoBehaviour {
 		}
 
 		EventTransferManager.instance.waitingForPlayer = false;
-		//EventTransferManager.instance.playerChecks [PhotonNetwork.player.ID - 1] = true;
-		EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
+		EventTransferManager.instance.playerChecks [PhotonNetwork.player.ID - 1] = true;
 	}
 
-	public IEnumerator moveRobberForCurrentPlayer() {
-		EventTransferManager.instance.waitingForPlayer = true;
+	public IEnumerator moveGamePieceForCurrentPlayer(int gamePieceNum, bool remove, bool steal) {
+		GamePiece gamePieceToMove;
+		List<GameTile> eligibleTiles;
 
-		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (boardManager.getLandTiles(true)));
-		EventTransferManager.instance.OnMoveGamePiece (0, players [currentPlayerTurn].lastGameTileSelection.id);
-
-		List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
-		foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
-			if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
-				opponentUnits.Add (intersection.occupier);
-			}
+		if (gamePieceNum == 0) {
+			gamePieceToMove = GameObject.FindObjectOfType<Robber> () as GamePiece;
+			eligibleTiles = boardManager.getLandTiles (true);
+		} else {
+			gamePieceToMove = GameObject.FindObjectOfType<Pirate> () as GamePiece;
+			eligibleTiles = boardManager.getOceanTiles (true);
 		}
-
-		List<Player> stealableOpponents = new List<Player> ();
-		foreach (IntersectionUnit opponentUnit in opponentUnits) {
-			if (!stealableOpponents.Contains (opponentUnit.owner) && !opponentUnit.owner.hasZeroAssets()) {
-				stealableOpponents.Add (opponentUnit.owner);
+		if (remove) {
+			if (gamePieceToMove != null) {
+				EventTransferManager.instance.OnMoveGamePiece (gamePieceNum, gamePieceToMove.occupyingTile.id, remove);
 			}
-		}
+		} else {
+			EventTransferManager.instance.waitingForPlayer = true;
 
+			yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (eligibleTiles));
+			EventTransferManager.instance.OnMoveGamePiece (gamePieceNum, players [currentPlayerTurn].lastGameTileSelection.id, remove);
+
+			if (steal) {
+				List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
+				foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
+					if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
+						opponentUnits.Add (intersection.occupier);
+					}
+				}
+
+				List<Player> stealableOpponents = new List<Player> ();
+				foreach (IntersectionUnit opponentUnit in opponentUnits) {
+					if (!stealableOpponents.Contains (opponentUnit.owner) && !opponentUnit.owner.hasZeroAssets()) {
+						stealableOpponents.Add (opponentUnit.owner);
+					}
+				}
+
+				if (stealableOpponents.Count == 1) { 
+					// If you steal 2 things if you have a city, then the argument here would be 2 etc.
+					AssetTuple randomStolenAsset = stealableOpponents [0].getRandomSufficientAsset (1);
+
+					EventTransferManager.instance.OnTradeWithBank(stealableOpponents [0].playerNumber - 1, false, randomStolenAsset);
+					EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
+
+				} else if (stealableOpponents.Count > 1) {
+					uiManager.robberStealPanel.displayPanelForChoices (stealableOpponents);
+					bool selectionMade = false;
+
+					while (!selectionMade) {
+						if (!uiManager.robberStealPanel.selectionMade) {
+							yield return StartCoroutine (uiManager.robberStealPanel.waitUntilButtonDown());
+						}
+
+						if (uiManager.robberStealPanel.selectionMade) {
+							selectionMade = true;
+						}
+					}
+
+					AssetTuple randomStolenAsset = stealableOpponents [uiManager.robberStealPanel.getSelection()].getRandomSufficientAsset (1);
+					EventTransferManager.instance.OnTradeWithBank(stealableOpponents [uiManager.robberStealPanel.getSelection()].playerNumber - 1, false, randomStolenAsset);
+					EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
+
+					uiManager.robberStealPanel.gameObject.SetActive (false);
+				}
+			}
+
+			EventTransferManager.instance.waitingForPlayer = false;
+		}
+	}
+
+	public IEnumerator stealRandomResource(List<Player> stealableOpponents) {
 		if (stealableOpponents.Count == 1) { 
 			// If you steal 2 things if you have a city, then the argument here would be 2 etc.
 			AssetTuple randomStolenAsset = stealableOpponents [0].getRandomSufficientAsset (1);
 
 			EventTransferManager.instance.OnTradeWithBank(stealableOpponents [0].playerNumber - 1, false, randomStolenAsset);
 			EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
-			
+
 		} else if (stealableOpponents.Count > 1) {
 			uiManager.robberStealPanel.displayPanelForChoices (stealableOpponents);
 			bool selectionMade = false;
@@ -328,8 +378,6 @@ public class CatanManager : MonoBehaviour {
 
 			uiManager.robberStealPanel.gameObject.SetActive (false);
 		}
-
-		EventTransferManager.instance.waitingForPlayer = false;
 	}
 
 	public void tradeWithBankAttempt(int resourceToGiveForOne) {

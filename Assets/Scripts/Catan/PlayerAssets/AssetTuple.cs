@@ -56,7 +56,7 @@ public class AssetTuple {
 	}
 
 	public void SetValueAtIndex(int index, int value) {
-		if (index < 0 || index > 7) {
+		if (index < 0 || index > 10) {
 		} else {
 			if (index < 5) {
 				this.resources.resourceTuple [(ResourceType)index] = value;

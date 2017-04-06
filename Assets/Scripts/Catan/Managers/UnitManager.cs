@@ -82,12 +82,12 @@ public class UnitManager : MonoBehaviour {
 	}
 
 
-	public IEnumerator buildRoad() {
-		yield return StartCoroutine (CatanManager.instance.buildEdgeUnit (UnitType.Road));
+	public IEnumerator buildRoad(bool paid) {
+		yield return StartCoroutine (CatanManager.instance.buildEdgeUnit (UnitType.Road, paid));
 	}
 
 	public IEnumerator buildShip() {
-		yield return StartCoroutine (CatanManager.instance.buildEdgeUnit (UnitType.Ship));
+		yield return StartCoroutine (CatanManager.instance.buildEdgeUnit (UnitType.Ship, true));
 	}
 
 	public IEnumerator upgradeSettlement() {
