@@ -595,6 +595,33 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		clientCatanManager.currentPlayerTurn = (clientCatanManager.currentPlayerTurn + 1) % PhotonNetwork.playerList.Length;
 		//clientCatanManager.unitManager.destroyCancelledUnits ();
 		Destroy(diceRoller);
+
+		if (clientCatanManager.players [clientCatanManager.currentPlayerTurn].hasOldBoot ()) {
+			Player maxVPPlayer = clientCatanManager.players [clientCatanManager.currentPlayerTurn];
+
+			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+				if (clientCatanManager.players [i].victoryPoints > maxVPPlayer.victoryPoints) {
+					maxVPPlayer = clientCatanManager.players [i];
+				}
+			}
+
+			if (maxVPPlayer != clientCatanManager.players [clientCatanManager.currentPlayerTurn]) {
+				maxVPPlayer.assets.fishTokens.OldBootReceive (true);
+				clientCatanManager.players [clientCatanManager.currentPlayerTurn].assets.fishTokens.OldBootReceive (false);
+
+				if (PhotonNetwork.player.ID - 1 == maxVPPlayer.playerNumber) {
+					//clientCatanManager.uiManager.notificationpanel.gameObject.SetActive (true);
+					clientCatanManager.uiManager.notificationpanel.gameObject.SetActive(true);
+					clientCatanManager.uiManager.notificationtext.text = "Received Old Boot from " + 
+						clientCatanManager.players [clientCatanManager.currentPlayerTurn].playerName;
+				}
+				else if (PhotonNetwork.player.ID - 1 == clientCatanManager.players [clientCatanManager.currentPlayerTurn].playerNumber) {
+					//clientCatanManager.uiManager.notificationpanel.gameObject.SetActive (true);
+					clientCatanManager.uiManager.notificationpanel.gameObject.SetActive(true);
+					clientCatanManager.uiManager.notificationtext.text = "Gave Old Boot to " + maxVPPlayer.playerName;
+				}
+			}
+		}
 	}
 
 	[PunRPC]
@@ -654,10 +681,22 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
-							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome && clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
+							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								fishTokens.printFishTuple ();
-								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								if (clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
+									OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								} else {
+									int currentLowestIndex = clientCatanManager.players [i].assets.fishTokens.nextAvailableSmallestIndex ();
+									int receivingLowestIndex = fishTokens.nextAvailableSmallestIndex ();
+									if (currentLowestIndex < receivingLowestIndex) {
+										FishTuple toRemove = new FishTuple ();
+										toRemove.addFishTokenWithType ((FishTokenType)currentLowestIndex, 1);
+
+										OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+										OnTradeWithBank (i, false, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), toRemove));
+									}
+								}
 							}
 						}
 					}
@@ -669,10 +708,20 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 						foreach (var intersection in lakeTile.getIntersections()) {
 							if (intersection.occupier != null && intersection.occupier.owner == clientCatanManager.players [i]) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
+								fishTokens.printFishTuple ();
 								if (clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
-									FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
-									fishTokens.printFishTuple ();
 									OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								} else {
+									int currentLowestIndex = clientCatanManager.players [i].assets.fishTokens.nextAvailableSmallestIndex ();
+									int receivingLowestIndex = fishTokens.nextAvailableSmallestIndex ();
+									if (currentLowestIndex < receivingLowestIndex) {
+										FishTuple toRemove = new FishTuple ();
+										toRemove.addFishTokenWithType ((FishTokenType)currentLowestIndex, 1);
+
+										OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+										OnTradeWithBank (i, false, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), toRemove));
+									}
 								}
 							}
 						}
@@ -727,10 +776,22 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 					if (PhotonNetwork.player.ID - 1 == i) {
 						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Ocean && clientBoard.GameTiles [tileIDs [j]].fishTile != null) {
-							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome && clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
+							if (clientBoard.GameTiles [tileIDs [j]].fishTile.diceValue == diceOutcome) {
 								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile(clientBoard.GameTiles [tileIDs [j]], 1);
 								fishTokens.printFishTuple ();
-								OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								if (clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
+									OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								} else {
+									int currentLowestIndex = clientCatanManager.players [i].assets.fishTokens.nextAvailableSmallestIndex ();
+									int receivingLowestIndex = fishTokens.nextAvailableSmallestIndex ();
+									if (currentLowestIndex < receivingLowestIndex) {
+										FishTuple toRemove = new FishTuple ();
+										toRemove.addFishTokenWithType ((FishTokenType)currentLowestIndex, 1);
+
+										OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+										OnTradeWithBank (i, false, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), toRemove));
+									}
+								}
 							}
 						}
 					}
@@ -742,10 +803,20 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 						foreach (var intersection in lakeTile.getIntersections()) {
 							if (intersection.occupier != null && intersection.occupier.owner == clientCatanManager.players [i]) {
+								FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
+								fishTokens.printFishTuple ();
 								if (clientCatanManager.players [i].assets.fishTokens.numTokens () < 7) {
-									FishTuple fishTokens = clientCatanManager.resourceManager.getFishTokenForTile (lakeTile, 1);
-									fishTokens.printFishTuple ();
 									OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+								} else {
+									int currentLowestIndex = clientCatanManager.players [i].assets.fishTokens.nextAvailableSmallestIndex ();
+									int receivingLowestIndex = fishTokens.nextAvailableSmallestIndex ();
+									if (currentLowestIndex < receivingLowestIndex) {
+										FishTuple toRemove = new FishTuple ();
+										toRemove.addFishTokenWithType ((FishTokenType)currentLowestIndex, 1);
+
+										OnTradeWithBank (i, true, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), fishTokens));
+										OnTradeWithBank (i, false, new AssetTuple (new ResourceTuple (0, 0, 0, 0, 0), new CommodityTuple (0, 0, 0), toRemove));
+									}
 								}
 							}
 						}

@@ -12,7 +12,6 @@ public class FishTradePanel : MonoBehaviour {
 	public int tokensValue;
 	public bool selectionMade;
 
-
 	//slider holders
 	public Slider[] FishTokens;
 	public Text[] TokensText;
@@ -82,7 +81,7 @@ public class FishTradePanel : MonoBehaviour {
 			optionsPanel [i].GetComponent<FishTradePanelButton> ().instance = this;
 			optionsPanel [i].gameObject.SetActive (false);
 		}
-
+		selectionGlow.gameObject.SetActive (false);
 		this.gameObject.SetActive (true);
 	}
 
@@ -144,6 +143,7 @@ public class FishTradePanel : MonoBehaviour {
 			CatanManager.instance.uiManager.fishResourceSelection ();
 			bool selectionMade = false;
 			this.transform.localScale = Vector3.zero;
+			CatanManager.instance.uiManager.fishresourcepanel.gameObject.SetActive (true);
 
 			while (!selectionMade) {
 				if (!CatanManager.instance.uiManager.fishresourcepanel.selectionMade) {
@@ -155,6 +155,7 @@ public class FishTradePanel : MonoBehaviour {
 			}
 
 			CatanManager.instance.uiManager.fishresourcepanel.gameObject.SetActive (false);
+			CatanManager.instance.uiManager.fishresourcepanel.selectionMade = false;
 			this.transform.localScale = scale;
 			this.gameObject.SetActive (false);
 

@@ -108,6 +108,17 @@ public class FishTuple {
 		return 0;
 	}
 
+	public int nextAvailableSmallestIndex() {
+		if (fishTuple [FishTokenType.One] != 0) {
+			return (int)FishTokenType.One;
+		} else if (fishTuple [FishTokenType.Two] != 0) {
+			return (int)FishTokenType.Two;
+		} else if (fishTuple [FishTokenType.Three] != 0) {
+			return (int)FishTokenType.Three;
+		}
+		return 2;
+	}
+
 	public List<FishTokenType> listForm() {
 		List<FishTokenType> fishTokens = new List<FishTokenType> ();
 

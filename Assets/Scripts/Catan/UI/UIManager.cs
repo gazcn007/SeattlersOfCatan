@@ -31,7 +31,8 @@ public class UIManager : MonoBehaviour {
 	public GameObject robberOrPiratePanel;
 	public GameObject costspanel;
 	public FlipChartPanel flipchart;
-
+	public GameObject notificationpanel;
+	public Text notificationtext;
 
 	void Awake() {
 		if (instance == null)
