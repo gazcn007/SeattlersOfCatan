@@ -27,39 +27,18 @@ public class DiscardPanel : MonoBehaviour {
 		if (!selectionMade) {
 			leftText.text = "Remaining : " + leftDiscards.ToString ();
 
-			/*if (leftDiscards > 0) {
-				int sum = 0;
-				for (int i = 0; i < assetSliders.Length; i++) {
-					assetSliders [i].maxValue = currentTuple.GetValueAtIndex (i);
-					assetNumTexts [i].text = assetSliders [i].value.ToString ();
-					sum += (int)assetSliders [i].value;
-				}
-
-				leftDiscards = neededDiscards - sum;
-			} else {
-				for (int i = 0; i < assetSliders.Length; i++) {
-					assetSliders [i].maxValue = assetSliders [i].value;
-				}
-			}*/
-
 			int sum = 0;
 			for (int i = 0; i < assetSliders.Length; i++) {
-				if (leftDiscards > 0) {
-					assetSliders [i].maxValue = currentTuple.GetValueAtIndex (i);
-				} else {
-					assetSliders [i].maxValue = assetSliders [i].value;
-				}
+				//assetSliders [i].maxValue = currentTuple.GetValueAtIndex (i);
 				assetNumTexts [i].text = assetSliders [i].value.ToString ();
 				sum += (int)assetSliders [i].value;
 			}
 			leftDiscards = neededDiscards - sum;
 		}
-
-
 	}
 
-	public void displayPanelForAssets(AssetTuple playerAssets, int neededDiscard) {
-		neededDiscards = neededDiscard;
+	public void displayPanelForAssets(AssetTuple playerAssets, int delta, bool isPositive) {
+		neededDiscards = delta;
 		leftDiscards = neededDiscards;
 
 		foreach (Text text in assetNumTexts) {
@@ -67,9 +46,15 @@ public class DiscardPanel : MonoBehaviour {
 		}
 
 		for(int i = 0; i < assetSliders.Length; i++) {
-			assetSliders [i].maxValue = playerAssets.GetValueAtIndex (i);
+			if (isPositive) {
+				assetSliders [i].maxValue = delta;
+			} else {
+				assetSliders [i].maxValue = playerAssets.GetValueAtIndex (i);
+			}
+
 			assetSliders [i].minValue = assetSliders [i].value = 0;
 		}
+			
 		currentTuple = playerAssets;
 		selectionMade = false;
 		this.gameObject.SetActive (true);
@@ -86,7 +71,7 @@ public class DiscardPanel : MonoBehaviour {
 
 			discardTuple = assetsToDiscard;
 		} else {
-			Debug.Log ("Need to discard the correct amount!");
+			Debug.Log ("Need to select the correct amount!");
 		}
 	}
 

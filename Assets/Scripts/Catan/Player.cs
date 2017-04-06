@@ -17,6 +17,7 @@ public class Player : MonoBehaviour {
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	public Dictionary<System.Type, List<Unit>> ownedUnits;
 	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 10, 10, 10, 0, 0, 0);
+	public CityImprovementTuple cityImprovements;
 
 	public GameTile lastGameTileSelection;
 	public Edge lastEdgeSelection;
@@ -31,6 +32,7 @@ public class Player : MonoBehaviour {
 	void Start () {
 		//playerColor = Color.black;
 		initializeUnitsDictionary();
+		cityImprovements = new CityImprovementTuple ();
 	}
 	
 	// Update is called once per frame
@@ -57,6 +59,30 @@ public class Player : MonoBehaviour {
 		//ownedUnits.Add (typeof(TradeUnit), new List<TradeUnit> ());
 
 		ownedUnits.Add (typeof(Unit), new List<Unit> ());
+	}
+
+	public bool canUpgrade(CityImprovementType improvementType) {
+		int numCities = getOwnedUnitsOfType (UnitType.City).Count;
+		bool canUpgrade = false;
+
+		if (numCities > 0) {
+			if (hasAvailableAssets (cityImprovements.nextImprovementCost (improvementType))) {
+				canUpgrade = true;
+			}
+		}
+		return canUpgrade;
+	}
+
+	public bool unlockedTradingHouse() {
+		return cityImprovements.cityImprovements [CityImprovementType.Trade] >= 3;
+	}
+
+	public bool unlockedFortress() {
+		return cityImprovements.cityImprovements [CityImprovementType.Politics] >= 3;
+	}
+
+	public bool unlockedAqueduct() {
+		return cityImprovements.cityImprovements [CityImprovementType.Science] >= 3;
 	}
 
 	public void addOwnedUnit(Unit unit, System.Type type) {

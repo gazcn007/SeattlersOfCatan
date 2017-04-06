@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Knight : IntersectionUnit {
+public class StrongKnight : Knight {
 
-	public int strength;
-	public bool isActive = false;
-	public KnightRank rank;
+	int strength = 2;
+	bool isActive = false;
+	KnightRank rank = KnightRank.Strong;
 
 	// Use this for initialization
 	void Start () {
@@ -17,10 +17,4 @@ public class Knight : IntersectionUnit {
 	void Update () {
 		
 	}
-}
-
-public enum KnightRank {
-	Basic = 0,
-	Strong,
-	Mighty
 }

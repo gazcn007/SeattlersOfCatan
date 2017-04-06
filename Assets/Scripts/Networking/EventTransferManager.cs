@@ -254,7 +254,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		int[] allPlayers = { 0, 1, 2, 3 };
 
 		EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
-		yield return StartCoroutine(clientCatanManager.discardResourcesForPlayers());
+
+		int numDiscards = clientCatanManager.players [PhotonNetwork.player.ID - 1].getNumDiscardsNeeded ();
+		yield return StartCoroutine(clientCatanManager.selectResourcesForPlayers(numDiscards, false));
 
 		Debug.Log ("Waiting for players started");
 		while (EventTransferManager.instance.waitingForPlayers) {
@@ -655,10 +657,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 	}
 
+	// MUST BE TURNED INTO A COROUTINE, RPC CALLS IT...
 	[PunRPC]
 	void ResourceCollectionEvent(int diceOutcome) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		int collectionCount = 0;
 
 		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
 
@@ -674,8 +678,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 						ResourceTuple resources = clientCatanManager.resourceManager.getResourceForTile (clientBoard.GameTiles [tileIDs [j]], 1);
 						//CommodityTuple commodities = new CommodityTuple (0, 0, 0);
-
 						clientCatanManager.players [i].receiveResources (resources);
+						collectionCount++;
+
 						//OnTradeWithBank(i, true, new AssetTuple(resources, commodities));
 					}
 
@@ -727,6 +732,27 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						}
 					}
 				}
+
+				if(PhotonNetwork.player.ID - 1 == i) {
+					/*if(clientCatanManager.players [i].unlockedAqueduct() && collectionCount == 0)
+						// Add waiting code here
+						int[] allPlayers = { 0, 1, 2, 3 };
+
+						EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
+						yield return StartCoroutine(clientCatanManager.pickResourcesForPlayer(i, collectionCount));
+						//yield return StartCoroutine(clientCatanManager.discardResourcesForPlayers());
+
+						Debug.Log ("Waiting for players started");
+						while (EventTransferManager.instance.waitingForPlayers) {
+							CheckIfPlayersReady ();
+							Debug.Log ("Waiting...");
+							yield return new WaitForEndOfFrame ();
+						}
+					}
+					else{
+						EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
+					}*/
+				}
 			}
 		}
 	}
@@ -757,6 +783,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	void CommodityCollectionEvent(int diceOutcome) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		int collectionCount = 0;
 
 		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
 			if (EventTransferManager.instance.setupPhase && i != clientCatanManager.currentPlayerTurn) {
@@ -770,6 +797,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 						//ResourceTuple resources = new ResourceTuple (0, 0, 0, 0, 0);
 						CommodityTuple commodities = clientCatanManager.resourceManager.getCommodityForTile (clientBoard.GameTiles [tileIDs [j]], 1);
+
 						clientCatanManager.players [i].receiveCommodities (commodities);
 						//OnTradeWithBank(i, true, new AssetTuple(resources, commodities));
 					}
@@ -824,6 +852,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				}
 			}
 		}
+
+
 	}
 
 	[PunRPC]

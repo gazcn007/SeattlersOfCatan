@@ -264,21 +264,21 @@ public class CatanManager : MonoBehaviour {
 		EventTransferManager.instance.OnMoveShipForUser (currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, players [currentPlayerTurn].lastEdgeSelection.id);
 	}
 
-	public IEnumerator discardResourcesForPlayers() {
+	public IEnumerator selectResourcesForPlayers(int numDelta, bool isPositiveDelta) {
 		EventTransferManager.instance.waitingForPlayer = true;
-		int numDiscards = players [PhotonNetwork.player.ID - 1].getNumDiscardsNeeded ();
 
-		if (numDiscards > 0) {
-			uiManager.discardPanel.displayPanelForAssets (players [PhotonNetwork.player.ID - 1].getCurrentAssets (), numDiscards);
+		if (numDelta > 0) {
+			uiManager.discardPanel.displayPanelForAssets (players [PhotonNetwork.player.ID - 1].getCurrentAssets (), numDelta, isPositiveDelta);
 			yield return StartCoroutine (uiManager.discardPanel.waitUntilButtonDown ());
 
 			//players [currentPlayerTurn].spendAssets (uiManager.discardPanel.discardTuple);
-			EventTransferManager.instance.OnTradeWithBank(players [PhotonNetwork.player.ID - 1].playerNumber - 1, false, uiManager.discardPanel.discardTuple);
+			EventTransferManager.instance.OnTradeWithBank(players [PhotonNetwork.player.ID - 1].playerNumber - 1, isPositiveDelta, uiManager.discardPanel.discardTuple);
 			uiManager.discardPanel.gameObject.SetActive (false);
 		}
 
 		EventTransferManager.instance.waitingForPlayer = false;
-		EventTransferManager.instance.playerChecks [PhotonNetwork.player.ID - 1] = true;
+		//EventTransferManager.instance.playerChecks [PhotonNetwork.player.ID - 1] = true;
+		EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
 	}
 
 	public IEnumerator moveGamePieceForCurrentPlayer(int gamePieceNum, bool remove, bool steal) {

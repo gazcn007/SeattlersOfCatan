@@ -308,6 +308,9 @@ public class UIManager : MonoBehaviour {
 
 	public void tradeDone() {
 		int tradeRatio = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getMinimumTradeValue (tradePanel.getTradeChoiceInt ());
+		if (tradePanel.getTradeChoiceInt () >= 5 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].unlockedTradingHouse ()) {
+			tradeRatio = 2;
+		}
 		AssetTuple assetsToSpend = GameAsset.getAssetOfIndex (tradePanel.getTradeChoiceInt (), tradeRatio);
 		AssetTuple assetsToReceive = GameAsset.getAssetOfIndex (tradePanel.getReceiveChoiceInt (), 1);
 

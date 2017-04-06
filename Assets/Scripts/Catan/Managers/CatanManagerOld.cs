@@ -896,7 +896,7 @@ public class CatanManagerOld : MonoBehaviour {
 		int numDiscards = players [currentPlayerTurn].getNumDiscardsNeeded ();
 
 		if (numDiscards > 0) {
-			discardPanel.displayPanelForAssets (players [currentPlayerTurn].getCurrentAssets (), numDiscards);
+			discardPanel.displayPanelForAssets (players [currentPlayerTurn].getCurrentAssets (), numDiscards, false);
 			yield return StartCoroutine (discardPanel.waitUntilButtonDown ());
 
 			players [currentPlayerTurn].spendAssets (discardPanel.discardTuple);
