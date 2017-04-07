@@ -253,6 +253,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						redDieRoll + yellowDieRoll
 					});
 				}
+
+
 			}
 			diceRolledThisTurn = true;
 		}
@@ -1263,6 +1265,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 		for (int i = 0; i < metropolisInPlay.Length; i++) {
 			if (metropolisInPlay [i].metropolisType == (MetropolisType)metropolisType) {
+				metropolisExists = true;
 				newMetropolis = metropolisInPlay [i];
 			}
 		}
