@@ -38,7 +38,8 @@ public enum ProgressCardColor{
 	Blue
 }
 public enum ProgressCardType {
-	Alchemist = 0,
+	None=0,
+	Alchemist,
 	Crane,
 	Mining,
 	Irrigation,

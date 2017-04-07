@@ -24,7 +24,7 @@ public class ProgressCardHolder : MonoBehaviour {
 		GameObject card= Instantiate (progressCardPrefab);
 		ProgressCard newcard = card.GetComponent<ProgressCard> ();
 		Image cardImage = card.GetComponent<Image> ();
-
+		Debug.Log ("card type: " + type.ToString ());
 		//set values
 		newcard.type=type;
 		newcard.color = color;

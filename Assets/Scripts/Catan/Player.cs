@@ -16,7 +16,7 @@ public class Player : MonoBehaviour {
 
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	public Dictionary<System.Type, List<Unit>> ownedUnits;
-	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 10, 10, 10, 0, 0, 0);
+	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 15, 15, 15, 0, 0, 0);
 	public List<ProgressCard> progressCards = new List<ProgressCard> ();
 	public CityImprovementTuple cityImprovements;
 
@@ -25,6 +25,7 @@ public class Player : MonoBehaviour {
 	public Intersection lastIntersectionSelection;
 	public Unit lastUnitSelection;
 
+	public int vpAdder;
 	public bool collectedThisTurn;
 
 	public Sprite avatar;
@@ -38,7 +39,7 @@ public class Player : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		victoryPoints = getTotalVictoryPoints ();
+		victoryPoints = getTotalVictoryPoints () + vpAdder;
 
 		//if (victoryPoints >= GameManager.victoryPointsToWinGame) {
 		//	winGame ();
@@ -102,6 +103,7 @@ public class Player : MonoBehaviour {
 	}
 
 	public bool canStealMetropolis(Player other, CityImprovementType metropolisType) {
+		Debug.Log ("Steal comparison. This is : " + this.playerNumber + " and other is : " + other.playerNumber);
 		return this.cityImprovements.cityImprovements [metropolisType] > other.cityImprovements.cityImprovements [metropolisType];
 	}
 
@@ -115,6 +117,34 @@ public class Player : MonoBehaviour {
 
 	public bool unlockedAqueduct() {
 		return cityImprovements.cityImprovements [CityImprovementType.Science] >= 3;
+	}
+
+	public int getVpPoints(){
+		return getTotalVictoryPoints () + vpAdder;
+	}
+
+	public bool hasMetropolis(int metropolisType) {
+		List<Metropolis> metropolisOwned = ownedUnits [typeof(Metropolis)].Cast<Metropolis> ().ToList ();
+		for (int i = 0; i < metropolisOwned.Count; i++) {
+			if (metropolisOwned [i].metropolisType == (MetropolisType)metropolisType) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public bool showMetropolisBuildButton(int metropolisType) {
+		Player maxLevelPlayer = this;
+		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+			if (CatanManager.instance.players [i].cityImprovements.cityImprovements [(CityImprovementType)metropolisType] >=
+				maxLevelPlayer.cityImprovements.cityImprovements [(CityImprovementType)metropolisType] && CatanManager.instance.players [i] != this) {
+				maxLevelPlayer = CatanManager.instance.players [i];
+			}
+		}
+
+		return ((this.canBuildMetropolis((CityImprovementType)metropolisType) && !hasMetropolis(metropolisType) && CatanManager.instance.metropolisOwners.metropolisOwners[metropolisType] == null)
+			|| (this == maxLevelPlayer && CatanManager.instance.metropolisOwners.metropolisOwners[metropolisType].playerNumber != this.playerNumber));
 	}
 
 	public void addOwnedUnit(Unit unit, System.Type type) {
@@ -289,6 +319,10 @@ public class Player : MonoBehaviour {
 
 	public int getNumAssets() {
 		return getNumResources () + getNumCommodities () + getNumFishTokens();
+	}
+
+	public int getHalfAssetCount(){
+		return (getNumAssets () - getNumFishTokens ()) / 2;
 	}
 
 	public int getNumDiscardsNeeded() {

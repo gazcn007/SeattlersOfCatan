@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour {
 	//public static string ASSETSPATH = Application.dataPath;
 
 	// game build
-	private string BUILD = "nehirGAMEPLAYNEW";
+	private string BUILD = "NehirNew";
 
 	// static instance of GameManager
 	public static GameManager instance = null;

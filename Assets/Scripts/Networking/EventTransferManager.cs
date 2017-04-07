@@ -253,8 +253,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						redDieRoll + yellowDieRoll
 					});
 				}
-
-
 			}
 			diceRolledThisTurn = true;
 		}
@@ -400,7 +398,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				id,
 				paid
 			});
-		} else if (unitType == UnitType.City && !EventTransferManager.instance.setupPhase) {
+		} else if (unitType == UnitType.City && !EventTransferManager.instance.setupPhase && paid) {
 			GetComponent<PhotonView> ().RPC ("UpgradeSettlement", PhotonTargets.All, new object[] {
 				playerNumber,
 				id
@@ -415,7 +413,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			GetComponent<PhotonView> ().RPC ("BuildIntersectionUnit", PhotonTargets.All, new object[] {
 				playerNumber,
 				(int)unitType,
-				id
+				id,
+				paid
 			});
 		}
 	}
@@ -652,13 +651,13 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				maxVPPlayer.assets.fishTokens.OldBootReceive (true);
 				clientCatanManager.players [clientCatanManager.currentPlayerTurn].assets.fishTokens.OldBootReceive (false);
 
-				if (PhotonNetwork.player.ID - 1 == maxVPPlayer.playerNumber) {
+				if (PhotonNetwork.player.ID == maxVPPlayer.playerNumber) {
 					//clientCatanManager.uiManager.notificationpanel.gameObject.SetActive (true);
 					clientCatanManager.uiManager.notificationpanel.gameObject.SetActive(true);
 					clientCatanManager.uiManager.notificationtext.text = "Received Old Boot from " + 
 						clientCatanManager.players [clientCatanManager.currentPlayerTurn].playerName;
 				}
-				else if (PhotonNetwork.player.ID - 1 == clientCatanManager.players [clientCatanManager.currentPlayerTurn].playerNumber) {
+				else if (PhotonNetwork.player.ID == clientCatanManager.players [clientCatanManager.currentPlayerTurn].playerNumber) {
 					//clientCatanManager.uiManager.notificationpanel.gameObject.SetActive (true);
 					clientCatanManager.uiManager.notificationpanel.gameObject.SetActive(true);
 					clientCatanManager.uiManager.notificationtext.text = "Gave Old Boot to " + maxVPPlayer.playerName;
@@ -1150,7 +1149,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void BuildIntersectionUnit(int userNum, int unitType, int intersectionID) {
+	void BuildIntersectionUnit(int userNum, int unitType, int intersectionID, bool paid) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 
@@ -1163,10 +1162,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		case UnitType.Settlement:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Settlement));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
+			intersectionUnitGO.name = "Settlement ";
 			break;
 		case UnitType.City:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.City));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
+			intersectionUnitGO.name = "City ";
 			break;
 		case UnitType.Metropolis:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Metropolis));
@@ -1175,10 +1176,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		case UnitType.CityWalls:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.CityWalls));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
+			intersectionUnitGO.name = "CityWalls ";
 			break;
 		case UnitType.Knight:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Knight));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
+			intersectionUnitGO.name = "Knight ";
 			break;
 		default:
 			return;
@@ -1197,10 +1200,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		intersectionUnit.transform.parent = clientGameBoard.Intersections[intersectionID].transform;
 		intersectionUnit.transform.localScale = intersectionUnit.transform.localScale * clientGameBoard.hexRadius;
 
+		intersectionUnit.name = intersectionUnit.name + intersectionUnit.id.ToString ();
+
 		intersectionUnit.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [userNum].playerColor;
 		intersectionUnit.gameObject.SetActive (true);
 
-		if (!EventTransferManager.instance.setupPhase) {
+		if (!EventTransferManager.instance.setupPhase && paid) {
 			clientCatanManager.players [userNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit ((UnitType)unitType));
 		}
 
@@ -1237,6 +1242,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		newCity.transform.parent = settlementToUpgrade.transform.parent;
 		newCity.transform.localScale = settlementToUpgrade.transform.localScale;
 
+		newCity.name = "City " + newCity.id;
+
 		newCity.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [playerNum].playerColor;
 
 		Destroy (settlementToUpgrade.gameObject);
@@ -1259,7 +1266,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
 		print("Found city with id#: " + cityToUpgrade.id + ". Residing on intersection id#: " + cityToUpgrade.locationIntersection.id);
 
+		int destroyedCityLocationID = -1;
+		int destroyedCityOwnerNumber = -1;
+
 		bool metropolisExists = false;
+
 		Metropolis newMetropolis = null;
 		Metropolis[] metropolisInPlay = GameObject.FindObjectsOfType<Metropolis> ();
 
@@ -1267,15 +1278,16 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			if (metropolisInPlay [i].metropolisType == (MetropolisType)metropolisType) {
 				metropolisExists = true;
 				newMetropolis = metropolisInPlay [i];
+				destroyedCityLocationID = newMetropolis.locationIntersection.id;
+				destroyedCityOwnerNumber = newMetropolis.owner.playerNumber;
+				newMetropolis.owner.removeOwnedUnit (metropolisInPlay [i], typeof(Metropolis));
 			}
 		}
 
 		if (!metropolisExists) {
-			GameObject metropolisGameObject = (GameObject)Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.City));
+			GameObject metropolisGameObject = (GameObject)Instantiate (clientCatanManager.unitManager.GetMetropolisOfType ((MetropolisType)metropolisType));
 			newMetropolis = metropolisGameObject.GetComponent<Metropolis> ();
 			newMetropolis.id = cityToUpgrade.id;
-		} else {
-			newMetropolis.owner.removeOwnedUnit (newMetropolis, typeof(Metropolis));
 		}
 
 		clientCatanManager.unitManager.unitsInPlay [newMetropolis.id] = newMetropolis;
@@ -1295,8 +1307,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 		Destroy (cityToUpgrade.gameObject);
 
+		if (metropolisExists && PhotonNetwork.player.ID == destroyedCityOwnerNumber) {
+			//BuildIntersectionUnit (destroyedCityOwnerNumber - 1, UnitType.City, destroyedCityLocationID);
+			//clientCatanManager.players[destroyedCityOwnerNumber - 1].removeOwnedUnit (newMetropolis, typeof(Metropolis));
+			OnBuildUnitForUser(UnitType.City, destroyedCityOwnerNumber - 1, destroyedCityLocationID, false, -1);
+		}
+
 		//clientCatanManager.players [playerNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit (UnitType.City));
-		clientCatanManager.boardManager.highlightUnitsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Settlement), true, clientCatanManager.players [playerNum].playerColor);
+		clientCatanManager.boardManager.highlightUnitsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.City), true, clientCatanManager.players [playerNum].playerColor);
 		//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 		clientCatanManager.metropolisOwners.metropolisOwners [metropolisType] = clientCatanManager.players [playerNum];
 
@@ -1390,9 +1408,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		EventTransferManager.instance.currentActiveButton = -1;
 	}
 
-	[PunRPC]
+[PunRPC]
+	//initial progress card method creates 3 synced queues of cards for each client
 	void GenerateProgressCards(){
+		Destroy (GameObject.FindGameObjectWithTag ("ProgressCardsStackManager"));
 		GameObject clientcardsStackGO = Instantiate (ProgressCardsStackManagerPrefab);
+		//ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
 		ProgressCardStackManager clientcards = clientcardsStackGO.GetComponent<ProgressCardStackManager> ();
 		//master sets everyones card orders
 		if (PhotonNetwork.isMasterClient) {
@@ -1418,8 +1439,84 @@ public class EventTransferManager : Photon.MonoBehaviour {
 					i
 				});
 			}
+			GetComponent<PhotonView> ().RPC ("GenerateProgressCardQueues", PhotonTargets.Others, new object[] {
+			});
+			clientcards.generateQueues();
 		}
 	}
+	public bool WaitOnDraw;
+	public IEnumerator CardDrawEvent(){
+		//nehir this will be used by dice to auto resolve who draws for now it is public for testing
+
+		EventTransferManager.instance.WaitOnDraw=false;
+		Debug.Log ("Card Draw Initiated");
+		Debug.Log ("test: " + PhotonNetwork.playerList.Length);
+		//I am not sure on how you handle/will handle all the dice and event dice things but this method needs to resolve who can draw what color
+		//of card and send that player the rpc DrawCard(see below)
+		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+			Debug.Log ("Next to draw: " + i);
+			while (EventTransferManager.instance.WaitOnDraw) {
+				Debug.Log ("Waiting for Players to draw");
+				yield return new WaitForEndOfFrame ();
+			}
+			EventTransferManager.instance.WaitOnDraw= true;
+			GetComponent<PhotonView> ().RPC ("DrawCard", PhotonTargets.All, new object[] {
+				(int) ProgressCardColor.Green,
+				i
+			});
+			Debug.Log ("Draw Completed");
+		}
+	}
+	[PunRPC]
+	void OnDrawCompleted(){
+		EventTransferManager.instance.WaitOnDraw = false;
+	}
+	//methods used for drawing cards this will be called by dice roll events player has no control over when he can draw the card himself
+	[PunRPC]
+	void DrawCard(int color,int receiverNum){
+		if(PhotonNetwork.player.ID-1== receiverNum) {
+			Debug.Log ("turn to draw: " + receiverNum);
+			GetComponent<PhotonView> ().RPC ("SyncProgressCardDraw", PhotonTargets.Others, new object[] {
+				color
+			});
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+			clientCatanManager.uiManager.progressCardPanel.newCard ((ProgressCardColor)color,clientcards.drawCard ((ProgressCardColor)color));
+			GetComponent<PhotonView> ().RPC ("OnDrawCompleted", PhotonTargets.All, new object[] {
+			});
+		}
+	}
+	//drawing will be done by client
+	public void ReturnProgressCard(ProgressCardColor color, ProgressCardType type){
+		GetComponent<PhotonView> ().RPC ("SyncProgressCardreturn", PhotonTargets.All, new object[] {
+			(int) color,
+			(int) type
+		});
+	}
+	//2 rpcs for drawing/returning progress cards
+	[PunRPC]
+	void SyncProgressCardreturn(int color,int type){
+		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+		clientcards.returnCard((ProgressCardColor)color,(ProgressCardType)type);
+	}
+	[PunRPC]
+	void SyncProgressCardDraw(int color){
+		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+		ProgressCardColor currentColor = (ProgressCardColor)color;
+		clientcards.drawCard (currentColor);
+	}
+	//makes the queues once order has been synced
+	[PunRPC]
+	void GenerateProgressCardQueues(){
+		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+		//because doubles ??
+		clientcards.yellowCardsQueue.Clear();
+		clientcards.blueCardsQueue.Clear();
+		clientcards.greenCardsQueue.Clear ();
+		//generates the queues
+		clientcards.generateQueues();
+	}
+	//sync progress card order across clients
 	[PunRPC]
 	void SetProgressCard(int color, int type, int position) {
 		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
@@ -1448,7 +1545,6 @@ public enum MoveType {
 	BuildShip,
 	TradeBank,
 	MoveShip,
-	TradePlayer,
-	BuildMetropolis
+	TradePlayer
 }
 

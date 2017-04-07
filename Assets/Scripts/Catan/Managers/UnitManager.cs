@@ -69,6 +69,13 @@ public class UnitManager : MonoBehaviour {
 		return unitPrefabsDictionary [unitType];
 	}
 
+	public GameObject GetMetropolisOfType(MetropolisType metropolisType) {
+		if (!metropolisPrefabsDictionary.ContainsKey (metropolisType)) {
+			return null;
+		}
+		return metropolisPrefabsDictionary [metropolisType];
+	}
+
 	public void removeUnitFromGame(Unit unit) {
 		if (unitsInPlay.ContainsKey (unit.id)) {
 			Destroy (unitsInPlay [unit.id].gameObject);

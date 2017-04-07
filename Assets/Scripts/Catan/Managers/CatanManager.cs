@@ -35,6 +35,7 @@ public class CatanManager : MonoBehaviour {
 		InitializeManagers ();
 
 		players = LevelManager.instance.players;
+		metropolisOwners = new MetropolisOwners ();
 
 		setupPhase = true;
 		waitingForPlayer = false;
@@ -445,10 +446,13 @@ public class CatanManager : MonoBehaviour {
 		uiManager.tradePlayerPanel.OpenPanel (opponents, players [currentPlayerTurn].assets);
 	}
 
-	void handleBuildFailure(string errorMessage, Button[] cancelledButton) {
-		Debug.Log (errorMessage);
+	void handleBuildFailure(string message, Button[] cancelledButton) {
+		Debug.Log (message);
 		waitingForPlayer = false;
 		currentActiveButton = -1;
+
+		uiManager.notificationpanel.gameObject.SetActive(true);
+		uiManager.notificationtext.text = message;
 		// SEND MESSAGE TO CANCELLED BUTTON TO CANCEL ITS HIGHLIGHT
 		EventTransferManager.instance.OnOperationFailure ();
 		//Destroy (failedUnit.gameObject);

@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MetropolisOwners : MonoBehaviour {
+public class MetropolisOwners {
 
 	public Player[] metropolisOwners;
 
-	// Use this for initialization
-	void Start () {
+	public MetropolisOwners() {
 		metropolisOwners = new Player[PhotonNetwork.playerList.Length];
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+
+		for (int i = 0; i < metropolisOwners.Length; i++) {
+			metropolisOwners[i] = null;
+		}
 	}
 }

@@ -28,8 +28,23 @@ public class BoardManager : MonoBehaviour {
 	public List<GameTile> getTilesWithDiceValue(int playerID, int valueRolled, bool isCommodity) {
 		List<GameTile> eligibleTiles = new List<GameTile> ();
 
+		List<Metropolis> ownedMetropolis = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(Metropolis)).Cast<Metropolis> ().ToList ();
 		List<City> ownedCities = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(City)).Cast<City> ().ToList ();
 		List<Settlement> ownedSettlements = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
+
+		for (int i = 0; i < ownedMetropolis.Count; i++) {
+			Intersection relatedIntersection = ownedMetropolis[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				//if ((tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) && (tile.tileType != TileType.Desert && tile.tileType != TileType.Ocean)) {
+				if (tile.diceValue == valueRolled || EventTransferManager.instance.setupPhase) {
+					eligibleTiles.Add (tile);
+
+					Debug.Log ("Added " + tile.name);
+				}
+			}
+		}
 
 		for (int i = 0; i < ownedCities.Count; i++) {
 			Intersection relatedIntersection = ownedCities[i].locationIntersection;

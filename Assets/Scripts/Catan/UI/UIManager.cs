@@ -59,6 +59,7 @@ public class UIManager : MonoBehaviour {
 		progressCardPanel.cardHolder = progressCardHolder;
 
 		//a few progress card tests
+		/*
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Alchemist);
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Diplomat);
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Merchant);
@@ -71,7 +72,7 @@ public class UIManager : MonoBehaviour {
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Wedding);
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Warlord);
 		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.CommercialHarbor);
-
+*/
 
 
 		//just in case due to constant editing
@@ -348,7 +349,6 @@ public class UIManager : MonoBehaviour {
 	public void offerTrade() {
 		tradePlayerPanel.sendTrade ();
 	}
-
 	public void tradeCancelled() {
 		StopAllCoroutines();
 
@@ -358,6 +358,12 @@ public class UIManager : MonoBehaviour {
 		}
 
 		EventTransferManager.instance.OnOperationFailure ();
+	}
+
+	public void Test(){
+		//StartCoroutine(EventTransferManager.instance.CardDrawEvent());
+		notificationpanel.SetActive (true);
+		notificationtext.text = "test";
 	}
 
 	#endregion

@@ -44,15 +44,27 @@ public class FlipChartPanel : MonoBehaviour {
 	public Image blue;
 	public Image green;
 
-	public List<Image>	yellowDice;
-	public List<Image>	blueDice;
-	public List<Image>	greenDice;
+	public List<Image> yellowDice;
+	public List<Image> blueDice;
+	public List<Image> greenDice;
 
 	public Button tradeUp;
 	public Button politicsUp;
 	public Button scienceUp;
 
+	public Image tradeMetropolisOwnerDisplay;
+	public Image politicsMetropolisOwnerDisplay;
+	public Image scienceMetropolisOwnerDisplay;
 
+	public Button buildTrade;
+	public Button buildPolitics;
+	public Button buildscience;
+
+	public Vector3 scale;
+
+	void Start() {
+		scale = this.transform.localScale;
+	}
 
 	public void openPanel(int x,int y, int z){
 		//add methods to get lvls from player this needs to be a tuple in asset of lvls from 0 to 5
@@ -99,7 +111,7 @@ public class FlipChartPanel : MonoBehaviour {
 
 			nextUpTrade.text="Next Upgrade Cost:";
 			tradeUp.gameObject.SetActive (true);
-			if (tradelvl > 1) {
+			if (tradelvl > 0) {
 				yellow.gameObject.SetActive (true);
 				for (int i = 0; i < 6; i++) {
 					if (i < tradelvl+1) {
@@ -162,7 +174,7 @@ public class FlipChartPanel : MonoBehaviour {
 
 			nextUpPolitics.text="Next Upgrade Cost:";
 			politicsUp.gameObject.SetActive (true);
-			if (politicslvl > 1) {
+			if (politicslvl > 0) {
 				blue.gameObject.SetActive (true);
 				for (int i = 0; i < 6; i++) {
 					if (i < politicslvl+1) {
@@ -223,7 +235,7 @@ public class FlipChartPanel : MonoBehaviour {
 
 			nextUpPolitics.text="Next Upgrade Cost:";
 			politicsUp.gameObject.SetActive (true);
-			if (sciencelvl > 1) {
+			if (sciencelvl > 0) {
 				green.gameObject.SetActive (true);
 				for (int i = 0; i < 6; i++) {
 					if (i < sciencelvl+1) {
@@ -249,6 +261,16 @@ public class FlipChartPanel : MonoBehaviour {
 				scienceSpecialAbilitylbl.gameObject.SetActive (false);
 				scienceSpecialAbility.gameObject.SetActive (false);
 			}
+		}
+
+		if (sciencelvl >= 4 && CatanManager.instance.players[CatanManager.instance.currentPlayerTurn].showMetropolisBuildButton((int)MetropolisType.Science)) {
+			buildscience.gameObject.SetActive (true);
+		}
+		if (politicslvl >= 4 && CatanManager.instance.players[CatanManager.instance.currentPlayerTurn].showMetropolisBuildButton((int)MetropolisType.Politics)) {
+			buildPolitics.gameObject.SetActive (true);
+		}
+		if (tradelvl >= 4 && CatanManager.instance.players[CatanManager.instance.currentPlayerTurn].showMetropolisBuildButton((int)MetropolisType.Trade)) {
+			buildTrade.gameObject.SetActive (true);
 		}
 		this.gameObject.SetActive (true);
 
@@ -303,5 +325,24 @@ public class FlipChartPanel : MonoBehaviour {
 
 			openPanel (tradeLevel, politicsLevel, scienceLevel);
 		}
+	}
+
+	public void buildTradeMetropolis(){
+		StartCoroutine (buildMetropolisCoroutine(MetropolisType.Trade));
+	}
+
+	public void buildPoliticsMetropolis(){
+		StartCoroutine (buildMetropolisCoroutine(MetropolisType.Politics));
+	}
+
+	public void buildScienceMetropolis(){
+		StartCoroutine (buildMetropolisCoroutine(MetropolisType.Science));
+	}
+
+	public IEnumerator buildMetropolisCoroutine(MetropolisType metropolisType) {
+		this.transform.localScale = Vector3.zero;
+		yield return StartCoroutine (EventTransferManager.instance.ClientUpgradeCity(PhotonNetwork.player.ID - 1, (int)metropolisType));
+		this.transform.localScale = scale;
+		this.gameObject.SetActive (false);
 	}
 }

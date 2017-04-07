@@ -6,7 +6,6 @@ using UnityEngine.UI;
 public class BuildPanel : MonoBehaviour {
 	public Button buildbutton;
 	public Button[] buttonsOnPanel;
-
 	// Use this for initialization
 	void Start () {
 
@@ -16,7 +15,6 @@ public class BuildPanel : MonoBehaviour {
 	void Update () {
 		
 	}
-
 	//used for ui movement element
 	public void OnMouseEnter(){
 		this.gameObject.SetActive (true);

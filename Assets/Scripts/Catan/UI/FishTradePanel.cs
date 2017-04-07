@@ -62,6 +62,7 @@ public class FishTradePanel : MonoBehaviour {
 			optionsPanel [4].gameObject.SetActive (true);
 		}
 		else {
+			rewardSelection = -1;
 			optionsPanel [4].gameObject.SetActive (false);
 		}
 	}
@@ -195,6 +196,10 @@ public class FishTradePanel : MonoBehaviour {
 			numTokensNeeded = 7;
 			//draw progess card
 			break;
+		}
+
+		if (assetsToRemove.fishTokens.numTotalTokens() == 0) {
+			success = false;
 		}
 
 		if (success) {
