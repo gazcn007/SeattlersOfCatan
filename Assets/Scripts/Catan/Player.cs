@@ -79,19 +79,30 @@ public class Player : MonoBehaviour {
 
 		switch (faceType) {
 		case EventDieFace.Green:
-			canDraw = redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Science] + 1);
+			canDraw = (redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Science] + 1))
+				&& (cityImprovements.cityImprovements [CityImprovementType.Science] != 0);
 			break;
 		case EventDieFace.Blue:
-			canDraw = redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Politics] + 1);
+			canDraw = (redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Politics] + 1))
+				&& (cityImprovements.cityImprovements [CityImprovementType.Politics] != 0);
 			break;
 		case EventDieFace.Yellow:
-			canDraw = redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Trade] + 1);
+			canDraw = (redDieRoll <= (cityImprovements.cityImprovements [CityImprovementType.Trade] + 1))
+				&& (cityImprovements.cityImprovements [CityImprovementType.Trade] != 0);
 			break;
 		default:
 			break;
 		}
 
 		return canDraw;
+	}
+
+	public bool canBuildMetropolis(CityImprovementType metropolisType) {
+		return cityImprovements.cityImprovements [metropolisType] >= 4;
+	}
+
+	public bool canStealMetropolis(Player other, CityImprovementType metropolisType) {
+		return this.cityImprovements.cityImprovements [metropolisType] > other.cityImprovements.cityImprovements [metropolisType];
 	}
 
 	public bool unlockedTradingHouse() {

@@ -22,7 +22,9 @@ public class CityImprovementTuple {
 	}
 
 	public void ImproveCityOfType(CityImprovementType improvementType) {
-		cityImprovements [improvementType]++;
+		if (cityImprovements [improvementType] < 5) {
+			cityImprovements [improvementType]++;
+		}
 	}
 
 	public AssetTuple nextImprovementCost(CityImprovementType improvementType) {

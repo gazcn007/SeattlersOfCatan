@@ -390,7 +390,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	}
 
-	public void OnBuildUnitForUser(UnitType unitType, int playerNumber, int id, bool paid) {
+	public void OnBuildUnitForUser(UnitType unitType, int playerNumber, int id, bool paid, int metropolisType) {
 		if (unitType == UnitType.Road || unitType == UnitType.Ship) {
 			GetComponent<PhotonView> ().RPC ("BuildEdgeUnit", PhotonTargets.All, new object[] {
 				playerNumber,
@@ -402,6 +402,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			GetComponent<PhotonView> ().RPC ("UpgradeSettlement", PhotonTargets.All, new object[] {
 				playerNumber,
 				id
+			});
+		} else if (unitType == UnitType.Metropolis) {
+			GetComponent<PhotonView> ().RPC ("UpgradeCity", PhotonTargets.All, new object[] {
+				playerNumber,
+				id,
+				metropolisType
 			});
 		} else {
 			GetComponent<PhotonView> ().RPC ("BuildIntersectionUnit", PhotonTargets.All, new object[] {
@@ -594,6 +600,25 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		});
 		while (EventTransferManager.instance.waitingForPlayer) {
 			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	public IEnumerator ClientUpgradeCity(int playerNumber, int metropolisType) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("BuildMetropolis", PhotonTargets.All, new object[] {
+			playerNumber,
+			metropolisType
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	[PunRPC]
+	void BuildMetropolis(int playerNumber, int metropolisType) {
+		if (playerNumber == PhotonNetwork.player.ID - 1) {
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			StartCoroutine(clientCatanManager.unitManager.upgradeCity (metropolisType));
 		}
 	}
 
@@ -1224,6 +1249,60 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
+	void UpgradeCity(int playerNum, int unitID, int metropolisType) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		City cityToUpgrade = (City)clientCatanManager.unitManager.unitsInPlay [unitID];
+		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
+		print("Found city with id#: " + cityToUpgrade.id + ". Residing on intersection id#: " + cityToUpgrade.locationIntersection.id);
+
+		bool metropolisExists = false;
+		Metropolis newMetropolis = null;
+		Metropolis[] metropolisInPlay = GameObject.FindObjectsOfType<Metropolis> ();
+
+		for (int i = 0; i < metropolisInPlay.Length; i++) {
+			if (metropolisInPlay [i].metropolisType == (MetropolisType)metropolisType) {
+				newMetropolis = metropolisInPlay [i];
+			}
+		}
+
+		if (!metropolisExists) {
+			GameObject metropolisGameObject = (GameObject)Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.City));
+			newMetropolis = metropolisGameObject.GetComponent<Metropolis> ();
+			newMetropolis.id = cityToUpgrade.id;
+		} else {
+			newMetropolis.owner.removeOwnedUnit (newMetropolis, typeof(Metropolis));
+		}
+
+		clientCatanManager.unitManager.unitsInPlay [newMetropolis.id] = newMetropolis;
+
+		cityToUpgrade.locationIntersection.occupier = newMetropolis;
+		newMetropolis.locationIntersection = cityToUpgrade.locationIntersection;
+
+		clientCatanManager.players [playerNum].removeOwnedUnit (cityToUpgrade, typeof(City));
+		clientCatanManager.players [playerNum].addOwnedUnit (newMetropolis, typeof(Metropolis));
+		newMetropolis.owner = clientCatanManager.players [playerNum];
+
+		newMetropolis.transform.position = cityToUpgrade.transform.position;
+		newMetropolis.transform.parent = cityToUpgrade.transform.parent;
+		newMetropolis.transform.localScale = cityToUpgrade.transform.localScale;
+
+		//newMetropolis.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [playerNum].playerColor;
+
+		Destroy (cityToUpgrade.gameObject);
+
+		//clientCatanManager.players [playerNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit (UnitType.City));
+		clientCatanManager.boardManager.highlightUnitsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Settlement), true, clientCatanManager.players [playerNum].playerColor);
+		//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+		clientCatanManager.metropolisOwners.metropolisOwners [metropolisType] = clientCatanManager.players [playerNum];
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+	}
+
+	[PunRPC]
 	void MoveShip(int playerNumber, int shipID, int newLocationEdgeID) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
@@ -1366,6 +1445,7 @@ public enum MoveType {
 	BuildShip,
 	TradeBank,
 	MoveShip,
-	TradePlayer
+	TradePlayer,
+	BuildMetropolis
 }
 

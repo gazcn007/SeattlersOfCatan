@@ -18,6 +18,7 @@ public class CatanManager : MonoBehaviour {
 	public BoardManager boardManager;
 
 	public List<Player> players;
+	public MetropolisOwners metropolisOwners;
 
 	public int currentPlayerTurn;
 	public int currentActiveButton;
@@ -123,7 +124,7 @@ public class CatanManager : MonoBehaviour {
 		//boardManager.highlightIntersectionsWithColor (validIntersectionsToBuild, true, players [currentPlayerTurn].playerColor);
 		EventTransferManager.instance.OnHighlightForUser(0, currentPlayerTurn, true, validIntersectionsToBuild);
 		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (validIntersectionsToBuildList));
-		EventTransferManager.instance.OnBuildUnitForUser (unitType, currentPlayerTurn, players [currentPlayerTurn].lastIntersectionSelection.id, true);
+		EventTransferManager.instance.OnBuildUnitForUser (unitType, currentPlayerTurn, players [currentPlayerTurn].lastIntersectionSelection.id, true, -1);
 	}
 
 	public IEnumerator buildIntersectionUnit(IntersectionUnit intersectionUnit, System.Type unitType) {
@@ -215,7 +216,7 @@ public class CatanManager : MonoBehaviour {
 			unitTypeToBuild = UnitType.Ship;
 		}
 
-		EventTransferManager.instance.OnBuildUnitForUser(unitTypeToBuild, currentPlayerTurn, players [currentPlayerTurn].lastEdgeSelection.id, paid);
+		EventTransferManager.instance.OnBuildUnitForUser(unitTypeToBuild, currentPlayerTurn, players [currentPlayerTurn].lastEdgeSelection.id, paid, -1);
 	}
 
 	public IEnumerator upgradeSettlement() {
@@ -239,7 +240,39 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightUnitsWithColor (ownedSettlements.Cast<Unit> ().ToList (), true, Color.black);
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedSettlements.Cast<Unit> ().ToList ()));
-		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, true);
+		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, true, -1);
+	}
+
+	public IEnumerator upgradeCity(int metropolisType) {
+		waitingForPlayer = true;
+		List<City> ownedCities = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.City).Cast<City> ().ToList ();
+		int[] ownedCityIDs = players [currentPlayerTurn].getOwnedUnitIDsOfType (UnitType.City);
+
+		if (metropolisOwners.metropolisOwners [metropolisType] != null) {
+			if (!players [currentPlayerTurn].canStealMetropolis (metropolisOwners.metropolisOwners [metropolisType], (CityImprovementType)metropolisType)) {
+				handleBuildFailure("Can not steal metropolis of type " + (MetropolisType)metropolisType + " from " + metropolisOwners.metropolisOwners [metropolisType].playerName + "!", uiManager.uiButtons);
+				//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+				yield break;
+			}
+		}
+
+		// AssetTuple costOfUnit = resourceManager.getCostOfUnit (UnitType.City);
+		if (!players [currentPlayerTurn].canBuildMetropolis ((CityImprovementType)metropolisType)) { 
+			handleBuildFailure("City improvement level not eligible to build a metropolis!", uiManager.uiButtons);
+			//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			yield break;
+		}
+
+		if (ownedCities.Count == 0) {
+			handleBuildFailure("No cities owned!", uiManager.uiButtons);
+			//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			yield break;
+		}
+
+		boardManager.highlightUnitsWithColor (ownedCities.Cast<Unit> ().ToList (), true, Color.black);
+		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedCities.Cast<Unit> ().ToList ()));
+		EventTransferManager.instance.OnBuildUnitForUser(UnitType.Metropolis, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, true, metropolisType);
 	}
 
 

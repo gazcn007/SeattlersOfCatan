@@ -8,8 +8,9 @@ public class UnitManager : MonoBehaviour {
 
 	public GameObject settlementPrefab;
 	public GameObject cityPrefab;
-	public GameObject metropolisPrefab;
 	public GameObject cityWallPrefab;
+
+	public GameObject[] metropolisPrefabs;
 
 	public GameObject roadPrefab;
 	public GameObject shipPrefab;
@@ -25,6 +26,7 @@ public class UnitManager : MonoBehaviour {
 	public Dictionary<int, Unit> unitsInPlay = new Dictionary<int, Unit> ();
 
 	public Dictionary<UnitType, GameObject> unitPrefabsDictionary = new Dictionary<UnitType, GameObject>();
+	public Dictionary<MetropolisType, GameObject> metropolisPrefabsDictionary = new Dictionary<MetropolisType, GameObject> ();
 
 	public Dictionary<int, Unit> Units {
 		get {return unitsInPlay;}
@@ -48,13 +50,16 @@ public class UnitManager : MonoBehaviour {
 	void PopulatePrefabsDictionary() {
 		unitPrefabsDictionary.Add (UnitType.Settlement, settlementPrefab);
 		unitPrefabsDictionary.Add (UnitType.City, cityPrefab);
-		unitPrefabsDictionary.Add (UnitType.Metropolis, metropolisPrefab);
 		unitPrefabsDictionary.Add (UnitType.CityWalls, cityWallPrefab);
 
 		unitPrefabsDictionary.Add (UnitType.Road, roadPrefab);
 		unitPrefabsDictionary.Add (UnitType.Ship, shipPrefab);
 
 		unitPrefabsDictionary.Add (UnitType.Knight, basicKnightPrefab);
+
+		metropolisPrefabsDictionary.Add (MetropolisType.Science, metropolisPrefabs [0]);
+		metropolisPrefabsDictionary.Add (MetropolisType.Politics, metropolisPrefabs [1]);
+		metropolisPrefabsDictionary.Add (MetropolisType.Trade, metropolisPrefabs [2]);
 	}
 
 	public GameObject GetPrefabOfType(UnitType unitType) {
@@ -96,6 +101,10 @@ public class UnitManager : MonoBehaviour {
 
 	public IEnumerator moveShip() {
 		yield return StartCoroutine (CatanManager.instance.moveShip());
+	}
+
+	public IEnumerator upgradeCity(int metropolistType) {
+		yield return StartCoroutine (CatanManager.instance.upgradeCity(metropolistType));
 	}
 
 }
