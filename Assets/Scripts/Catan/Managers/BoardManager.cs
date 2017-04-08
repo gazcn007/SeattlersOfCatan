@@ -168,7 +168,7 @@ public class BoardManager : MonoBehaviour {
 		List<Edge> validEdges = new List<Edge> ();
 		List<Unit> ownedUnits = player.getOwnedUnits ();
 
-		if (EventTransferManager.instance.setupPhase) {
+		if (EventTransferManager.instance.setupPhase || player.playedRoadBuilding) {
 			for (int i = 0; i < ownedUnits.Count; i++) {
 				if (typeof(IntersectionUnit).IsAssignableFrom (ownedUnits [i].GetType ())) {
 					bool validSet = true;
