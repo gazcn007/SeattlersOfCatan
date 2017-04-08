@@ -190,6 +190,17 @@ public class CatanManager : MonoBehaviour {
 		waitingForPlayer = true;
 		List<Edge> validEdgesToBuildList = boardManager.getValidEdgesForPlayer (players[currentPlayerTurn], unitType == UnitType.Road);
 		int[] validEdgesToBuild = boardManager.getValidEdgeIDsForPlayer (players[currentPlayerTurn], unitType == UnitType.Road);
+
+		bool canBeShip = EventTransferManager.instance.setupPhase || players [currentPlayerTurn].playedRoadBuilding;
+
+		if (canBeShip) {
+			int[] validShipEdgesToBuild = boardManager.getValidEdgeIDsForPlayer (players[currentPlayerTurn], unitType == UnitType.Ship);
+			List<Edge> validShipEdgesToBuildList =  boardManager.getValidEdgesForPlayer (players[currentPlayerTurn], unitType == UnitType.Ship);
+
+			validEdgesToBuild = validEdgesToBuild.Union (validShipEdgesToBuild).ToArray();
+			validEdgesToBuildList = validEdgesToBuildList.Union (validShipEdgesToBuildList).ToList ();
+		}
+
 		AssetTuple costOfUnit = resourceManager.getCostOfUnit (unitType);
 
 		if (costOfUnit == null) {
@@ -213,7 +224,6 @@ public class CatanManager : MonoBehaviour {
 		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuildList));//, edgeUnit));//new Road(unitID++)));
 
 		UnitType unitTypeToBuild = unitType;
-		bool canBeShip = EventTransferManager.instance.setupPhase || players [currentPlayerTurn].playedRoadBuilding;
 		if (canBeShip && !(players [currentPlayerTurn].lastEdgeSelection.isLandEdge () || players [currentPlayerTurn].lastEdgeSelection.isShoreEdge ())) {
 			unitTypeToBuild = UnitType.Ship;
 		}
