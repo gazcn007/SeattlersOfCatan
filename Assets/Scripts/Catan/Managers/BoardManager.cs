@@ -274,7 +274,7 @@ public class BoardManager : MonoBehaviour {
 	}
 
 
-	public List<Intersection> getValidIntersectionsForPlayer(Player player) {
+	public List<Intersection> getValidIntersectionsForPlayer(Player player, bool isKnight) {
 		List<Intersection> allIntersections = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().Intersections.Values.ToList ();
 		List<Intersection> validIntersections = new List<Intersection> ();
 
@@ -306,7 +306,7 @@ public class BoardManager : MonoBehaviour {
 
 					for (int j = 0; j < neighborIntersections.Count; j++) {
 						if (neighborIntersections [j].occupier == null && neighborIntersections [j].isSettleable()
-							&& neighborIntersections [j].isNotNeighboringIntersectionWithUnit()) {
+							&& (neighborIntersections [j].isNotNeighboringIntersectionWithUnit() || isKnight)) {
 							validIntersections.Add (neighborIntersections [j]);
 						}
 					}
@@ -317,8 +317,8 @@ public class BoardManager : MonoBehaviour {
 		return validIntersections;
 	}
 
-	public int[] getValidIntersectionIDsForPlayer(Player player) {
-		List<Intersection> validIntersections = getValidIntersectionsForPlayer (player);
+	public int[] getValidIntersectionIDsForPlayer(Player player, bool isKnight) {
+		List<Intersection> validIntersections = getValidIntersectionsForPlayer (player, isKnight);
 		int[] validIntersectionIDs = new int[validIntersections.Count];
 
 		for (int i = 0; i < validIntersections.Count; i++) {
@@ -328,6 +328,107 @@ public class BoardManager : MonoBehaviour {
 		return validIntersectionIDs;
 	}
 
+	public List<Intersection> getMoveableIntersectionsForKnight(Knight knightToMove) {
+		List<Intersection> moveableIntersectionsWithOwnUnits = new List<Intersection> ();
+
+		List<Edge> closedEdges = new List<Edge> ();
+		Stack<Edge> dfsStack = new Stack<Edge> ();
+
+		foreach (var neighborEdge in knightToMove.locationIntersection.getLinkedEdges()) {
+			if (neighborEdge.occupier != null && neighborEdge.occupier.owner == knightToMove.owner) {
+				dfsStack.Push (neighborEdge);
+			}
+		}
+
+		while (dfsStack.Count != 0) {
+			Edge currentEdge = dfsStack.Pop ();
+			closedEdges.Add (currentEdge);
+			List<Intersection> neighborIntersections = currentEdge.getLinkedIntersections ();
+
+			foreach (var neighborIntersection in neighborIntersections) {
+				if ((neighborIntersection.occupier == null || neighborIntersection.occupier.owner == knightToMove.owner) && !moveableIntersectionsWithOwnUnits.Contains (neighborIntersection) && neighborIntersection != knightToMove.locationIntersection) {
+					moveableIntersectionsWithOwnUnits.Add (neighborIntersection);
+
+					foreach (Edge neighborEdge in neighborIntersection.getLinkedEdges()) {
+						if (neighborEdge.occupier != null && neighborEdge.occupier.owner == knightToMove.owner && !closedEdges.Contains (neighborEdge)) {
+							dfsStack.Push (neighborEdge);
+						}
+					}
+				}
+			}
+		}
+
+		List<Intersection> moveableIntersections = new List<Intersection> ();
+		foreach (var intersection in moveableIntersectionsWithOwnUnits) {
+			if (intersection.occupier == null) {
+				moveableIntersections.Add (intersection);
+			}
+		}
+
+		return moveableIntersections;
+	}
+
+	public List<Knight> getDisplaceableKnightsFor(Knight playerKnight) {
+		List<Intersection> moveableIntersectionsWithOwnUnits = new List<Intersection> ();
+		List<Knight> opponentKnights = new List<Knight> ();
+
+		List<Edge> closedEdges = new List<Edge> ();
+		Stack<Edge> dfsStack = new Stack<Edge> ();
+
+		foreach (var neighborEdge in playerKnight.locationIntersection.getLinkedEdges()) {
+			if (neighborEdge.occupier != null && neighborEdge.occupier.owner == playerKnight.owner) {
+				dfsStack.Push (neighborEdge);
+			}
+		}
+
+		while (dfsStack.Count != 0) {
+			Edge currentEdge = dfsStack.Pop ();
+			closedEdges.Add (currentEdge);
+			List<Intersection> neighborIntersections = currentEdge.getLinkedIntersections ();
+
+			foreach (var neighborIntersection in neighborIntersections) {
+				if ((neighborIntersection.occupier == null || neighborIntersection.occupier.owner == playerKnight.owner) && !moveableIntersectionsWithOwnUnits.Contains (neighborIntersection) && neighborIntersection != playerKnight.locationIntersection) {
+					moveableIntersectionsWithOwnUnits.Add (neighborIntersection);
+
+					foreach (Edge neighborEdge in neighborIntersection.getLinkedEdges()) {
+						if (neighborEdge.occupier != null && neighborEdge.occupier.owner == playerKnight.owner && !closedEdges.Contains (neighborEdge)) {
+							dfsStack.Push (neighborEdge);
+						}
+					}
+				} else if (neighborIntersection.occupier != null && neighborIntersection.occupier.owner != playerKnight.owner) {
+					Knight opponentKnight = neighborIntersection.occupier as Knight;
+
+					if (opponentKnight != null && (int)opponentKnight.rank < (int)playerKnight.rank) {
+						opponentKnights.Add (opponentKnight);
+					}
+				}
+			}
+		}
+
+		return opponentKnights;
+	}
+
+	public List<Intersection> getRobberPirateIntersections() {
+		GameBoard board = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		List<Intersection> neighborIntersections = new List<Intersection> ();
+
+		if (board.robber != null) {
+			foreach (var intersection in board.robber.occupyingTile.getIntersections()) {
+				if (!neighborIntersections.Contains (intersection)) {
+					neighborIntersections.Add (intersection);
+				}
+			}
+		}
+		if (board.pirate != null) {
+			foreach (var intersection in board.pirate.occupyingTile.getIntersections()) {
+				if (!neighborIntersections.Contains (intersection)) {
+					neighborIntersections.Add (intersection);
+				}
+			}
+		}
+
+		return neighborIntersections;
+	}
 
 	public List<GameTile> getLandTiles(bool occupierCheck) {
 		List<GameTile> allTiles = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().GameTiles.Values.ToList ();
@@ -399,6 +500,13 @@ public class BoardManager : MonoBehaviour {
 
 		} else if (typeof(EdgeUnit).IsAssignableFrom (unit.GetType())) {
 
+		}
+	}
+
+	public void highlightKnightsWithColor(List<Unit> units, bool highlight, Color colorToHighlight) {
+		for (int i = 0; i < units.Count; i++) {
+			SpriteRenderer renderer = units [i].gameObject.GetComponentsInChildren<SpriteRenderer> ()[1];
+			renderer.color = colorToHighlight;
 		}
 	}
 

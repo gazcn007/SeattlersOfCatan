@@ -27,4 +27,123 @@ public class KnightPanel : MonoBehaviour {
 		}
 		this.gameObject.SetActive (false);
 	}
+
+	public void MoveKnight() {
+		int buttonId = 13;
+		Debug.Log ("Move knight event()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				EventTransferManager.instance.currentActiveButton = buttonId;
+
+				StartCoroutine (EventTransferManager.instance.ClientMoveKnightForAll(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
+					BoardManager.instance.highlightAllIntersections (false);
+					EventTransferManager.instance.OnOperationFailure ();
+				}
+			}
+		}
+	}
+
+	public void BuildKnight() {
+		int buttonId = 10;
+		Debug.Log ("Knight build event()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				EventTransferManager.instance.currentActiveButton = buttonId;
+
+				StartCoroutine (EventTransferManager.instance.ClientBuildKnightForAll(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					BoardManager.instance.highlightAllIntersections (false);
+					EventTransferManager.instance.OnOperationFailure ();
+				}
+			}
+		}
+	}
+
+	public void ActivateKnight() {
+		int buttonId = 11;
+		Debug.Log ("Activate knight event()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				EventTransferManager.instance.currentActiveButton = buttonId;
+
+				StartCoroutine (EventTransferManager.instance.ClientActivateKnightForAll(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
+					EventTransferManager.instance.OnOperationFailure ();
+				}
+			}
+		}
+	}
+
+	public void DisplaceKnight() {
+		int buttonId = 14;
+		Debug.Log ("Displace opponent's knight event()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				EventTransferManager.instance.currentActiveButton = buttonId;
+
+				StartCoroutine (EventTransferManager.instance.ClientDisplaceKnightForAll(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+						BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [i].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [i].playerColor);
+					}
+					BoardManager.instance.highlightAllIntersections (false);
+					EventTransferManager.instance.OnOperationFailure ();
+				}
+			}
+		}
+	}
+
+	public void UpgradeKnight() {
+		int buttonId = 12;
+		Debug.Log ("Upgrade knight event()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				EventTransferManager.instance.currentActiveButton = buttonId;
+
+				StartCoroutine (EventTransferManager.instance.ClientPromoteKnightForAll(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
+					EventTransferManager.instance.OnOperationFailure ();
+				}
+			}
+		}
+	}
+
+	public void ChaseRobber() {
+		int buttonId = 15;
+		Debug.Log ("Chase away robber event()");
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				EventTransferManager.instance.currentActiveButton = buttonId;
+
+				StartCoroutine (EventTransferManager.instance.ClientChaseRobberForAll(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
+					EventTransferManager.instance.OnOperationFailure ();
+				}
+			}
+		}
+	}
+
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,9 +19,7 @@ public class UnitManager : MonoBehaviour {
 	public GameObject robberPrefab;
 	public GameObject piratePrefab;
 
-	public GameObject basicKnightPrefab;
-	public GameObject strongKnightPrefab;
-	public GameObject mightyKnightPrefab;
+	public GameObject[] knightPrefabs;
 
 	public int unitID = 0;
 	public Dictionary<int, Unit> unitsInPlay = new Dictionary<int, Unit> ();
@@ -55,7 +54,7 @@ public class UnitManager : MonoBehaviour {
 		unitPrefabsDictionary.Add (UnitType.Road, roadPrefab);
 		unitPrefabsDictionary.Add (UnitType.Ship, shipPrefab);
 
-		unitPrefabsDictionary.Add (UnitType.Knight, basicKnightPrefab);
+		unitPrefabsDictionary.Add (UnitType.Knight, knightPrefabs[0]);
 
 		metropolisPrefabsDictionary.Add (MetropolisType.Science, metropolisPrefabs [0]);
 		metropolisPrefabsDictionary.Add (MetropolisType.Politics, metropolisPrefabs [1]);
@@ -67,6 +66,16 @@ public class UnitManager : MonoBehaviour {
 			return null;
 		}
 		return unitPrefabsDictionary [unitType];
+	}
+
+	public GameObject GetNextLevelKnightPrefab(KnightRank rank) {
+		GameObject nextLevelKnightPrefab = null;
+
+		if (((int)rank) + 1 < knightPrefabs.Length) {
+			nextLevelKnightPrefab = knightPrefabs [((int)rank) + 1];
+		}
+
+		return nextLevelKnightPrefab;
 	}
 
 	public GameObject GetMetropolisOfType(MetropolisType metropolisType) {
@@ -114,6 +123,29 @@ public class UnitManager : MonoBehaviour {
 		yield return StartCoroutine (CatanManager.instance.upgradeCity(metropolistType));
 	}
 
+	public IEnumerator buildKnight() {
+		yield return StartCoroutine (CatanManager.instance.buildIntersectionUnit(UnitType.Knight));
+	}
+
+	public IEnumerator activateKnight(bool paid) {
+		yield return StartCoroutine (CatanManager.instance.activateKnight(paid));
+	}
+
+	public IEnumerator promoteKnight(bool paid) {
+		yield return StartCoroutine (CatanManager.instance.promoteKnight(paid));
+	}
+
+	public IEnumerator moveKnight() {
+		yield return StartCoroutine (CatanManager.instance.moveKnight(-1, false));
+	}
+
+	public IEnumerator displaceKnight() {
+		yield return StartCoroutine (CatanManager.instance.displaceKnight());
+	}
+
+	public IEnumerator chaseRobber() {
+		yield return StartCoroutine (CatanManager.instance.chaseRobber());
+	}
 }
 
 public enum UnitType {

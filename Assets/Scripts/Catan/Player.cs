@@ -29,6 +29,7 @@ public class Player : MonoBehaviour {
 	public bool collectedThisTurn;
 
 	public bool playedRoadBuilding;
+	public bool playedBishop;
 
 	public Sprite avatar;
 
@@ -147,6 +148,10 @@ public class Player : MonoBehaviour {
 
 		return ((this.canBuildMetropolis((CityImprovementType)metropolisType) && !hasMetropolis(metropolisType) && CatanManager.instance.metropolisOwners.metropolisOwners[metropolisType] == null)
 			|| (this == maxLevelPlayer && CatanManager.instance.metropolisOwners.metropolisOwners[metropolisType].playerNumber != this.playerNumber));
+	}
+
+	public bool isImmuneToBarbarians() {
+		return ownedUnits [typeof(City)].Count == 0 && ownedUnits [typeof(Metropolis)].Count == 0;
 	}
 
 	public void addOwnedUnit(Unit unit, System.Type type) {

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class EventTransferManager : Photon.MonoBehaviour {
@@ -284,6 +285,26 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 	}
 
+	void OnMoveRobberOrPirate(int gamePieceNumber, bool removeFromBoard, bool stealResource) {
+		GetComponent<PhotonView> ().RPC ("MoveRobberOrPirate", PhotonTargets.All, new object[] {
+			gamePieceNumber,
+			removeFromBoard,
+			stealResource
+		});
+	}
+
+	[PunRPC]
+	void MoveRobberOrPirate(int gamePieceNumber, bool removeFromBoard, bool stealResource) {
+		StartCoroutine (MoveRobberPirateCoroutine (gamePieceNumber, removeFromBoard, stealResource));
+	}
+
+	IEnumerator MoveRobberPirateCoroutine(int gamePieceNumber, bool removeFromBoard, bool stealResource) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		if (PhotonNetwork.player.ID - 1 == clientCatanManager.currentPlayerTurn) {
+			yield return StartCoroutine(clientCatanManager.moveGamePieceForCurrentPlayer(gamePieceNumber, removeFromBoard, stealResource));
+		}
+	}
+
 	void BeginWaitForPlayers(int[] playerNums) {
 		for (int i = 0; i < playerChecks.Length; i++) {
 			EventTransferManager.instance.playerChecks [i] = true;
@@ -447,6 +468,92 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		});
 	}
 
+	public void OnKnightActionForUser(MoveType knightActionType, int playerNumber, int knightID, int otherID, bool active, bool paid) {
+		if (knightActionType == MoveType.ActivateKnight) {
+			GetComponent<PhotonView> ().RPC ("ActivateKnight", PhotonTargets.All, new object[] {
+				playerNumber,
+				knightID,
+				active,
+				paid
+			});
+		} else if (knightActionType == MoveType.PromoteKnight) {
+			GetComponent<PhotonView> ().RPC ("PromoteKnight", PhotonTargets.All, new object[] {
+				playerNumber,
+				knightID,
+				paid
+			});
+		} else if (knightActionType == MoveType.MoveKnight) {
+			GetComponent<PhotonView> ().RPC ("MoveKnight", PhotonTargets.All, new object[] {
+				playerNumber,
+				knightID,
+				otherID
+			});
+		} else if (knightActionType == MoveType.DisplaceKnight) {
+			GetComponent<PhotonView> ().RPC ("DisplaceKnight", PhotonTargets.All, new object[] {
+				playerNumber,
+				knightID,
+				otherID
+			});
+		} else if (knightActionType == MoveType.ChaseRobber) {
+			GetComponent<PhotonView> ().RPC ("ChaseRobber", PhotonTargets.All, new object[] {
+				playerNumber,
+				knightID,
+				otherID
+			});
+		}
+
+	}
+
+	public void OnDestroyUnit(UnitType type, int unitID) {
+		GetComponent<PhotonView> ().RPC ("DestroyUnitRPC", PhotonTargets.All, new object[] {
+			(int)type,
+			unitID
+		});
+	}
+
+	[PunRPC]
+	public void DestroyUnitRPC(int unitType, int unitID) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		Unit destroyedUnit = clientCatanManager.unitManager.unitsInPlay [unitID];
+
+		switch ((UnitType)unitType) {
+		case UnitType.Settlement:
+			Settlement selectedSettlement = destroyedUnit as Settlement;
+			selectedSettlement.owner.removeOwnedUnit (selectedSettlement, typeof(Settlement));
+			selectedSettlement.locationIntersection.occupier = null;
+			break;
+		case UnitType.City:
+			City selectedCity = destroyedUnit as City;
+			selectedCity.owner.removeOwnedUnit (selectedCity, typeof(City));
+			selectedCity.locationIntersection.occupier = null;
+			break;
+		case UnitType.CityWalls:
+			CityWall selectedCityWall = destroyedUnit as CityWall;
+			selectedCityWall.owner.removeOwnedUnit (selectedCityWall, typeof(CityWall));
+			selectedCityWall.locationIntersection.occupier = null;
+			break;
+		case UnitType.Knight:
+			Knight selectedKnight = destroyedUnit as Knight;
+			selectedKnight.owner.removeOwnedUnit (selectedKnight, typeof(Knight));
+			selectedKnight.locationIntersection.occupier = null;
+			break;
+		case UnitType.Road:
+			Road selectedRoad = destroyedUnit as Road;
+			selectedRoad.owner.removeOwnedUnit (selectedRoad, typeof(Road));
+			selectedRoad.locationEdge.occupier = null;
+			break;
+		case UnitType.Ship:
+			Ship selectedShip = destroyedUnit as Ship;
+			selectedShip.owner.removeOwnedUnit (selectedShip, typeof(Ship));
+			selectedShip.locationEdge.occupier = null;
+			break;
+		default:
+			break;
+		}
+
+		Destroy (destroyedUnit.gameObject);
+	}
+
 
 	IEnumerator CatanSetupPhase() {
 		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
@@ -502,6 +609,24 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				break;
 			case MoveType.MoveShip:
 				StartCoroutine(clientCatanManager.unitManager.moveShip ());
+				break;
+			case MoveType.BuildKnight:
+				StartCoroutine(clientCatanManager.unitManager.buildKnight ());
+				break;
+			case MoveType.ActivateKnight:
+				StartCoroutine(clientCatanManager.unitManager.activateKnight (true));
+				break;
+			case MoveType.PromoteKnight:
+				StartCoroutine(clientCatanManager.unitManager.promoteKnight (true));
+				break;
+			case MoveType.MoveKnight:
+				StartCoroutine(clientCatanManager.unitManager.moveKnight ());
+				break;
+			case MoveType.DisplaceKnight:
+				StartCoroutine(clientCatanManager.unitManager.displaceKnight ());
+				break;
+			case MoveType.ChaseRobber:
+				StartCoroutine(clientCatanManager.unitManager.chaseRobber ());
 				break;
 			default:
 				break;
@@ -635,6 +760,72 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 	}
 
+	public IEnumerator ClientBuildKnightForAll(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.BuildKnight
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	public IEnumerator ClientActivateKnightForAll(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.ActivateKnight
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	public IEnumerator ClientPromoteKnightForAll(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.PromoteKnight
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	public IEnumerator ClientMoveKnightForAll(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.MoveKnight
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	public IEnumerator ClientDisplaceKnightForAll(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.DisplaceKnight
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
+	public IEnumerator ClientChaseRobberForAll(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.ChaseRobber
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
 	[PunRPC]
 	void BuildMetropolis(int playerNumber, int metropolisType) {
 		if (playerNumber == PhotonNetwork.player.ID - 1) {
@@ -661,6 +852,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
 			clientCatanManager.players [i].cityImprovements.playedCraneThisTurn = false;
 			clientCatanManager.players [i].playedRoadBuilding = false;
+
+			List<Knight> playerKnights = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().ToList ();
+
+			for(int j = 0; j < playerKnights.Count; j++) {
+				playerKnights [j].actionPerformedThisTurn = false;
+			}
 		}
 
 		if (clientCatanManager.players [clientCatanManager.currentPlayerTurn].hasOldBoot ()) {
@@ -1175,6 +1372,182 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
+	void ActivateKnight(int playerNum, int unitID, bool active, bool isPaid) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		Knight knightToActivate = (Knight)clientCatanManager.unitManager.unitsInPlay [unitID];
+		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
+		print("Found knight to upgrade with id#: " + knightToActivate.id + ". Residing on intersection id#: " + knightToActivate.locationIntersection.id);
+
+		knightToActivate.activateKnight (active);
+
+		if (isPaid) {
+			clientCatanManager.players [playerNum].spendAssets (clientCatanManager.resourceManager.getCostOf (MoveType.ActivateKnight));
+		}
+		clientCatanManager.boardManager.highlightKnightsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Knight), true, clientCatanManager.players [playerNum].playerColor);
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+	}
+
+	[PunRPC]
+	void PromoteKnight(int playerNum, int unitID, bool isPaid) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		Knight knightToPromote = (Knight)clientCatanManager.unitManager.unitsInPlay [unitID];
+		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
+		print("Found knight to promote with id#: " + knightToPromote.id + ". Residing on intersection id#: " + knightToPromote.locationIntersection.id);
+
+		GameObject nextLevelKnight = (GameObject)Instantiate (clientCatanManager.unitManager.GetNextLevelKnightPrefab(knightToPromote.rank));
+		Knight newKnight = nextLevelKnight.GetComponent<Knight> ();
+		newKnight.id = knightToPromote.id;
+		newKnight.name = newKnight.rank.ToString () + " Knight " + newKnight.id;
+
+		clientCatanManager.unitManager.unitsInPlay [knightToPromote.id] = newKnight;
+
+		knightToPromote.locationIntersection.occupier = newKnight;
+		newKnight.locationIntersection = knightToPromote.locationIntersection;
+
+		clientCatanManager.players [playerNum].removeOwnedUnit (knightToPromote, typeof(Knight));
+		clientCatanManager.players [playerNum].addOwnedUnit (newKnight, typeof(Knight));
+
+		newKnight.owner = clientCatanManager.players [playerNum];
+
+		newKnight.transform.position = knightToPromote.transform.position;
+		newKnight.transform.parent = knightToPromote.transform.parent;
+		newKnight.transform.localScale = knightToPromote.transform.localScale;
+
+		newKnight.GetComponentsInChildren<SpriteRenderer> ()[1].color = clientCatanManager.players [playerNum].playerColor;
+
+		if (knightToPromote.isActive) {
+			newKnight.activateKnight (true);
+			newKnight.actionPerformedThisTurn = knightToPromote.actionPerformedThisTurn;
+		}
+
+		Destroy (knightToPromote.gameObject);
+
+		if (isPaid) {
+			clientCatanManager.players [playerNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit (UnitType.Knight));
+		}
+		clientCatanManager.boardManager.highlightKnightsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Knight), true, clientCatanManager.players [playerNum].playerColor);
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+	}
+
+	[PunRPC]
+	void MoveKnight(int playerNum, int unitID, int newLocationID) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		Knight knightToMove = (Knight)clientCatanManager.unitManager.unitsInPlay [unitID];
+		Intersection newLocationIntersection = clientGameBoard.Intersections [newLocationID];
+		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
+		print("Moving with id#: " + knightToMove.id + ". From current location with intersection id#: " + knightToMove.locationIntersection.id + 
+			" to new intersection with id#: " + newLocationIntersection.id);
+
+		knightToMove.locationIntersection.occupier = null;
+		knightToMove.locationIntersection = newLocationIntersection;
+		newLocationIntersection.occupier = knightToMove;
+
+		knightToMove.transform.position = newLocationIntersection.transform.position + Vector3.up * 0.2f;
+		knightToMove.transform.parent = newLocationIntersection.transform;
+
+		knightToMove.activateKnight (false);
+		knightToMove.actionPerformedThisTurn = true;
+
+		clientCatanManager.boardManager.highlightKnightsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Knight), true, clientCatanManager.players [playerNum].playerColor);
+		clientCatanManager.boardManager.highlightAllIntersections (false);
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+	}
+
+	[PunRPC]
+	void DisplaceKnight(int playerNum, int unitID, int opponentKnightID) {
+		StartCoroutine (DisplaceKnightCoroutine (playerNum, unitID, opponentKnightID));
+	}
+
+	IEnumerator DisplaceKnightCoroutine(int playerNum, int knightID, int opponentKnightID) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		Knight playerKnight = (Knight)clientCatanManager.unitManager.unitsInPlay [knightID];
+		Knight opponentKnight = (Knight)clientCatanManager.unitManager.unitsInPlay [opponentKnightID];
+		Intersection newLocationIntersection = opponentKnight.locationIntersection;
+
+		bool opponentKnightActive = opponentKnight.isActive;
+
+		print("Player knight with id#: " + playerKnight.id + " at intersection with id#: " + playerKnight.locationIntersection.id +
+			" displaced opponent knight with id#: " + opponentKnight.id + " at intersection with id#: " + opponentKnight.locationIntersection.id);
+
+		int[] opponentIDArray = { opponentKnight.owner.playerNumber - 1 };
+		EventTransferManager.instance.BeginWaitForPlayers (opponentIDArray);
+
+		if (PhotonNetwork.player.ID == opponentKnight.owner.playerNumber) {
+			yield return StartCoroutine(clientCatanManager.moveKnight(opponentKnightID, true));
+
+			if (clientCatanManager.unitManager.unitsInPlay [opponentKnightID] != null) {
+				if (opponentKnightActive) {
+					EventTransferManager.instance.OnKnightActionForUser (MoveType.ActivateKnight, opponentKnight.owner.playerNumber - 1, opponentKnightID, -1, true, false);
+				}
+			}
+		}
+
+		if (clientCatanManager.unitManager.unitsInPlay [opponentKnightID] != null) {
+			Debug.Log ("Waiting for players started");
+			while (EventTransferManager.instance.waitingForPlayers) {
+				EventTransferManager.instance.CheckIfPlayersReady ();
+				Debug.Log ("Waiting...");
+				yield return new WaitForEndOfFrame ();
+			}
+		}
+
+		playerKnight.locationIntersection.occupier = null;
+		playerKnight.locationIntersection = newLocationIntersection;
+		newLocationIntersection.occupier = playerKnight;
+
+		playerKnight.transform.position = newLocationIntersection.transform.position + Vector3.up * 0.2f;
+		playerKnight.transform.parent = newLocationIntersection.transform;
+
+		playerKnight.activateKnight (false);
+		playerKnight.actionPerformedThisTurn = true;
+
+		clientCatanManager.boardManager.highlightKnightsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Knight), true, clientCatanManager.players [playerNum].playerColor);
+		clientCatanManager.boardManager.highlightAllIntersections (false);
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+	}
+
+	[PunRPC]
+	void ChaseRobber(int playerNum, int knightID, int gamePieceType) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		Knight playerKnight = (Knight)clientCatanManager.unitManager.unitsInPlay [knightID];
+
+		if (PhotonNetwork.player.ID - 1 == playerNum) {
+			OnMoveRobberOrPirate (gamePieceType, false, true);
+		}
+
+		playerKnight.activateKnight (false);
+		playerKnight.actionPerformedThisTurn = true;
+
+		clientCatanManager.boardManager.highlightKnightsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Knight), true, clientCatanManager.players [playerNum].playerColor);
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+	}
+
+	[PunRPC]
 	void BuildIntersectionUnit(int userNum, int unitType, int intersectionID, bool paid) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
@@ -1188,12 +1561,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		case UnitType.Settlement:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Settlement));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
-			intersectionUnitGO.name = "Settlement ";
+			intersectionUnitGO.name = "Settlement " + clientCatanManager.unitManager.unitID;
 			break;
 		case UnitType.City:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.City));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
-			intersectionUnitGO.name = "City ";
+			intersectionUnitGO.name = "City " + clientCatanManager.unitManager.unitID;
 			break;
 		case UnitType.Metropolis:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Metropolis));
@@ -1202,12 +1575,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		case UnitType.CityWalls:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.CityWalls));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
-			intersectionUnitGO.name = "CityWalls ";
 			break;
 		case UnitType.Knight:
 			intersectionUnitGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.Knight));
 			intersectionUnit = intersectionUnitGO.GetComponent<IntersectionUnit> ();
-			intersectionUnitGO.name = "Knight ";
+			intersectionUnitGO.name = "Basic Knight " + clientCatanManager.unitManager.unitID;
 			break;
 		default:
 			return;
@@ -1226,12 +1598,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		intersectionUnit.transform.parent = clientGameBoard.Intersections[intersectionID].transform;
 		intersectionUnit.transform.localScale = intersectionUnit.transform.localScale * clientGameBoard.hexRadius;
 
-		intersectionUnit.name = intersectionUnit.name + intersectionUnit.id.ToString ();
+		if ((UnitType)unitType == UnitType.Knight) {
+			intersectionUnit.transform.localScale = intersectionUnit.transform.localScale * (1.5f / 3.33f);
+			intersectionUnit.transform.position = intersectionUnit.transform.position + Vector3.up * 0.2f;
+			intersectionUnit.GetComponentsInChildren<SpriteRenderer> ()[1].color = clientCatanManager.players [userNum].playerColor;
+		} else {
+			intersectionUnit.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [userNum].playerColor;
+		}
 
-		intersectionUnit.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [userNum].playerColor;
 		intersectionUnit.gameObject.SetActive (true);
 
-		if (!EventTransferManager.instance.setupPhase && paid) {
+		if (paid && !EventTransferManager.instance.setupPhase) {
 			clientCatanManager.players [userNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit ((UnitType)unitType));
 		}
 
@@ -1571,6 +1948,12 @@ public enum MoveType {
 	BuildShip,
 	TradeBank,
 	MoveShip,
-	TradePlayer
+	TradePlayer,
+	BuildKnight,
+	ActivateKnight,
+	PromoteKnight,
+	MoveKnight,
+	DisplaceKnight,
+	ChaseRobber
 }
 

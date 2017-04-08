@@ -101,8 +101,9 @@ public class CatanManager : MonoBehaviour {
 		Debug.Log ("Current turn is: " + players[currentPlayerTurn].playerName + " and my photon id is: " + PhotonNetwork.player.ID + " note -1 ");
 
 		waitingForPlayer = true;
-		List<Intersection> validIntersectionsToBuildList = boardManager.getValidIntersectionsForPlayer (players[currentPlayerTurn]);
-		int[] validIntersectionsToBuild = boardManager.getValidIntersectionIDsForPlayer (players[currentPlayerTurn]);
+		List<Intersection> validIntersectionsToBuildList = boardManager.getValidIntersectionsForPlayer (players [currentPlayerTurn], unitType == UnitType.Knight);
+		int[] validIntersectionsToBuild = boardManager.getValidIntersectionIDsForPlayer (players[currentPlayerTurn], unitType == UnitType.Knight);
+
 		AssetTuple costOfUnit = resourceManager.getCostOfUnit (unitType);
 
 		if (EventTransferManager.instance.setupPhase && costOfUnit == null) {
@@ -128,7 +129,7 @@ public class CatanManager : MonoBehaviour {
 		EventTransferManager.instance.OnBuildUnitForUser (unitType, currentPlayerTurn, players [currentPlayerTurn].lastIntersectionSelection.id, true, -1);
 	}
 
-	public IEnumerator buildIntersectionUnit(IntersectionUnit intersectionUnit, System.Type unitType) {
+	/*public IEnumerator buildIntersectionUnit(IntersectionUnit intersectionUnit, System.Type unitType) {
 		waitingForPlayer = true;
 		List<Intersection> validIntersectionsToBuildList = boardManager.getValidIntersectionsForPlayer (players[currentPlayerTurn]);
 		int[] validIntersectionsToBuild = boardManager.getValidIntersectionIDsForPlayer (players[currentPlayerTurn]);
@@ -184,7 +185,7 @@ public class CatanManager : MonoBehaviour {
 
 		currentActiveButton = -1;
 		waitingForPlayer = false;
-	}
+	}*/
 
 	public IEnumerator buildEdgeUnit(UnitType unitType, bool paid) {
 		waitingForPlayer = true;
@@ -309,6 +310,174 @@ public class CatanManager : MonoBehaviour {
 		EventTransferManager.instance.OnMoveShipForUser (currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, players [currentPlayerTurn].lastEdgeSelection.id);
 	}
 
+	public IEnumerator activateKnight(bool paid) {
+		waitingForPlayer = true;
+		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => !knight.isActive).ToList ();
+		AssetTuple costOfActivation = resourceManager.getCostOf (MoveType.ActivateKnight);
+
+		if (ownedKnights.Count == 0) {
+			handleBuildFailure("No knights owned!", uiManager.uiButtons);
+			//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			yield break;
+		}
+
+		if (paid && !players [currentPlayerTurn].hasAvailableAssets (costOfActivation)) { 
+			handleBuildFailure("Insufficient Resources to activate a knight!", uiManager.uiButtons);
+			//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			yield break;
+		}
+
+		boardManager.highlightKnightsWithColor (ownedKnights.Cast<Unit> ().ToList (), true, Color.black);
+		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
+		EventTransferManager.instance.OnKnightActionForUser (MoveType.ActivateKnight, currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, -1, true, paid);
+	}
+
+	public IEnumerator promoteKnight(bool paid) {
+		waitingForPlayer = true;
+		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => knight.rank != KnightRank.Mighty).ToList ();
+		AssetTuple costOfActivation = resourceManager.getCostOfUnit (UnitType.Knight);
+
+		if (ownedKnights.Count == 0) {
+			handleBuildFailure("No promotable knights owned!", uiManager.uiButtons);
+			yield break;
+		}
+
+		if (paid && !players [currentPlayerTurn].hasAvailableAssets (costOfActivation)) { 
+			handleBuildFailure("Insufficient Resources to promote a knight!", uiManager.uiButtons);
+			yield break;
+		}
+
+		List<Knight> promotableKnights = new List<Knight> ();
+		for (int i = 0; i < ownedKnights.Count; i++) {
+			if (players [currentPlayerTurn].unlockedFortress () || ownedKnights [i].rank != KnightRank.Strong) {
+				promotableKnights.Add (ownedKnights [i]);
+			}
+		}
+
+		if (promotableKnights.Count == 0) {
+			handleBuildFailure("Cannot promote strong knights, politics city improvement level 3 not unlocked!", uiManager.uiButtons);
+			yield break;
+		}
+
+		boardManager.highlightKnightsWithColor (promotableKnights.Cast<Unit> ().ToList (), true, Color.black);
+		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (promotableKnights.Cast<Unit> ().ToList ()));
+		EventTransferManager.instance.OnKnightActionForUser (MoveType.PromoteKnight, currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, -1, true, paid);
+	}
+
+	public IEnumerator moveKnight(int knightID, bool forced) {
+		waitingForPlayer = true;
+		int knightToMoveID;
+		int ownerID;
+
+		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => knight.isActive && !knight.actionPerformedThisTurn).ToList ();
+
+		if (!forced) {
+			if (ownedKnights.Count == 0) {
+				handleBuildFailure ("No eligible knights to perform action owned!", uiManager.uiButtons);
+				yield break;
+			}
+
+			boardManager.highlightKnightsWithColor (ownedKnights.Cast<Unit> ().ToList (), true, Color.black);
+			yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
+
+			knightToMoveID = players [currentPlayerTurn].lastUnitSelection.id;
+		} else {
+			knightToMoveID = knightID;
+		}
+
+
+		Knight selectedKnight = unitManager.unitsInPlay [knightToMoveID] as Knight;
+		ownerID = selectedKnight.owner.playerNumber - 1;
+		List<Intersection> possibleMovementLocations = boardManager.getMoveableIntersectionsForKnight (selectedKnight);
+		boardManager.highlightKnightsWithColor (players [ownerID].getOwnedUnitsOfType (UnitType.Knight), true, players [ownerID].playerColor);
+
+		if (possibleMovementLocations.Count == 0) {
+			if (forced) {
+				EventTransferManager.instance.OnDestroyUnit(UnitType.Knight, knightToMoveID);
+				EventTransferManager.instance.OnPlayerReady (ownerID, true);
+				handleBuildFailure("No possible location to move for this knight! Knight is destroyed", uiManager.uiButtons);
+			} else {
+				handleBuildFailure("No possible location to move for this knight!", uiManager.uiButtons);
+			}
+			yield break;
+		}
+
+		selectedKnight.GetComponentsInChildren<SpriteRenderer>()[1].color = Color.black;
+		boardManager.highlightIntersectionsWithColor (possibleMovementLocations, true, players [ownerID].playerColor);
+
+		yield return StartCoroutine (players [ownerID].makeIntersectionSelection (possibleMovementLocations));
+
+		EventTransferManager.instance.OnKnightActionForUser (MoveType.MoveKnight, ownerID, selectedKnight.id, players [ownerID].lastIntersectionSelection.id, true, false);
+
+		if (forced) {
+			EventTransferManager.instance.OnPlayerReady (ownerID, true);
+		}
+	}
+
+	public IEnumerator displaceKnight() {
+		waitingForPlayer = true;
+		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => knight.isActive && !knight.actionPerformedThisTurn).ToList ();
+
+		if (ownedKnights.Count == 0) {
+			handleBuildFailure("No eligible knights to perform action owned!", uiManager.uiButtons);
+			yield break;
+		}
+
+		boardManager.highlightKnightsWithColor (ownedKnights.Cast<Unit> ().ToList (), true, Color.black);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
+
+		Knight selectedKnight = unitManager.unitsInPlay [players [currentPlayerTurn].lastUnitSelection.id] as Knight;
+		List<Knight> displaceableKnights = boardManager.getDisplaceableKnightsFor (selectedKnight);
+		boardManager.highlightKnightsWithColor (players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight), true, players [currentPlayerTurn].playerColor);
+
+		if (displaceableKnights.Count == 0) {
+			handleBuildFailure("No possible opponent knight to displace!", uiManager.uiButtons);
+			yield break;
+		}
+
+		selectedKnight.GetComponentsInChildren<SpriteRenderer>()[1].color = Color.black;
+		boardManager.highlightKnightsWithColor (displaceableKnights.Cast<Unit> ().ToList (), true, Color.black);
+
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (displaceableKnights.Cast<Unit> ().ToList ()));
+
+		EventTransferManager.instance.OnKnightActionForUser (MoveType.DisplaceKnight, currentPlayerTurn, selectedKnight.id, players [currentPlayerTurn].lastUnitSelection.id, true, false);
+	}
+
+	public IEnumerator chaseRobber() {
+		waitingForPlayer = true;
+		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => knight.isActive && !knight.actionPerformedThisTurn).ToList ();
+		List<Knight> eligibleKnights = new List<Knight> ();
+		List<Intersection> eligibleIntersections = boardManager.getRobberPirateIntersections ();
+
+		foreach (var knight in ownedKnights) {
+			if (eligibleIntersections.Contains (knight.locationIntersection)) {
+				eligibleKnights.Add (knight);
+			}
+		}
+		
+		if (eligibleKnights.Count == 0) {
+			handleBuildFailure("No eligible knights to perform action owned!", uiManager.uiButtons);
+			yield break;
+		}
+
+		if (eligibleIntersections.Count == 0) {
+			handleBuildFailure("No game piece on board to chase away!", uiManager.uiButtons);
+			yield break;
+		}
+
+		boardManager.highlightKnightsWithColor (eligibleKnights.Cast<Unit> ().ToList (), true, Color.black);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (eligibleKnights.Cast<Unit> ().ToList ()));
+
+		Knight selectedKnight = unitManager.unitsInPlay [players [currentPlayerTurn].lastUnitSelection.id] as Knight;
+
+		boardManager.highlightKnightsWithColor (players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight), true, players [currentPlayerTurn].playerColor);
+		selectedKnight.GetComponentsInChildren<SpriteRenderer>()[1].color = Color.black;
+
+		EventTransferManager.instance.OnKnightActionForUser (MoveType.ChaseRobber, currentPlayerTurn, selectedKnight.id, 0, true, false);
+	}
+
 	public IEnumerator receiveNResourceSelection(int playerNum, int numResourcesGained) {
 		EventTransferManager.instance.waitingForPlayer = true;
 
@@ -382,7 +551,7 @@ public class CatanManager : MonoBehaviour {
 
 				List<Player> stealableOpponents = new List<Player> ();
 				foreach (IntersectionUnit opponentUnit in opponentUnits) {
-					if (!stealableOpponents.Contains (opponentUnit.owner) && !opponentUnit.owner.hasZeroAssets()) {
+					if (!stealableOpponents.Contains (opponentUnit.owner) && !opponentUnit.owner.hasZeroAssets ()) {
 						stealableOpponents.Add (opponentUnit.owner);
 					}
 				}
@@ -391,28 +560,37 @@ public class CatanManager : MonoBehaviour {
 					// If you steal 2 things if you have a city, then the argument here would be 2 etc.
 					AssetTuple randomStolenAsset = stealableOpponents [0].getRandomSufficientAsset (1);
 
-					EventTransferManager.instance.OnTradeWithBank(stealableOpponents [0].playerNumber - 1, false, randomStolenAsset);
+					EventTransferManager.instance.OnTradeWithBank (stealableOpponents [0].playerNumber - 1, false, randomStolenAsset);
 					EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
 
 				} else if (stealableOpponents.Count > 1) {
-					uiManager.robberStealPanel.displayPanelForChoices (stealableOpponents);
-					bool selectionMade = false;
+					if (players [PhotonNetwork.player.ID - 1].playedBishop) {
+						for (int i = 0; i < stealableOpponents.Count; i++) {
+							AssetTuple randomStolenAsset = stealableOpponents [uiManager.robberStealPanel.getSelection ()].getRandomSufficientAsset (1);
+							EventTransferManager.instance.OnTradeWithBank (stealableOpponents [i].playerNumber - 1, false, randomStolenAsset);
+							EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
 
-					while (!selectionMade) {
-						if (!uiManager.robberStealPanel.selectionMade) {
-							yield return StartCoroutine (uiManager.robberStealPanel.waitUntilButtonDown());
+						}
+					} else {
+						uiManager.robberStealPanel.displayPanelForChoices (stealableOpponents);
+						bool selectionMade = false;
+
+						while (!selectionMade) {
+							if (!uiManager.robberStealPanel.selectionMade) {
+								yield return StartCoroutine (uiManager.robberStealPanel.waitUntilButtonDown ());
+							}
+
+							if (uiManager.robberStealPanel.selectionMade) {
+								selectionMade = true;
+							}
 						}
 
-						if (uiManager.robberStealPanel.selectionMade) {
-							selectionMade = true;
-						}
+						AssetTuple randomStolenAsset = stealableOpponents [uiManager.robberStealPanel.getSelection ()].getRandomSufficientAsset (1);
+						EventTransferManager.instance.OnTradeWithBank (stealableOpponents [uiManager.robberStealPanel.getSelection ()].playerNumber - 1, false, randomStolenAsset);
+						EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
+
+						uiManager.robberStealPanel.gameObject.SetActive (false);
 					}
-
-					AssetTuple randomStolenAsset = stealableOpponents [uiManager.robberStealPanel.getSelection()].getRandomSufficientAsset (1);
-					EventTransferManager.instance.OnTradeWithBank(stealableOpponents [uiManager.robberStealPanel.getSelection()].playerNumber - 1, false, randomStolenAsset);
-					EventTransferManager.instance.OnTradeWithBank (players [currentPlayerTurn].playerNumber - 1, true, randomStolenAsset);
-
-					uiManager.robberStealPanel.gameObject.SetActive (false);
 				}
 			}
 
@@ -450,6 +628,20 @@ public class CatanManager : MonoBehaviour {
 		}
 	}
 
+	public IEnumerator stealRessourcesWedding(int sendto) {
+		EventTransferManager.instance.waitingForPlayer = true;
+
+		uiManager.discardPanel.displayPanelForAssets (players [PhotonNetwork.player.ID - 1].getCurrentAssets (), 2, false);
+		yield return StartCoroutine (uiManager.discardPanel.waitUntilButtonDown ());
+
+		EventTransferManager.instance.OnTradeWithBank(players [PhotonNetwork.player.ID - 1].playerNumber - 1, false, uiManager.discardPanel.discardTuple);
+		EventTransferManager.instance.OnTradeWithBank(sendto, true, uiManager.discardPanel.discardTuple);
+		uiManager.discardPanel.gameObject.SetActive (false);
+
+		EventTransferManager.instance.waitingForPlayer = false;
+		EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
+	}
+	
 	public void tradeWithBankAttempt(int resourceToGiveForOne) {
 		/*bool canTrade = resourceManager.canTrade (players [currentPlayerTurn], resourceToGiveForOne);
 
