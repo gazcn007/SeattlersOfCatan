@@ -213,7 +213,8 @@ public class CatanManager : MonoBehaviour {
 		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToBuildList));//, edgeUnit));//new Road(unitID++)));
 
 		UnitType unitTypeToBuild = unitType;
-		if (EventTransferManager.instance.setupPhase && !(players [currentPlayerTurn].lastEdgeSelection.isLandEdge () || players [currentPlayerTurn].lastEdgeSelection.isShoreEdge ())) {
+		bool canBeShip = EventTransferManager.instance.setupPhase || players [currentPlayerTurn].playedRoadBuilding;
+		if (canBeShip && !(players [currentPlayerTurn].lastEdgeSelection.isLandEdge () || players [currentPlayerTurn].lastEdgeSelection.isShoreEdge ())) {
 			unitTypeToBuild = UnitType.Ship;
 		}
 
@@ -296,6 +297,31 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightAllEdges(false);
 
 		EventTransferManager.instance.OnMoveShipForUser (currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, players [currentPlayerTurn].lastEdgeSelection.id);
+	}
+
+	public IEnumerator receiveNResourceSelection(int playerNum, int numResourcesGained) {
+		EventTransferManager.instance.waitingForPlayer = true;
+
+		uiManager.fishResourceSelection ();
+		bool selectionMade = false;
+		uiManager.fishresourcepanel.gameObject.SetActive (true);
+
+		while (!selectionMade) {
+			if (!uiManager.fishresourcepanel.selectionMade) {
+				yield return StartCoroutine (uiManager.fishresourcepanel.waitUntilButtonDown ());
+			}
+			if (uiManager.fishresourcepanel.selectionMade) {
+				selectionMade = true;
+			}
+		}
+
+		uiManager.fishresourcepanel.gameObject.SetActive (false);
+		uiManager.fishresourcepanel.selectionMade = false;
+
+		AssetTuple assetsToGain = GameAsset.getAssetOfIndex (CatanManager.instance.uiManager.fishresourcepanel.getSelection (), numResourcesGained);
+		EventTransferManager.instance.OnTradeWithBank(playerNum, true, assetsToGain);
+
+		EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
 	}
 
 	public IEnumerator selectResourcesForPlayers(int numDelta, bool isPositiveDelta) {

@@ -79,6 +79,71 @@ public class BoardManager : MonoBehaviour {
 		return eligibleTiles;
 	}
 
+	public int[] getTileIDsWithDiceValue(int playerID, int valueRolled, bool isCommodity) {
+		List<GameTile> eligibleTiles = getTilesWithDiceValue(playerID, valueRolled, isCommodity);
+		int[] eligibleTileIDs = new int[eligibleTiles.Count];
+
+		for(int i = 0; i < eligibleTiles.Count; i++) {
+			eligibleTileIDs[i] = eligibleTiles[i].id;
+		}
+
+		return eligibleTileIDs;
+	}
+
+	public List<GameTile> getAdjacentTilesOfType(int playerID, TileType tileType) {
+		List<GameTile> eligibleTiles = new List<GameTile> ();
+
+		List<Metropolis> ownedMetropolis = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(Metropolis)).Cast<Metropolis> ().ToList ();
+		List<City> ownedCities = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(City)).Cast<City> ().ToList ();
+		List<Settlement> ownedSettlements = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
+
+		for (int i = 0; i < ownedMetropolis.Count; i++) {
+			Intersection relatedIntersection = ownedMetropolis[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				if (tile.tileType == tileType && !eligibleTiles.Contains(tile)) {
+					eligibleTiles.Add (tile);
+				}
+			}
+		}
+
+		for (int i = 0; i < ownedCities.Count; i++) {
+			Intersection relatedIntersection = ownedCities[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				if (tile.tileType == tileType && !eligibleTiles.Contains(tile)) {
+					eligibleTiles.Add (tile);
+				}
+			}
+		}
+
+		for (int i = 0; i < ownedSettlements.Count; i++) {
+			Intersection relatedIntersection = ownedSettlements[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				if (tile.tileType == tileType && !eligibleTiles.Contains(tile)) {
+					eligibleTiles.Add (tile);
+				}
+			}
+		}
+
+		return eligibleTiles;
+	}
+
+	public int[] getAdjacentTileIDsOfType(int playerID, TileType tileType) {
+		List<GameTile> eligibleTiles = getAdjacentTilesOfType(playerID, tileType);
+		int[] eligibleTileIDs = new int[eligibleTiles.Count];
+
+		for(int i = 0; i < eligibleTiles.Count; i++) {
+			eligibleTileIDs[i] = eligibleTiles[i].id;
+		}
+
+		return eligibleTileIDs;
+	}
+
 	public GameTile getLakeTile() {
 		List<GameTile> allTiles = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().GameTiles.Values.ToList ();
 
@@ -96,17 +161,6 @@ public class BoardManager : MonoBehaviour {
 	public int getLakeTileID() {
 		GameTile lakeTile = getLakeTile ();
 		return lakeTile.id;
-	}
-
-	public int[] getTileIDsWithDiceValue(int playerID, int valueRolled, bool isCommodity) {
-		List<GameTile> eligibleTiles = getTilesWithDiceValue(playerID, valueRolled, isCommodity);
-		int[] eligibleTileIDs = new int[eligibleTiles.Count];
-
-		for(int i = 0; i < eligibleTiles.Count; i++) {
-			eligibleTileIDs[i] = eligibleTiles[i].id;
-		}
-
-		return eligibleTileIDs;
 	}
 
 	public List<Edge> getValidEdgesForPlayer(Player player, bool roadBuilt) {

@@ -7,7 +7,11 @@ public class CityImprovementTuple {
 	public Dictionary<CityImprovementType, int> cityImprovements = new Dictionary<CityImprovementType, int>();
 	public Dictionary<CityImprovementType, CommodityType> upgradeCommodityChart = new Dictionary<CityImprovementType, CommodityType>();
 
+	public bool playedCraneThisTurn;
+
 	public CityImprovementTuple() {
+		playedCraneThisTurn = false;
+
 		cityImprovements.Add (CityImprovementType.Science, 0);
 		cityImprovements.Add (CityImprovementType.Politics, 0);
 		cityImprovements.Add (CityImprovementType.Trade, 0);
@@ -31,7 +35,11 @@ public class CityImprovementTuple {
 		CommodityTuple commodityCost = new CommodityTuple ();
 
 		if (cityImprovements [improvementType] < 5) {
-			commodityCost.addCommodityWithType (upgradeCommodityChart [improvementType], cityImprovements [improvementType] + 1);
+			if (playedCraneThisTurn) {
+				commodityCost.addCommodityWithType (upgradeCommodityChart [improvementType], cityImprovements [improvementType]);
+			} else {
+				commodityCost.addCommodityWithType (upgradeCommodityChart [improvementType], cityImprovements [improvementType] + 1);
+			}
 		}
 
 		return new AssetTuple (new ResourceTuple(), commodityCost);

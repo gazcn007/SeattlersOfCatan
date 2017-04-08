@@ -228,8 +228,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				redDieRoll = 4;
 				yellowDieRoll = 4;
 			} else {
-				redDieRoll = 5;
-				yellowDieRoll = 6;
+				redDieRoll = 4;
+				yellowDieRoll = 4;
 			}
 
 			print ("Red die rolled: " + redDieRoll);
@@ -242,17 +242,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				//StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
 				GetComponent<PhotonView> ().RPC ("EnforceDiceRollEvents", PhotonTargets.All, new object[] {});
 			} else {
-				GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
-					redDieRoll + yellowDieRoll
-				});
-				//ResourceCollectionEvent (redDieRoll + yellowDieRoll);
-
 				if (!setupPhase) {
 					//CommodityCollectionEvent (redDieRoll + yellowDieRoll);
 					GetComponent<PhotonView> ().RPC ("CommodityCollectionEvent", PhotonTargets.All, new object[] {
 						redDieRoll + yellowDieRoll
 					});
 				}
+
+				GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
+					redDieRoll + yellowDieRoll
+				});
+
 			}
 			diceRolledThisTurn = true;
 		}
@@ -274,7 +274,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 		Debug.Log ("Waiting for players started");
 		while (EventTransferManager.instance.waitingForPlayers) {
-			CheckIfPlayersReady ();
+			EventTransferManager.instance.CheckIfPlayersReady ();
 			Debug.Log ("Waiting...");
 			yield return new WaitForEndOfFrame ();
 		}
@@ -284,7 +284,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 	}
 
-	[PunRPC]
 	void BeginWaitForPlayers(int[] playerNums) {
 		for (int i = 0; i < playerChecks.Length; i++) {
 			EventTransferManager.instance.playerChecks [i] = true;
@@ -295,6 +294,26 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 		}
 		EventTransferManager.instance.waitingForPlayers = true;
+	}
+
+	void WaitForAllPlayers() {
+		for (int i = 0; i < playerChecks.Length; i++) {
+			EventTransferManager.instance.playerChecks [i] = false;
+		}
+		EventTransferManager.instance.waitingForPlayers = true;
+	}
+
+	void WaitUntilPlayersDone() {
+		StartCoroutine (WaitUntilPlayersDoneCoroutine ());
+	}
+
+	IEnumerator WaitUntilPlayersDoneCoroutine() {
+		while (EventTransferManager.instance.waitingForPlayers) {
+			EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
+			CheckIfPlayersReady ();
+			Debug.Log ("Waiting...");
+			yield return new WaitForEndOfFrame ();
+		}
 	}
 
 	void OnWaitForPlayers(int[] playerNums) {
@@ -323,6 +342,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 		}
 		EventTransferManager.instance.waitingForPlayers = !ready;
+		EventTransferManager.instance.waitingForPlayer = !ready;
 	}
 
 	[PunRPC]
@@ -638,6 +658,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		//clientCatanManager.unitManager.destroyCancelledUnits ();
 		Destroy(diceRoller);
 
+		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+			clientCatanManager.players [i].cityImprovements.playedCraneThisTurn = false;
+			clientCatanManager.players [i].playedRoadBuilding = false;
+		}
+
 		if (clientCatanManager.players [clientCatanManager.currentPlayerTurn].hasOldBoot ()) {
 			Player maxVPPlayer = clientCatanManager.players [clientCatanManager.currentPlayerTurn];
 
@@ -700,6 +725,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	// MUST BE TURNED INTO A COROUTINE, RPC CALLS IT...
 	[PunRPC]
 	void ResourceCollectionEvent(int diceOutcome) {
+		StartCoroutine(ResourceCollectionCoroutine(diceOutcome));
+	}
+
+	IEnumerator ResourceCollectionCoroutine(int diceOutcome) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 		int collectionCount = 0;
@@ -772,28 +801,25 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						}
 					}
 				}
-
-				if(PhotonNetwork.player.ID - 1 == i) {
-					/*if(clientCatanManager.players [i].unlockedAqueduct() && collectionCount == 0)
-						// Add waiting code here
-						int[] allPlayers = { 0, 1, 2, 3 };
-
-						EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
-						yield return StartCoroutine(clientCatanManager.pickResourcesForPlayer(i, collectionCount));
-						//yield return StartCoroutine(clientCatanManager.discardResourcesForPlayers());
-
-						Debug.Log ("Waiting for players started");
-						while (EventTransferManager.instance.waitingForPlayers) {
-							CheckIfPlayersReady ();
-							Debug.Log ("Waiting...");
-							yield return new WaitForEndOfFrame ();
-						}
-					}
-					else{
-						EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
-					}*/
-				}
 			}
+		}
+
+		int[] allPlayers = { 0, 1, 2, 3 };
+		EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
+
+		if(clientCatanManager.players[PhotonNetwork.player.ID - 1].unlockedAqueduct() && collectionCount == 0 && diceOutcome != 7) {
+			yield return StartCoroutine(clientCatanManager.receiveNResourceSelection(PhotonNetwork.player.ID - 1, 1));
+		}
+		else{
+			EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
+			Debug.Log (clientCatanManager.players [PhotonNetwork.player.ID - 1].playerName + " signals ready");
+		}
+
+		Debug.Log ("Waiting for players started");
+		while (EventTransferManager.instance.waitingForPlayers) {
+			EventTransferManager.instance.CheckIfPlayersReady ();
+			Debug.Log ("Waiting...");
+			yield return new WaitForEndOfFrame ();
 		}
 	}
 

@@ -28,6 +28,8 @@ public class Player : MonoBehaviour {
 	public int vpAdder;
 	public bool collectedThisTurn;
 
+	public bool playedRoadBuilding;
+
 	public Sprite avatar;
 
 	// Use this for initialization
