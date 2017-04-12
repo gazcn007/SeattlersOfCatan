@@ -194,7 +194,12 @@ public class FishTradePanel : MonoBehaviour {
 			break;
 		case 4:
 			numTokensNeeded = 7;
-			//draw progess card
+			CatanManager.instance.uiManager.cardSelectPanel.gameObject.SetActive (true);
+			for(int i = 0; i < FishTokens.Length; i++) {
+				Debug.Log ("Set index " + (i + 8) + " of assetToRemove to = " + (int)FishTokens [i].value);
+				assetsToRemove.SetValueAtIndex (i + 8, (int)FishTokens [i].value);
+			}
+			success = true;
 			break;
 		}
 

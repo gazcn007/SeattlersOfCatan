@@ -39,11 +39,22 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	public void OnReadyToPlay() {
-		GetComponent<PhotonView> ().RPC ("GenerateBoardForClient", PhotonTargets.All, new object[] { });
-		GetComponent<PhotonView> ().RPC ("GenerateHarborsForClient", PhotonTargets.All, new object[] { });
-		GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
-		//GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
-		StartCoroutine (CatanSetupPhase());
+		Debug.Log (GameManager.instance.gameBoard);
+		if (GameManager.instance.LoadGameMode == true) {
+			GetComponent<PhotonView> ().RPC ("GenerateBoardForClientFromSavedGame", PhotonTargets.All, new object[] {
+			});
+			GetComponent<PhotonView> ().RPC ("GenerateHarborsForClient", PhotonTargets.All, new object[] { });
+			GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
+		} else {
+			GetComponent<PhotonView> ().RPC ("GenerateBoardForClient", PhotonTargets.All, new object[] { });
+			GetComponent<PhotonView> ().RPC ("GenerateHarborsForClient", PhotonTargets.All, new object[] { });
+			GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
+		}
+		GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
+
+		if (photonView.isMine) {
+			StartCoroutine (CatanSetupPhase ());
+		}
 	}
 
 	public void OnEndTurn() {
@@ -72,7 +83,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			assetsTraded.fishTokens.fishTuple[FishTokenType.One],
 			assetsTraded.fishTokens.fishTuple[FishTokenType.Two],
 			assetsTraded.fishTokens.fishTuple[FishTokenType.Three],
-			assetsTraded.fishTokens.fishTuple[FishTokenType.OldBoot]
+			assetsTraded.fishTokens.fishTuple[FishTokenType.OldBoot],
+			assetsTraded.gold
 		});
 	}
 
@@ -193,7 +205,16 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 		clientCatanManager.uiManager.tradePlayerPanel.gameObject.SetActive (false);
 	}
-
+	public void GoldTrade(int player){
+		GetComponent<PhotonView> ().RPC ("OnGoldTrade", PhotonTargets.All, new object[] {
+			player
+		});
+	}
+	[PunRPC]
+	void OnGoldTrade(int reciever){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.players [reciever].goldCoins = clientCatanManager.players [reciever].goldCoins - 2;
+	}
 	public void OnMoveGamePiece(int boardPieceNum, int tileID, bool remove) {
 		GetComponent<PhotonView> ().RPC ("PlaceBoardPieces", PhotonTargets.All, new object[] {
 			boardPieceNum,
@@ -216,28 +237,74 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		clientCatanManager.players [playerNum].cityImprovements.ImproveCityOfType ((CityImprovementType)upgradeType);
 	}
 
-	public void OnDiceRolled() {
-		if (!diceRolledThisTurn) {
-			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
-			//int redDieRoll = Random.Range (1, 7);
-			//int yellowDieRoll = Random.Range (1, 7);
+	public IEnumerator OnDiceRolled() {
+		//int redDieRoll=1;
+		//int yellowDieRoll=1;
+		//EventDieFace eventDieRoll=EventDieFace.Green;
+		if (!diceRolledThisTurn){
+		  
+			EventTransferManager.instance.waitingForPlayer = true;
+			GetComponent<PhotonView> ().RPC ("RollDice", PhotonTargets.All, new object[] {Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),false});
 			GameObject[] dice = GameObject.FindGameObjectsWithTag ("Dice");
-			//int redDieRoll = dice[0].GetComponent<FaceDetection>().getNumber;
-			int redDieRoll;
-			int yellowDieRoll;
-			if (Random.Range (0.0f, 1.0f) < 0.5f) {
-				redDieRoll = 4;
-				yellowDieRoll = 4;
-			} else {
-				redDieRoll = 4;
-				yellowDieRoll = 4;
+			int redDieRoll=0;
+			int yellowDieRoll=0;
+			EventDieFace eventDieRoll=EventDieFace.Black;
+			bool ready = true;		
+
+			bool x = dice [0].GetComponent<FaceDetection> ().ready;
+			bool y = dice [1].GetComponent<FaceDetection> ().ready;
+			bool z = dice [2].GetComponent<FaceDetection> ().ready;
+			//wait for dice to finish rolling
+			while (ready) {
+				dice = GameObject.FindGameObjectsWithTag ("Dice");
+				if (x) {
+					if (y) {
+						if (z) {
+							ready = false;
+						}
+					}
+				}
+				Debug.Log ("Dice Rolling");
+				yield return new WaitForSeconds (3f);
+				x = dice [0].GetComponent<FaceDetection> ().ready;
+				y = dice [1].GetComponent<FaceDetection> ().ready;
+				z = dice [2].GetComponent<FaceDetection> ().ready;
+				if (!x || !y || !z) {
+					//fault tolerance in event 1 of the dice got stuck
+					Debug.Log("Re-roll required");
+					GetComponent<PhotonView> ().RPC ("RollDice", PhotonTargets.All, new object[] {Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),false});
+				}
+				yield return new WaitForEndOfFrame ();
 			}
-
-			print ("Red die rolled: " + redDieRoll);
-			print ("Yellow die rolled: " + yellowDieRoll);
-
-			GetComponent<PhotonView> ().RPC ("RollDice", PhotonTargets.All, new object[] {redDieRoll, redDieRoll, redDieRoll});
-
+			//get dice rolls
+			GameObject temp = GameObject.FindGameObjectWithTag ("DiceRoller");
+			redDieRoll=temp.GetComponent<DiceRoller> ().dice [0].GetComponent<DieHelper>().value;
+			yellowDieRoll = temp.GetComponent<DiceRoller> ().dice [1].GetComponent<DieHelper>().value;;
+			int temp2=temp.GetComponent<DiceRoller> ().dice [2].GetComponent<DieHelper>().value;;
+			switch (temp2) {
+			case 1:
+				eventDieRoll = EventDieFace.Blue;
+				break;
+			case 2:
+				eventDieRoll = EventDieFace.Black;
+				break;
+			case 3:
+				eventDieRoll = EventDieFace.Green;
+				break;
+			case 4:
+				eventDieRoll = EventDieFace.Black;
+				break;
+			case 5:
+				eventDieRoll = EventDieFace.Black;
+				break;
+			case 6:
+				eventDieRoll = EventDieFace.Yellow;
+				break;
+			}
+			GetComponent<PhotonView> ().RPC ("DestroyDice", PhotonTargets.All, new object[] {});
+			Debug.Log("Red: "+redDieRoll+" Yellow: "+yellowDieRoll+ " Event: "+eventDieRoll.ToString());
+			//draw progress cards
+			yield return StartCoroutine(CardDrawEvent (eventDieRoll, redDieRoll));
 			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
 				//StartCoroutine(clientCatanManager.discardResourcesForPlayers());
 				//StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
@@ -255,10 +322,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				});
 
 			}
+			EventTransferManager.instance.waitingForPlayer = false;
 			diceRolledThisTurn = true;
 		}
 	}
-
+	[PunRPC]
+	void DestroyDice(){
+		Destroy(diceRoller);
+	}
 	[PunRPC]
 	void EnforceDiceRollEvents() {
 		StartCoroutine(DiceRollSevenEvents());
@@ -367,26 +438,31 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void RollDice(int number, int number1, int number2){
+	IEnumerator RollDice(float number, float number1, float number2,bool alchemist){
+		Destroy(diceRoller);
 		diceRoller = Instantiate(diceRollerPrefab , new Vector3(-1.0f,0,-5.7f),Quaternion.identity);
-		GameObject[] dice = GameObject.FindGameObjectsWithTag ("Dice");
-		foreach(GameObject go in dice) {
-			DiePhysics physics = go.GetComponent<DiePhysics> ();
+
+		if (alchemist) {
+			GameObject temp = GameObject.FindGameObjectWithTag ("DiceRoller");
+			Destroy (temp.GetComponent<DiceRoller> ().dice [0]);
+			Destroy (temp.GetComponent<DiceRoller> ().dice [1]);
+
+			DiePhysics physics = temp.GetComponent<DiceRoller> ().dice [2].GetComponent<DiePhysics> ();
 			Debug.Log ("vector is " + number + " " + number1 + " " + number2);
-			physics.init (new Vector3 ((float)number+1, (float)number1+1, (float)number2+1));
-		}
-		StartCoroutine (ShowDiceResult ());
-	}
+			physics.init (new Vector3 (number, number1, number2));
 
-	IEnumerator ShowDiceResult(){
+		} else {
+			GameObject[] dice = GameObject.FindGameObjectsWithTag ("Dice");
+			foreach (GameObject go in dice) {
+				DiePhysics physics = go.GetComponent<DiePhysics> ();
+				Debug.Log ("vector is " + number + " " + number1 + " " + number2);
+				physics.init (new Vector3 (number, number1, number2));
+			}
+		}
+		
 		yield return new WaitForSeconds (3.0f);
-		GameObject[] dices = GameObject.FindGameObjectsWithTag ("Dice");
-		foreach(GameObject go in dices) {
-			FaceDetection faceDetection = go.GetComponent<FaceDetection> ();
-			faceDetection.showNumber ();
-		}
 	}
-
+		
 	public void OnPlayerReady(int playerNum, bool ready) {
 		GetComponent<PhotonView> ().RPC ("SignalReady", PhotonTargets.All, new object[] {
 			playerNum,
@@ -499,6 +575,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				playerNumber,
 				knightID,
 				otherID
+			});
+		} else if (knightActionType == MoveType.RemoveKnight) {
+			GetComponent<PhotonView> ().RPC ("DestroyUnitRPC", PhotonTargets.All, new object[] {
+				(int)UnitType.Knight,
+				knightID
 			});
 		}
 
@@ -905,10 +986,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void ResourceChangeEvent(int playerNum, bool gained, int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneFish, int twoFish, int threeFish, int oldBoot) {
+	void ResourceChangeEvent(int playerNum, bool gained, int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneFish, int twoFish, int threeFish, int oldBoot, int gold) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 
-		AssetTuple delta = new AssetTuple (brick, grain, lumber, ore, wool, paper, coin, cloth, oneFish, twoFish, threeFish, oldBoot);
+		AssetTuple delta = new AssetTuple (brick, grain, lumber, ore, wool, paper, coin, cloth, oneFish, twoFish, threeFish, oldBoot, gold);
 
 		if (gained) {
 			clientCatanManager.players [playerNum].receiveAssets (delta);
@@ -1167,6 +1248,57 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 	}
 
+	[PunRPC]
+	void GenerateBoardForClientFromSavedGame() {
+		
+		GameObject clientBoardGO = Instantiate (boardPrefab);
+		GameBoard clientBoard = clientBoardGO.GetComponent<GameBoard>();
+		Persistence.pe_GameBoard pe_gameBoard = GameManager.instance.gameBoard;
+			
+		// deseralize the setttings to generate the same shape
+		clientBoard.mapShape = (MapShape)pe_gameBoard.mapShape;
+		clientBoard.mapWidth = pe_gameBoard.mapWidth;
+		clientBoard.mapHeight = pe_gameBoard.mapHeight;
+		clientBoard.hexOrientation = (HexOrientation)pe_gameBoard.hexOrientation;
+		clientBoard.hexRadius = pe_gameBoard.hexRadius;
+
+		GameObject clientSettingsGO = Instantiate (settingsPrefab);
+		TileTypeSettings clientSettings = clientSettingsGO.GetComponent<TileTypeSettings> (); // not needed
+
+		clientBoard.GenerateTiles (clientBoard.transform.GetChild(0));
+		clientBoard.GenerateIntersections (clientBoard.transform.GetChild(1));
+		clientBoard.GenerateEdges (clientBoard.transform.GetChild(2));
+
+		if (PhotonNetwork.isMasterClient) {
+			BoardDecorator clientBoardDecorator = new BoardDecorator (clientBoard, pe_gameBoard);
+
+			foreach(GameTile tile in clientBoard.GameTiles.Values) {
+				Material mat = clientSettings.getMaterialsDictionary ()[tile.tileType];
+				GetComponent<PhotonView> ().RPC ("PaintTile", PhotonTargets.All, new object[] {
+					tile.id,
+					tile.diceValue,
+					(int)tile.tileType,
+					tile.atIslandLayer
+				});
+			}
+		}
+	}
+	public void swapDiceValues(GameTile tile1, GameTile tile2){
+		int d1 = tile1.diceValue;
+		int d2 = tile2.diceValue;
+		GetComponent<PhotonView> ().RPC ("PaintTile", PhotonTargets.All, new object[] {
+			tile1.id,
+			d2,
+			(int)tile1.tileType,
+			tile1.atIslandLayer
+		});
+		GetComponent<PhotonView> ().RPC ("PaintTile", PhotonTargets.All, new object[] {
+			tile2.id,
+			d1,
+			(int)tile2.tileType,
+			tile2.atIslandLayer
+		});
+	}
 	[PunRPC]
 	void PaintTile(int id, int diceValue, int tileTypeNum, bool islandLayer) {
 		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
@@ -1810,16 +1942,16 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		EventTransferManager.instance.waitingForPlayers = false;
 		EventTransferManager.instance.currentActiveButton = -1;
 	}
-
-[PunRPC]
 	//initial progress card method creates 3 synced queues of cards for each client
-	void GenerateProgressCards(){
+	[PunRPC]
+	public IEnumerator GenerateProgressCards(){
 		Destroy (GameObject.FindGameObjectWithTag ("ProgressCardsStackManager"));
 		GameObject clientcardsStackGO = Instantiate (ProgressCardsStackManagerPrefab);
 		//ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
 		ProgressCardStackManager clientcards = clientcardsStackGO.GetComponent<ProgressCardStackManager> ();
 		//master sets everyones card orders
 		if (PhotonNetwork.isMasterClient) {
+			yield return new WaitForSeconds (5f);
 			clientcards.shuffleCards ();
 			for (int i = 0; i < clientcards.yellowCards.Length; i++) {
 				GetComponent<PhotonView> ().RPC ("SetProgressCard", PhotonTargets.Others, new object[] {
@@ -1842,71 +1974,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 					i
 				});
 			}
-			GetComponent<PhotonView> ().RPC ("GenerateProgressCardQueues", PhotonTargets.Others, new object[] {
-			});
-			clientcards.generateQueues();
+			GetComponent<PhotonView> ().RPC ("GenerateProgressCardQueues", PhotonTargets.All, new object[] { });
 		}
-	}
-	public bool WaitOnDraw;
-	public IEnumerator CardDrawEvent(){
-		//nehir this will be used by dice to auto resolve who draws for now it is public for testing
-
-		EventTransferManager.instance.WaitOnDraw=false;
-		Debug.Log ("Card Draw Initiated");
-		Debug.Log ("test: " + PhotonNetwork.playerList.Length);
-		//I am not sure on how you handle/will handle all the dice and event dice things but this method needs to resolve who can draw what color
-		//of card and send that player the rpc DrawCard(see below)
-		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
-			Debug.Log ("Next to draw: " + i);
-			while (EventTransferManager.instance.WaitOnDraw) {
-				Debug.Log ("Waiting for Players to draw");
-				yield return new WaitForEndOfFrame ();
-			}
-			EventTransferManager.instance.WaitOnDraw= true;
-			GetComponent<PhotonView> ().RPC ("DrawCard", PhotonTargets.All, new object[] {
-				(int) ProgressCardColor.Green,
-				i
-			});
-			Debug.Log ("Draw Completed");
-		}
-	}
-	[PunRPC]
-	void OnDrawCompleted(){
-		EventTransferManager.instance.WaitOnDraw = false;
-	}
-	//methods used for drawing cards this will be called by dice roll events player has no control over when he can draw the card himself
-	[PunRPC]
-	void DrawCard(int color,int receiverNum){
-		if(PhotonNetwork.player.ID-1== receiverNum) {
-			Debug.Log ("turn to draw: " + receiverNum);
-			GetComponent<PhotonView> ().RPC ("SyncProgressCardDraw", PhotonTargets.Others, new object[] {
-				color
-			});
-			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
-			ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
-			clientCatanManager.uiManager.progressCardPanel.newCard ((ProgressCardColor)color,clientcards.drawCard ((ProgressCardColor)color));
-			GetComponent<PhotonView> ().RPC ("OnDrawCompleted", PhotonTargets.All, new object[] {
-			});
-		}
-	}
-	//drawing will be done by client
-	public void ReturnProgressCard(ProgressCardColor color, ProgressCardType type){
-		GetComponent<PhotonView> ().RPC ("SyncProgressCardreturn", PhotonTargets.All, new object[] {
-			(int) color,
-			(int) type
-		});
-	}
-	//2 rpcs for drawing/returning progress cards
-	[PunRPC]
-	void SyncProgressCardreturn(int color,int type){
-		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
-		clientcards.returnCard((ProgressCardColor)color,(ProgressCardType)type);
-	}
-	[PunRPC]
-	void SyncProgressCardDraw(int color){
-		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
-		ProgressCardColor currentColor = (ProgressCardColor)color;
-		clientcards.drawCard (currentColor);
 	}
 	//makes the queues once order has been synced
 	[PunRPC]
@@ -1938,6 +2007,507 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 		}
 	}
+	public bool WaitOnDraw;
+	public IEnumerator CardDrawEvent(EventDieFace eventdie,int redDieRoll){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		ProgressCardColor drawcolor=ProgressCardColor.Blue;
+		switch (eventdie) {
+		case EventDieFace.Blue:
+			drawcolor=ProgressCardColor.Blue;
+			break;
+		case EventDieFace.Yellow:
+			drawcolor=ProgressCardColor.Yellow;
+			break;
+		case EventDieFace.Green:
+			drawcolor=ProgressCardColor.Green;
+			break;
+		}
+
+		Debug.Log ("draw color is: " + drawcolor.ToString ());
+		if (eventdie != EventDieFace.Black) {
+			ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+			EventTransferManager.instance.WaitOnDraw = false;
+			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+				while (EventTransferManager.instance.WaitOnDraw) {
+					Debug.Log ("Waiting for Players to draw");
+					yield return new WaitForEndOfFrame ();
+				}
+				EventTransferManager.instance.WaitOnDraw = true;
+				Debug.Log ("can draw: " + i + " t: " + clientCatanManager.players [i].canDrawProgressCard (eventdie, redDieRoll).ToString());
+				if (clientCatanManager.players [i].canDrawProgressCard (eventdie, redDieRoll) && clientcards.checkQueue (drawcolor)) {
+					GetComponent<PhotonView> ().RPC ("DrawCard", PhotonTargets.All, new object[] {
+						(int)drawcolor,
+						i
+					});
+				} else {
+					WaitOnDraw = false;
+				}
+				Debug.Log ("Draw Completed");
+			}
+		}
+	}
+	[PunRPC]
+	void OnDrawCompleted(){
+		EventTransferManager.instance.WaitOnDraw = false;
+	}
+	//methods used for drawing cards this will be called by dice roll events player has no control over when he can draw the card himself
+	[PunRPC]
+	public void DrawCard(int color,int receiverNum){
+		Debug.Log ("card color: " + color);
+		if(PhotonNetwork.player.ID-1== receiverNum) {
+			Debug.Log ("turn to draw: " + receiverNum);
+			GetComponent<PhotonView> ().RPC ("SyncProgressCardDraw", PhotonTargets.Others, new object[] {
+				color
+			});
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+			clientCatanManager.uiManager.progressCardPanel.newCard ((ProgressCardColor)color,clientcards.drawCard ((ProgressCardColor)color));
+			GetComponent<PhotonView> ().RPC ("OnDrawCompleted", PhotonTargets.All, new object[] {
+			});
+		}
+	}
+	//drawing will be done by client
+	public void ReturnProgressCard(ProgressCardColor color, ProgressCardType type){
+		GetComponent<PhotonView> ().RPC ("SyncProgressCardreturn", PhotonTargets.All, new object[] {
+			(int) color,
+			(int) type
+		});
+	}
+	//functions for player progress cards
+	//used for notifications of cards
+	public void NotifyProgressCard(ProgressCardType type,string name){
+		string message="";
+		switch(type){
+		case ProgressCardType.Constitution:
+			message = name + " has played the Constitution card. Victory points permanently increased by 1";
+			break;
+		case ProgressCardType.Printer:
+			message = name + " has played the Printer card. Victory points permanently increased by 1";
+			break;
+		case ProgressCardType.Warlord:
+			message = name + " has played the Warlord card. All owned knights have been activated for free";
+			break;
+		case ProgressCardType.Inventor:
+			message = name + " has played the Inventor card. 2 tiles have swapped dice values";
+			break;
+		case ProgressCardType.Merchant:
+			message = name + " has played the Merchant card. Previous controller, if any, loses 1 victory point";
+			break;
+		}
+		GetComponent<PhotonView> ().RPC ("sendNotification", PhotonTargets.Others, new object[] {
+			message
+		});
+	}
+	public void sendNotification(string message,int receiverNum){
+		GetComponent<PhotonView> ().RPC ("sendNotificationSpecific", PhotonTargets.Others, new object[] {
+			message,
+			receiverNum
+		});
+	}
+	[PunRPC]
+	void sendNotificationSpecific(string message,int receiverNum){
+		if (PhotonNetwork.player.ID - 1 == receiverNum) {
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			clientCatanManager.uiManager.notificationpanel.SetActive (true);
+			clientCatanManager.uiManager.notificationtext.text = message;
+		}
+	}
+	[PunRPC]
+	void sendNotification(string message){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.uiManager.notificationpanel.SetActive (true);
+		clientCatanManager.uiManager.notificationtext.text = message;
+	}
+	//2 rpcs for drawing/returning progress cards
+	[PunRPC]
+	void SyncProgressCardreturn(int color,int type){
+		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+		clientcards.returnCard((ProgressCardColor)color,(ProgressCardType)type);
+	}
+	[PunRPC]
+	void SyncProgressCardDraw(int color){
+		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+		ProgressCardColor currentColor = (ProgressCardColor)color;
+		clientcards.drawCard (currentColor);
+	}
+	public void addCardToHand(int reciever, ProgressCardType card){
+		GetComponent<PhotonView> ().RPC ("addCardToHandRPC", PhotonTargets.All, new object[] {
+			reciever,
+			(int)card
+		});
+	}
+	[PunRPC]
+	void addCardToHandRPC(int reciever,int card){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.players [reciever].progressCards.Add ((ProgressCardType)card);
+	}
+	public void removeCardFromHand(int reciever, ProgressCardType card){
+		GetComponent<PhotonView> ().RPC ("removeCardFromHandRPC", PhotonTargets.All, new object[] {
+			reciever,
+			(int)card
+		});
+
+	}
+	[PunRPC]
+	void removeCardFromHandRPC(int reciever,int card){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.players [reciever].progressCards.Remove ((ProgressCardType)card);
+		if(PhotonNetwork.player.ID-1==reciever){
+			for (int i = 0; i < clientCatanManager.uiManager.progressCardHolder.progressCardList.Count; i++) {
+				if (clientCatanManager.uiManager.progressCardHolder.progressCardList[i].type == (ProgressCardType)card) {
+					Debug.Log ("removal was initiated");
+					Destroy (clientCatanManager.uiManager.progressCardHolder.progressCardList[i].gameObject);
+					clientCatanManager.uiManager.progressCardHolder.progressCardList.RemoveAt(i);
+				}
+			}
+		}
+	}
+	public void increaseVpAdder(int number, int player){
+		GetComponent<PhotonView> ().RPC ("setVpAdder", PhotonTargets.All, new object[] {
+			number,
+			player
+		});
+
+	}
+
+	[PunRPC]
+	void setVpAdder(int number, int player){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.players [player].vpAdder = number;
+	}
+	public IEnumerator playSaboteur(int vplimit,int player,string sendername){
+		List<int> toplayers=new List<int>();
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		//figure out which players need to do it
+		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+			if (clientCatanManager.players[i].getVpPoints() >= vplimit && i!=PhotonNetwork.player.ID - 1) {
+				toplayers.Add (i);
+				GetComponent<PhotonView> ().RPC ("sendNotificationSpecific", PhotonTargets.Others, new object[] {
+					sendername+" has played the Saboteur card, you must discard half your resources/commodities",
+					i
+				});
+			}
+		}
+		EventTransferManager.instance.BeginWaitForPlayers (toplayers.ToArray());
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("saboteurRPC", PhotonTargets.Others, new object[] {
+			toplayers.ToArray()
+		});
+
+		Debug.Log ("Waiting for players started");
+
+		while (EventTransferManager.instance.waitingForPlayers) {
+			EventTransferManager.instance.CheckIfPlayersReady ();
+			Debug.Log ("Waiting...");
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+	[PunRPC]
+	IEnumerator saboteurRPC(int[] allPlayers){
+		for(int i=0;i<allPlayers.Length;i++){
+			if (PhotonNetwork.player.ID - 1 == allPlayers[i]) {
+				CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+
+				EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
+
+				int numDiscards = clientCatanManager.players [allPlayers[i]].getHalfAssetCount ();
+				yield return StartCoroutine (clientCatanManager.selectResourcesForPlayers (numDiscards, false));
+				Debug.Log ("Waiting for players started");
+				while (EventTransferManager.instance.waitingForPlayers) {
+					EventTransferManager.instance.CheckIfPlayersReady ();
+					Debug.Log ("Waiting...");
+					yield return new WaitForEndOfFrame ();
+				}
+			}
+			Debug.Log ("events completed");
+		}
+	}
+	public IEnumerator playWedding(int vplimit, int player,string sendername){
+		List<int> toplayers=new List<int>();
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		//figure out which players need to do it
+		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+			if (clientCatanManager.players[i].getVpPoints() >= vplimit && i!=PhotonNetwork.player.ID - 1) {
+				toplayers.Add (i);
+				GetComponent<PhotonView> ().RPC ("sendNotificationSpecific", PhotonTargets.Others, new object[] {
+					sendername+" has played the Wedding card, you must give him 2 of your resources/commodities",
+					i
+				});
+			}
+		}
+
+		EventTransferManager.instance.BeginWaitForPlayers (toplayers.ToArray());
+		GetComponent<PhotonView> ().RPC ("weddingRPC", PhotonTargets.Others, new object[] {
+			toplayers.ToArray(),
+			player
+		});
+
+		Debug.Log ("Waiting for players started");
+		while (EventTransferManager.instance.waitingForPlayers) {
+			EventTransferManager.instance.CheckIfPlayersReady ();
+			Debug.Log ("Waiting...");
+			yield return new WaitForEndOfFrame ();
+		}
+
+	}
+	[PunRPC]
+	IEnumerator weddingRPC(int[] allPlayers, int sendto){
+		for(int i=0;i<allPlayers.Length;i++){
+			if (PhotonNetwork.player.ID - 1 == allPlayers[i]) {
+				CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+
+				EventTransferManager.instance.BeginWaitForPlayers (allPlayers);
+
+				yield return StartCoroutine (clientCatanManager.stealRessourcesWedding (sendto));
+
+				Debug.Log ("Waiting for players started");
+				while (EventTransferManager.instance.waitingForPlayers) {
+					EventTransferManager.instance.CheckIfPlayersReady ();
+					Debug.Log ("Waiting...");
+					yield return new WaitForEndOfFrame ();
+				}
+			}
+		}
+	}
+	//handles both trade and resource monopoly
+	public void playMonopoly(int sender,int selection,bool trigger){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		AssetTuple tempasset = new AssetTuple ();
+		string message = "";
+		if (trigger) {
+			tempasset.SetValueAtIndex (selection, 1);
+			message = " has played the Trade Monopoly card, you must give him 1 "+ ((CommodityType)selection - 5).ToString ();
+		} else {
+			tempasset.SetValueAtIndex (selection, 2);
+			message = " has played the Resource Monopoly card, you must give him 2 "+ ((ResourceType)selection).ToString ();
+		}
+		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+			if(i!=sender && clientCatanManager.players[i].hasAvailableAssets(tempasset)){
+				EventTransferManager.instance.OnTradeWithBank (sender, true, tempasset);
+				EventTransferManager.instance.OnTradeWithBank (i, false, tempasset);
+				GetComponent<PhotonView> ().RPC ("sendNotificationSpecific", PhotonTargets.Others, new object[] {
+					clientCatanManager.players [sender].playerName + message,
+					i
+				});
+			}
+
+		}
+	}
+	public IEnumerator playCommercialHarbor (List<Player> recievers, int[] selections){
+		List<int> toplayers=new List<int>();
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		for (int i = 0; i < recievers.Count; i++) {
+			//only if the player has commodities
+			if (!recievers [i].hasZeroCommodities()) {
+				GetComponent<PhotonView> ().RPC ("sendNotificationSpecific", PhotonTargets.Others, new object[] {
+					clientCatanManager.players[PhotonNetwork.player.ID-1].playerName+" has played the Commercial Harbor, you must give him 1 of your commodities, you will recieve a resource of your choice",
+					recievers[i].playerNumber-1
+				});
+				GetComponent<PhotonView> ().RPC ("commercialHarborRPC", PhotonTargets.Others, new object[] {
+					recievers[i].playerNumber-1,
+					PhotonNetwork.player.ID - 1,
+					selections [i]
+				});
+				toplayers.Add (recievers[i].playerNumber-1);
+			}
+		}
+		EventTransferManager.instance.BeginWaitForPlayers (toplayers.ToArray());
+		Debug.Log ("Waiting for players started");
+		while (EventTransferManager.instance.waitingForPlayers) {
+			EventTransferManager.instance.CheckIfPlayersReady ();
+			Debug.Log ("Waiting...");
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+	[PunRPC]
+	IEnumerator commercialHarborRPC(int receiver,int sender,int receiveselection){
+		if (PhotonNetwork.player.ID - 1 == receiver) {
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			AssetTuple givetuple = new AssetTuple ();
+			givetuple.SetValueAtIndex (receiveselection, 1);
+			clientCatanManager.uiManager.fishresourcepanel.gameObject.SetActive (true);
+			//disabled resources
+			for (int i = 0; i < 5; i++) {
+				clientCatanManager.uiManager.fishresourcepanel.resourceoptions [i].gameObject.SetActive (false);
+			}
+			//wait for selection
+			bool selectionMade = false;
+			//get the selection
+			while (!selectionMade) {
+				if (!clientCatanManager.uiManager.fishresourcepanel.selectionMade) {
+					yield return StartCoroutine (clientCatanManager.uiManager.fishresourcepanel.waitUntilButtonDown ());
+				}
+				if (clientCatanManager.uiManager.fishresourcepanel.selectionMade) {
+					selectionMade = true;
+				}
+			}
+			clientCatanManager.uiManager.fishresourcepanel.selectionMade = false;
+			int selection = clientCatanManager.uiManager.fishresourcepanel.getSelection ();
+			//reactivate resource options
+			for (int i = 0; i < 5; i++) {
+				clientCatanManager.uiManager.fishresourcepanel.resourceoptions [i].gameObject.SetActive (true);
+			}
+			clientCatanManager.uiManager.fishresourcepanel.gameObject.SetActive (false);
+			AssetTuple temptuple = new AssetTuple ();
+			temptuple.SetValueAtIndex (selection, 1);
+			EventTransferManager.instance.OnTradeWithBank (PhotonNetwork.player.ID - 1, false, temptuple);
+			EventTransferManager.instance.OnTradeWithBank (sender, true, temptuple);
+
+			EventTransferManager.instance.OnTradeWithBank (sender, false, givetuple);
+			EventTransferManager.instance.OnTradeWithBank (PhotonNetwork.player.ID - 1, true, givetuple);
+
+			EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
+		}
+	}
+	[PunRPC]
+	void notifyAlchemist(int red, int yellow,int name){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.uiManager.notificationpanel.gameObject.SetActive (true);
+		clientCatanManager.uiManager.notificationtext.text=clientCatanManager.players[name].playerName+" played the Alchemist Card red die value: "+red+" yellow die value: "+yellow;
+
+	}
+	public IEnumerator playDeserter(int selection){
+		int[] toplayers={selection};
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		//first send notification
+		GetComponent<PhotonView> ().RPC ("sendNotificationSpecific", PhotonTargets.Others, new object[] {
+			clientCatanManager.players[PhotonNetwork.player.ID-1].playerName+" has played the Deserter card, you must destroy 1 of your knights",
+			selection
+		});
+		EventTransferManager.instance.BeginWaitForPlayers (toplayers);
+
+		GetComponent<PhotonView> ().RPC ("knightRPC", PhotonTargets.Others, new object[] {
+			selection
+		});
+
+		Debug.Log ("Waiting for players started");
+		while (EventTransferManager.instance.waitingForPlayers) {
+			EventTransferManager.instance.CheckIfPlayersReady ();
+			Debug.Log ("Waiting...");
+			yield return new WaitForEndOfFrame ();
+		}
+
+
+	}
+	[PunRPC]
+	IEnumerator knightRPC(int reciever){
+		if (PhotonNetwork.player.ID - 1 == reciever) {
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+			yield return StartCoroutine (clientCatanManager.removeKnight ());
+			OnPlayerReady(PhotonNetwork.player.ID-1,true);
+		}
+	}
+	public void setMerchantController(){
+		GetComponent<PhotonView> ().RPC ("merchantRPC", PhotonTargets.All, new object[] {
+			PhotonNetwork.player.ID-1
+		});
+	}
+	[PunRPC]
+	void merchantRPC(int playerNum){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.merchantController = playerNum;
+	}
+	public void onDeserterBuild(KnightRank rank){
+		GetComponent<PhotonView> ().RPC ("knightbuildRPC", PhotonTargets.Others, new object[] {
+			(int)rank
+		});
+	}
+	[PunRPC]
+	public void knightbuildRPC(int rank){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		if (clientCatanManager.players [clientCatanManager.currentPlayerTurn].playerNumber-1 == PhotonNetwork.player.ID - 1) {
+			StartCoroutine(clientCatanManager.buildDeserter ((KnightRank)rank));
+		}
+	}
+	public IEnumerator playAlchemist(int redDieRoll, int yellowDieRoll) {
+		if (!diceRolledThisTurn) {
+			
+			GetComponent<PhotonView> ().RPC ("RollDice", PhotonTargets.All, new object[] {Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),true});
+			GetComponent<PhotonView> ().RPC ("notifyAlchemist", PhotonTargets.Others, new object[] {
+				redDieRoll,
+				yellowDieRoll,
+				PhotonNetwork.player.ID-1
+			});
+
+			GameObject dice = GameObject.FindGameObjectWithTag ("DiceRoller").GetComponent<DiceRoller> ().dice [2];
+			EventDieFace eventDieRoll=EventDieFace.Black;
+			bool ready = true;		
+			//wait for dice to finish rolling
+			while (ready) {
+				dice = GameObject.FindGameObjectWithTag ("DiceRoller").GetComponent<DiceRoller> ().dice [2];
+				yield return new WaitForSeconds (3f);
+				bool z = dice.GetComponent<FaceDetection> ().ready;
+				if (z) {
+					ready = false;
+				} else {
+					Debug.Log("Re-roll required");
+					GetComponent<PhotonView> ().RPC ("RollDice", PhotonTargets.All, new object[] {Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),Random.Range(-5.0f, 5.0f),true});
+				}
+				Debug.Log ("Dice Rolling");
+				yield return new WaitForEndOfFrame ();
+			}
+
+
+			DieHelper temp = dice.GetComponent<DieHelper> ();
+			switch (temp.value) {
+			case 1:
+				eventDieRoll = EventDieFace.Blue;
+				break;
+			case 2:
+				eventDieRoll = EventDieFace.Black;
+				break;
+			case 3:
+				eventDieRoll = EventDieFace.Green;
+				break;
+			case 4:
+				eventDieRoll = EventDieFace.Black;
+				break;
+			case 5:
+				eventDieRoll = EventDieFace.Black;
+				break;
+			case 6:
+				eventDieRoll = EventDieFace.Yellow;
+				break;
+			}
+
+			//let everyone look then destroy
+			yield return new WaitForSeconds (5f);
+
+			GetComponent<PhotonView> ().RPC ("DestroyDice", PhotonTargets.All, new object[] {});
+
+			Debug.Log("Red: "+redDieRoll+" Yellow: "+yellowDieRoll+ " Event: "+eventDieRoll.ToString());
+
+			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
+				//StartCoroutine(clientCatanManager.discardResourcesForPlayers());
+				//StartCoroutine(clientCatanManager.moveRobberForCurrentPlayer());
+				GetComponent<PhotonView> ().RPC ("EnforceDiceRollEvents", PhotonTargets.All, new object[] {});
+			} else {
+				if (!setupPhase) {
+					//CommodityCollectionEvent (redDieRoll + yellowDieRoll);
+					GetComponent<PhotonView> ().RPC ("CommodityCollectionEvent", PhotonTargets.All, new object[] {
+						redDieRoll + yellowDieRoll
+					});
+				}
+
+				GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
+					redDieRoll + yellowDieRoll
+				});
+
+			}
+			diceRolledThisTurn = true;
+		}
+	}
+
+	public void saveFile(string fileName){
+		GetComponent<PhotonView> ().RPC ("saveFileEvent", PhotonTargets.All, new object[] {
+			fileName
+		});
+	}
+	[PunRPC]
+	private void saveFileEvent(string fileName){
+		SaveJson.saveJson (fileName);
+	}
+
 }
 
 public enum MoveType {
@@ -1954,6 +2524,7 @@ public enum MoveType {
 	PromoteKnight,
 	MoveKnight,
 	DisplaceKnight,
-	ChaseRobber
+	ChaseRobber,
+	RemoveKnight
 }
 

@@ -90,10 +90,12 @@ public class PlayerHUD : MonoBehaviour {
 			resourcesText.text = displayingPlayer.getNumAssets ().ToString();
 
 			//cardsText.text = Player.METHODTOGTNUMRESOURCECARDSLOL ();
-			roadsText.text = (displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count
-				+ displayingPlayer.getOwnedUnitsOfType(typeof(Ship)).Count).ToString();
+			roadsText.text=displayingPlayer.getNumFishTokens().ToString();
+			//roadsText.text = (displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count
+			//	+ displayingPlayer.getOwnedUnitsOfType(typeof(Ship)).Count).ToString();
 			knightsText.text = displayingPlayer.getOwnedUnitsOfType (typeof(Knight)).Count.ToString();
-			goldText.text= displayingPlayer.goldCoins.ToString();
+			cardsText.text =""+ displayingPlayer.progressCards.Count;
+			goldText.text =""+ displayingPlayer.getGoldCoinsCnt ();
 			VpText.text= displayingPlayer.victoryPoints.ToString();
 		}
 

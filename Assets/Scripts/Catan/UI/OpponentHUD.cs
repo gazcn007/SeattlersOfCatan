@@ -44,12 +44,14 @@ public class OpponentHUD : MonoBehaviour {
 
 	private void UpdateUIForPlayer() { 
 		if(displayingPlayer != null) {
+			roadsText.text=displayingPlayer.getNumFishTokens().ToString();
 			resourcesText.text = displayingPlayer.getNumAssets ().ToString();
 			//cardsText.text = Player.METHODTOGTNUMRESOURCECARDSLOL ();
-			roadsText.text = (displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count
-				+ displayingPlayer.getOwnedUnitsOfType(typeof(Ship)).Count).ToString();
+			//roadsText.text = (displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count
+			//	+ displayingPlayer.getOwnedUnitsOfType(typeof(Ship)).Count).ToString();
 			knightsText.text = displayingPlayer.getOwnedUnitsOfType (typeof(Knight)).Count.ToString();
 			VpText.text= displayingPlayer.victoryPoints.ToString();
+			cardsText.text =""+ displayingPlayer.progressCards.Count;
 		}
 		
 	}

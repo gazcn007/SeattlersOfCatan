@@ -88,6 +88,7 @@ public class FlipChartPanel : MonoBehaviour {
 			tradeSpecialAbilitylbl.gameObject.SetActive (true);
 			tradeSpecialAbility.gameObject.SetActive (true);
 			tradeUp.gameObject.SetActive (false);
+
 			for (int i = 0; i < 5; i++) {
 				tradeCosts [i].gameObject.SetActive (false);
 			}
@@ -101,6 +102,9 @@ public class FlipChartPanel : MonoBehaviour {
 			}
 			//set cost array
 			int cost = tradelvl + 1;
+			if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane) {
+				cost= cost - 1;
+			}
 			for (int i = 0; i < 5; i++) {
 				if (i < cost) {
 					tradeCosts [i].gameObject.SetActive (true);
@@ -164,6 +168,9 @@ public class FlipChartPanel : MonoBehaviour {
 			}
 			//set cost array
 			int cost = politicslvl + 1;
+			if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane) {
+				cost= cost - 1;
+			}
 			for (int i = 0; i < 5; i++) {
 				if (i < cost) {
 					politicsCosts [i].gameObject.SetActive (true);
@@ -216,6 +223,10 @@ public class FlipChartPanel : MonoBehaviour {
 			scienceSpecialAbility.gameObject.SetActive (true);
 			scienceUp.gameObject.SetActive (false);
 
+			for (int i = 0; i < 5; i++) {
+				scienceCosts [i].gameObject.SetActive (false);
+			}
+
 		} else {
 			scienceHolder.gameObject.SetActive (true);
 			scienceMax.gameObject.SetActive (false);
@@ -225,6 +236,9 @@ public class FlipChartPanel : MonoBehaviour {
 			}
 			//set cost array
 			int cost = sciencelvl + 1;
+			if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane) {
+				cost= cost - 1;
+			}
 			for (int i = 0; i < 5; i++) {
 				if (i < cost) {
 					scienceCosts [i].gameObject.SetActive (true);
@@ -281,7 +295,11 @@ public class FlipChartPanel : MonoBehaviour {
 
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].canUpgrade (trade)) {
 			AssetTuple upgradeCost = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.nextImprovementCost (trade);
-
+			if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane) {
+				upgradeCost.SetValueAtIndex(7,upgradeCost.GetValueAtIndex(7)-1);
+				CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane = false;
+			}
+				
 			EventTransferManager.instance.OnTradeWithBank (CatanManager.instance.currentPlayerTurn, false, upgradeCost);
 			EventTransferManager.instance.OnUpgradeCity (CatanManager.instance.currentPlayerTurn, (int)trade);
 
@@ -298,6 +316,11 @@ public class FlipChartPanel : MonoBehaviour {
 
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].canUpgrade (politics)) {
 			AssetTuple upgradeCost = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.nextImprovementCost (politics);
+			if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane) {
+				upgradeCost.SetValueAtIndex(6,upgradeCost.GetValueAtIndex(6)-1);
+				CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane = false;
+			}
+
 
 			EventTransferManager.instance.OnTradeWithBank (CatanManager.instance.currentPlayerTurn, false, upgradeCost);
 			EventTransferManager.instance.OnUpgradeCity (CatanManager.instance.currentPlayerTurn, (int)politics);
@@ -315,7 +338,11 @@ public class FlipChartPanel : MonoBehaviour {
 
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].canUpgrade (science)) {
 			AssetTuple upgradeCost = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].cityImprovements.nextImprovementCost (science);
-
+			if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane) {
+				upgradeCost.SetValueAtIndex(5,upgradeCost.GetValueAtIndex(5)-1);
+				CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playedCrane = false;
+			}
+				
 			EventTransferManager.instance.OnTradeWithBank (CatanManager.instance.currentPlayerTurn, false, upgradeCost);
 			EventTransferManager.instance.OnUpgradeCity (CatanManager.instance.currentPlayerTurn, (int)science);
 

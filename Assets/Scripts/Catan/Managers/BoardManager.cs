@@ -132,6 +132,48 @@ public class BoardManager : MonoBehaviour {
 
 		return eligibleTiles;
 	}
+	public List<GameTile> getAdjacentTiles(int playerID) {
+		List<GameTile> eligibleTiles = new List<GameTile> ();
+
+		List<Metropolis> ownedMetropolis = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(Metropolis)).Cast<Metropolis> ().ToList ();
+		List<City> ownedCities = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(City)).Cast<City> ().ToList ();
+		List<Settlement> ownedSettlements = CatanManager.instance.players[playerID].getOwnedUnitsOfType (typeof(Settlement)).Cast<Settlement> ().ToList ();
+
+		for (int i = 0; i < ownedMetropolis.Count; i++) {
+			Intersection relatedIntersection = ownedMetropolis[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				if (!eligibleTiles.Contains(tile)&&tile.tileType!=TileType.Ocean) {
+					eligibleTiles.Add (tile);
+				}
+			}
+		}
+
+		for (int i = 0; i < ownedCities.Count; i++) {
+			Intersection relatedIntersection = ownedCities[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				if (!eligibleTiles.Contains(tile)) {
+					eligibleTiles.Add (tile);
+				}
+			}
+		}
+
+		for (int i = 0; i < ownedSettlements.Count; i++) {
+			Intersection relatedIntersection = ownedSettlements[i].locationIntersection;
+
+			List<GameTile> adjacentTiles = relatedIntersection.getAdjacentTiles ();
+			foreach(GameTile tile in adjacentTiles) {
+				if (!eligibleTiles.Contains(tile)) {
+					eligibleTiles.Add (tile);
+				}
+			}
+		}
+
+		return eligibleTiles;
+	}
 
 	public int[] getAdjacentTileIDsOfType(int playerID, TileType tileType) {
 		List<GameTile> eligibleTiles = getAdjacentTilesOfType(playerID, tileType);
@@ -602,6 +644,18 @@ public class BoardManager : MonoBehaviour {
 		List<Edge> edges = board.Edges.Values.ToList();
 		for (int i = 0; i < edges.Count; i++) {
 			edges [i].highlightEdge (highlight);
+		}
+	}
+	public void HighlightTiles(List<GameTile> tiles,bool highlight){
+		if (highlight) {
+			for (int i = 0; i < tiles.Count; i++) {
+				tiles [i].HighlightTile.gameObject.SetActive (true);
+			}
+		} else {
+			for (int i = 0; i < tiles.Count; i++) {
+				tiles [i].HighlightTile.gameObject.SetActive (false);
+			}
+
 		}
 	}
 

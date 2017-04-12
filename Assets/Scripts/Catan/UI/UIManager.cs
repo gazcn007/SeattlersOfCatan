@@ -27,13 +27,20 @@ public class UIManager : MonoBehaviour {
 	public DiscardPanel discardPanel;
 	public FishTradePanel fishTradePanel;
 	public FishResourcePanel fishresourcepanel;
+	public CommercialHarborPanel commercialHarborPanel;
+	public SpyPanel spyPanel;
+	public AlchemistPanel alchemistPanel;
+	public BarbariansPanel barbariansPanel;
 	//no script needed for this
 	public GameObject robberOrPiratePanel;
 	public GameObject costspanel;
 	public FlipChartPanel flipchart;
 	public GameObject notificationpanel;
 	public Text notificationtext;
+	public GameObject savePanel;
+	public CardSelectPanel cardSelectPanel;
 
+	public InputField filenameInput;
 	void Awake() {
 		if (instance == null)
 			instance = this;
@@ -48,7 +55,10 @@ public class UIManager : MonoBehaviour {
 	void Update() {
 		currentTurnColor.color = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor;
 		currentTurnAvatar.sprite = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].avatar;
+
+
 	}
+
 
 	#region Initializers
 
@@ -57,27 +67,7 @@ public class UIManager : MonoBehaviour {
 		//progress card initiators
 		progressCardHolder.UIinstance = this;
 		progressCardPanel.cardHolder = progressCardHolder;
-
-		//a few progress card tests
-		/*
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Alchemist);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Diplomat);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Merchant);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Crane);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.ResourceMonopoly);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Smith);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Deserter);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Engineer);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.MasterMerchant);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Wedding);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.Warlord);
-		progressCardHolder.SpawnCard(ProgressCardColor.Yellow,ProgressCardType.CommercialHarbor);
-*/
-
-
-		//just in case due to constant editing
-		tradePanel.gameObject.SetActive (false);
-		buildPanel.gameObject.SetActive (false);
+		progressCardPanel.uiManager = this;
 
 	}
 
@@ -179,7 +169,7 @@ public class UIManager : MonoBehaviour {
 		Debug.Log ("diceRollEvent()");
 		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
 			if (!EventTransferManager.instance.waitingForPlayer) {
-				EventTransferManager.instance.OnDiceRolled ();
+				StartCoroutine(EventTransferManager.instance.OnDiceRolled ());
 			}
 		}
 	}
@@ -204,6 +194,11 @@ public class UIManager : MonoBehaviour {
 				}
 			}
 		}
+	}
+	public void buildCityWallEvent(){
+		progressCardHolder.SpawnCard (ProgressCardColor.Yellow,ProgressCardType.Merchant);
+
+
 	}
 	public void toggleFlipChartPanel (){
 		int buttonId = 4;
@@ -266,7 +261,21 @@ public class UIManager : MonoBehaviour {
 			}
 		}
 	}
+	public void togglerBarbariansPanel(){
+		if (barbariansPanel.isActiveAndEnabled) {
+			barbariansPanel.gameObject.SetActive (false);
+		} else {
+			barbariansPanel.gameObject.SetActive (true);
+		}
+	}
+	public void togglerSavePanel (){
+		if (savePanel.activeSelf) {
+			savePanel.gameObject.SetActive (false);
+		} else {
+			savePanel.gameObject.SetActive (true);
+		}
 
+	}
 	public void moveShipEvent(){
 		int buttonId = 8;
 		Debug.Log ("moveShipEvent()");
@@ -306,6 +315,12 @@ public class UIManager : MonoBehaviour {
 				//CatanManager.instance.currentPlayerTurn = (CatanManager.instance.currentPlayerTurn + 1) % PhotonNetwork.playerList.Length;
 				//UnitManager.instance.destroyCancelledUnits ();
 				EventTransferManager.instance.OnEndTurn();
+				//reset progress card flags
+				CatanManager.instance.players [PhotonNetwork.player.ID - 1].playedMerchantFleet = false;
+				CatanManager.instance.players [PhotonNetwork.player.ID - 1].playedCrane = false;
+				//for bug fix
+				CatanManager.instance.players [PhotonNetwork.player.ID - 1].canPlayIrrigation = true;
+				CatanManager.instance.players [PhotonNetwork.player.ID - 1].canPlayMining = true;
 				deactivateButtons ();
 			}
 		}
@@ -320,11 +335,31 @@ public class UIManager : MonoBehaviour {
 			}
 		}
 	}
-
+	/*public void tradeGoldDone(){
+		Debug.Log ("trade ini");
+		Debug.Log ("gold cnt: " + CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getGoldCoinsCnt ());
+		AssetTuple assetsToReceive = GameAsset.getAssetOfIndex (tradePanel.getGoldChoiceInt(), 1);
+		if (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getGoldCoinsCnt() >= 2) {
+			EventTransferManager.instance.GoldTrade (PhotonNetwork.player.ID - 1);
+			EventTransferManager.instance.OnTradeWithBank(CatanManager.instance.currentPlayerTurn, true, assetsToReceive);
+			tradePanel.hideErrorText ();
+			tradePanel.gameObject.SetActive (false);
+			EventTransferManager.instance.OnOperationFailure ();
+		}
+	}*/
 	public void tradeDone() {
 		int tradeRatio = CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getMinimumTradeValue (tradePanel.getTradeChoiceInt ());
 		if (tradePanel.getTradeChoiceInt () >= 5 && CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].unlockedTradingHouse ()) {
 			tradeRatio = 2;
+		}
+		if (CatanManager.instance.players [PhotonNetwork.player.ID - 1].playedMerchantFleet && tradePanel.getTradeChoiceInt () == CatanManager.instance.players [PhotonNetwork.player.ID - 1].merchantFleetSelection) {
+			tradeRatio = 2;
+		}
+		if (CatanManager.instance.merchantController == PhotonNetwork.player.ID - 1) {
+			ResourceType typeOfResource = GameAsset.getResourceOfHex (GameObject.FindGameObjectWithTag ("Merchant").GetComponent<Merchant> ().occupyingTile.tileType);
+			if ((int)typeOfResource == tradePanel.getTradeChoiceInt ()) {
+				tradeRatio = 2;
+			}
 		}
 		AssetTuple assetsToSpend = GameAsset.getAssetOfIndex (tradePanel.getTradeChoiceInt (), tradeRatio);
 		AssetTuple assetsToReceive = GameAsset.getAssetOfIndex (tradePanel.getReceiveChoiceInt (), 1);
@@ -360,11 +395,17 @@ public class UIManager : MonoBehaviour {
 		EventTransferManager.instance.OnOperationFailure ();
 	}
 
-	public void Test(){
-		//StartCoroutine(EventTransferManager.instance.CardDrawEvent());
-		notificationpanel.SetActive (true);
-		notificationtext.text = "test";
+	public void saveGameEvent() {
+		Debug.Log ("saveGameEvent()");
+		string fileName = filenameInput == null ? "savefile" : filenameInput.text;
+//		if (!EventTransferManager.instance.waitingForPlayer) {
+			EventTransferManager.instance.saveFile (fileName);
+//		}
+		cancelSaveGamePanel ();
 	}
 
+	public void cancelSaveGamePanel(){
+		savePanel.SetActive (false);
+	}
 	#endregion
 }

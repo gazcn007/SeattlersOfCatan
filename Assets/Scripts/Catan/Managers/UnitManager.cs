@@ -18,6 +18,7 @@ public class UnitManager : MonoBehaviour {
 
 	public GameObject robberPrefab;
 	public GameObject piratePrefab;
+	public GameObject merchantPrefab;
 
 	public GameObject[] knightPrefabs;
 

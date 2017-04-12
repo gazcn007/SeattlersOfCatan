@@ -17,7 +17,7 @@ public class Player : MonoBehaviour {
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	public Dictionary<System.Type, List<Unit>> ownedUnits;
 	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 15, 15, 15, 0, 0, 0);
-	public List<ProgressCard> progressCards = new List<ProgressCard> ();
+	public List<ProgressCardType> progressCards = new List<ProgressCardType> ();
 	public CityImprovementTuple cityImprovements;
 
 	public GameTile lastGameTileSelection;
@@ -30,7 +30,13 @@ public class Player : MonoBehaviour {
 
 	public bool playedRoadBuilding;
 	public bool playedBishop;
-
+	public bool playedMerchantFleet;
+	public int merchantFleetSelection;
+	public bool playedCrane;
+	public bool playedPrinter = false;
+	public bool playedConstitution = false;
+	public bool canPlayIrrigation = true;
+	public bool canPlayMining = true;
 	public Sprite avatar;
 
 	// Use this for initialization
@@ -100,7 +106,9 @@ public class Player : MonoBehaviour {
 
 		return canDraw;
 	}
-
+	public int getGoldCoinsCnt(){
+		return goldCoins;
+	}
 	public bool canBuildMetropolis(CityImprovementType metropolisType) {
 		return cityImprovements.cityImprovements [metropolisType] >= 4;
 	}
@@ -779,6 +787,7 @@ public class Player : MonoBehaviour {
 		Edge selectedEdge;
 
 		while (!selectionMade) {
+			Debug.Log ("waiting for edge selection");
 			yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
 
 			RaycastHit hitInfo = new RaycastHit();
@@ -786,6 +795,7 @@ public class Player : MonoBehaviour {
 
 			if (hit) {
 				if (hitInfo.transform.gameObject.tag == "Edge") {
+					Debug.Log ("hit edge");
 					selectedEdge = hitInfo.transform.gameObject.GetComponent<Edge>();
 
 					if (selectedEdge != null && selectedEdge.occupier == null && possibleEdges.Contains(selectedEdge)) {//(selectedEdge.isLandEdge() || selectedEdge.isShoreEdge())) {
@@ -796,7 +806,31 @@ public class Player : MonoBehaviour {
 			}
 		}
 	}
+	public IEnumerator makeOccupiedEdgeSelection(List<Edge> possibleEdges) {//, TradeUnit unitToBuild) {
+		bool selectionMade = false;
+		Edge selectedEdge;
 
+		while (!selectionMade) {
+			Debug.Log ("waiting for edge selection");
+			yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
+
+			RaycastHit hitInfo = new RaycastHit();
+			bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo);
+
+			if (hit) {
+				if (hitInfo.transform.gameObject.tag == "Edge") {
+					Debug.Log ("hit edge");
+					selectedEdge = hitInfo.transform.gameObject.GetComponent<Edge>();
+
+					if (selectedEdge != null && possibleEdges.Contains(selectedEdge)) {
+						Debug.Log ("edge is valid");
+						selectionMade = true;
+						lastEdgeSelection = selectedEdge;
+					}
+				} 
+			}
+		}
+	}
 	public IEnumerator makeIntersectionSelection(List<Intersection> possibleIntersections) {
 		bool selectionMade = false;
 		Intersection selectedIntersection;
@@ -826,6 +860,7 @@ public class Player : MonoBehaviour {
 		Unit selectedUnit;
 
 		while (!selectionMade) {
+			Debug.Log ("Waiting for game unit selection");
 			yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
 
 			RaycastHit hitInfo = new RaycastHit();

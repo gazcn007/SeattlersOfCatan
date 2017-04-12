@@ -40,9 +40,9 @@ public class RobberStealPanel : MonoBehaviour {
 
 				//set values for the buttons 
 				current.instance = this;
-				current.playernumber = i;
+				current.playernumber = opponents [i].playerNumber - 1;
 				current.avatar.sprite = opponents [i].avatar;
-
+		
 				//set button
 				optionsPanel[i].onClick.AddListener (current.UpdateSelection);
 			}
@@ -63,7 +63,7 @@ public class RobberStealPanel : MonoBehaviour {
 		selectionGlow.gameObject.transform.position = button.gameObject.transform.position;
 	}
 	public IEnumerator waitUntilButtonDown() {
-		yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
+		//yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
 	
 		while (!selectionMade) {
 			yield return new WaitForEndOfFrame ();

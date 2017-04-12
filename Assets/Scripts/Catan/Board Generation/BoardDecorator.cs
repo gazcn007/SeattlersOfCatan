@@ -43,6 +43,18 @@ public class BoardDecorator {
 		//board.placePirateOnTile (pirateTiles [Random.Range(0, pirateTiles.Count)].id);
 	}
 
+	// Use this for re-genearte board with saved file
+	public BoardDecorator(GameBoard board, Persistence.pe_GameBoard pe_gameBoard) {
+		foreach (KeyValuePair<int, GameTile> entry in board.GameTiles) {
+//			if ((TileType)pe_gameBoard.pe_gameTiles [entry.Key].tileType == TileType.Desert) {
+//				
+//			}
+			entry.Value.tileType= (TileType)pe_gameBoard.pe_gameTiles [entry.Key].tileType;
+			entry.Value.diceValue= pe_gameBoard.pe_gameTiles [entry.Key].diceValue;
+			entry.Value.atIslandLayer= pe_gameBoard.pe_gameTiles [entry.Key].atIslandLayer;
+		}
+	}
+
 	public List<GameTile> findLandTiles(List<GameTile> allTiles) {
 		List<GameTile> landTiles = new List<GameTile>();
 

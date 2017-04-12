@@ -9,6 +9,7 @@ public class FishResourcePanel : MonoBehaviour {
 	public Image glow;
 	public int selection;
 	public bool selectionMade = false;
+	public bool valchange;
 
 	// Use this for initialization
 	void Start () {
@@ -30,7 +31,9 @@ public class FishResourcePanel : MonoBehaviour {
 	}
 
 	public void confirmSelection() {
-		selectionMade = true;
+		if (valchange) {
+			selectionMade = true;
+		}
 	}
 
 	public int getSelection() {

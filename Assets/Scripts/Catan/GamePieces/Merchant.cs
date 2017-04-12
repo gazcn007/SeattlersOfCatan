@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Merchant : GamePiece {
 
+
 	// Use this for initialization
 	void Start () {
 		

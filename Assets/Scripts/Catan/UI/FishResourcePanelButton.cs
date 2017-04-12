@@ -17,6 +17,7 @@ public class FishResourcePanelButton : MonoBehaviour {
 
 	public void SelectionGetEvent(){
 		instance.selection = id;
+		instance.valchange = true;
 		instance.setGlow (this);
 	}
 

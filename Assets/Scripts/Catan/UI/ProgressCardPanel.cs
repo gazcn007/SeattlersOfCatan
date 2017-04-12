@@ -13,30 +13,32 @@ public class ProgressCardPanel : MonoBehaviour {
 	public Button confirm;
 	public Button cancel;
 	public Text titleText;
+	public UIManager uiManager;
 
 	public ProgressCardHolder cardHolder;
 
 
 	//this displays a new card and creates the card
 	public void newCard(ProgressCardColor color,ProgressCardType type){
-
+		this.gameObject.SetActive (true);
+		confirm.onClick.RemoveAllListeners ();
 		cardType = type;
 		cardColor = color;
 		//first display card on panel
 		cardToDisplay.sprite=Resources.Load<Sprite> ("ProgressCards/"+cardType.ToString());
 		titleText.text = "New Progress Card";
 		//spawn this new card in the ui
-		cardHolder.SpawnCard(color,type);
+		StartCoroutine(cardHolder.SpawnCard(color,type));
 
 		//on click for confirm is decativation of this panel
 		confirm.onClick.AddListener (Cancel);
 		//no cancel button
 		cancel.gameObject.SetActive (false);
 
-		this.gameObject.SetActive (true);
 	}
 	public void SubmitCard(ProgressCardColor color,ProgressCardType type){
-
+		this.gameObject.SetActive (true);
+		confirm.onClick.RemoveAllListeners ();
 		cardType = type;
 		cardColor = color;
 
@@ -50,8 +52,6 @@ public class ProgressCardPanel : MonoBehaviour {
 		cancel.gameObject.SetActive (true);
 
 
-		this.gameObject.SetActive (true);
-
 	}
 
 	public void Cancel(){
@@ -60,7 +60,11 @@ public class ProgressCardPanel : MonoBehaviour {
 
 
 	public void PlayCard (){
-		
+
+		GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ().playCard (cardType);
+	
+
+		this.gameObject.SetActive (false);
 	}
 
 }

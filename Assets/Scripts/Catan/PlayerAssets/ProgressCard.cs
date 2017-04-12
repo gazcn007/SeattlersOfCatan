@@ -28,8 +28,20 @@ public class ProgressCard: MonoBehaviour  {
 	}
 	//handler for triggering cards
 	public void OnMouseClick(){
-		DisplayCard.gameObject.SetActive (false);
-		//UIinstance.progressCardPanel.SubmitCard (color, type);
+		//check if player can play card at this moment
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		if (clientCatanManager.currentPlayerTurn == PhotonNetwork.player.ID - 1) {
+			//alchemist check
+			if (EventTransferManager.instance.diceRolledThisTurn && type == ProgressCardType.Alchemist) {
+				clientCatanManager.uiManager.notificationpanel.SetActive (true);
+				clientCatanManager.uiManager.notificationtext.text="you must play this card before rolling the dice";
+			}else{
+				if (EventTransferManager.instance.diceRolledThisTurn || type == ProgressCardType.Alchemist) {
+					DisplayCard.gameObject.SetActive (false);
+					UIinstance.progressCardPanel.SubmitCard (color, type);
+				}
+			}
+		}
 	}
 }
 public enum ProgressCardColor{

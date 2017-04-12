@@ -400,6 +400,80 @@ public class GameBoard : MonoBehaviour {
 
 	}
 
+	public void GenerateFishGroundTiles(Persistence.pe_FishTile[] pe_fishTiles) {
+		List<GameTile> fishTiles = new List<GameTile> ();
+
+		foreach (Persistence.pe_FishTile pe_fileTile in pe_fishTiles) {
+			fishTiles.Add (GameTiles[pe_fileTile.locationTileId]);
+		}
+
+		foreach (var tile in fishTiles) {
+			List<Intersection> tileIntersections = tile.getIntersections ();
+
+			List<int> shoreIntersectionCornerNumbers = new List<int> ();
+			for (int i = 0; i < tileIntersections.Count; i++) {
+				if (tileIntersections [i].isShoreIntersection ()) {
+					shoreIntersectionCornerNumbers.Add(tile.getCornerNumberOfIntersection (tileIntersections [i]));
+				}
+			}
+
+			int corner1 = shoreIntersectionCornerNumbers [0];
+			int corner2 = shoreIntersectionCornerNumbers [1];
+			int corner3 = shoreIntersectionCornerNumbers [2];
+
+			int middleCorner = -1;
+
+			if (corner1 > corner2) {
+				if (corner2 > corner3) {
+					middleCorner = corner2;
+				} else if (corner1 > corner3) {
+					middleCorner = corner3;
+				} else {
+					middleCorner = corner1;
+				}
+			} else {
+				if (corner1 > corner3) {
+					middleCorner = corner1;
+				} else if (corner2 > corner3) {
+					middleCorner = corner3;
+				} else {
+					middleCorner = corner2;
+				}
+			}
+
+			if (shoreIntersectionCornerNumbers.Contains (0) && shoreIntersectionCornerNumbers.Contains (5)) {
+				if (shoreIntersectionCornerNumbers.Contains (4)) {
+					middleCorner = 5;
+				} else {
+					middleCorner = 0;
+				}
+			}
+
+			GameObject fishTileGO = Instantiate (fishGroundTilePrefab);
+			fishTileGO.transform.position = tile.transform.position + Vector3.up * 0.015f;
+			fishTileGO.transform.rotation = Quaternion.Euler(new Vector3 (90.0f, 0.0f, 30.0f + 60.0f * middleCorner));
+			fishTileGO.transform.Translate (Vector3.right * 0.38f, Space.Self);
+			Transform diceValue = fishTileGO.transform.FindChild ("Dice Value");
+			diceValue.transform.rotation = Quaternion.Euler (new Vector3 ((-1.0f * fishTileGO.transform.rotation.z)-90.0f, 0.0f, 0.0f));
+			diceValue.transform.Rotate (new Vector3 (90.0f, 0.0f, 0.0f), Space.Self);
+			fishTileGO.transform.parent = tile.transform;
+
+			FishTile fishTile = fishTileGO.GetComponent<FishTile> ();
+			fishTile.locationTile = tile;
+			fishTile.id = fishTileID++;
+
+			fishTileGO.name = "Fish Tile " + fishTile.id;
+
+			fishTile.setDiceValue(pe_fishTiles[fishTile.id].diceValue);
+
+			tile.fishTile = fishTile;
+			tile.diceValue = fishTile.diceValue;
+
+			fishTilesByIdDictionary.Add (fishTile.id, fishTile);
+		}
+
+	}
+
 	#region GamePiece Place and Move Methods
 
 	public void placeRobberOnTile(int tileID) {

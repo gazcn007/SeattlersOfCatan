@@ -15,7 +15,8 @@ public class DiscardPanel : MonoBehaviour {
 	private AssetTuple currentTuple;
 	private int neededDiscards;
 	private int leftDiscards;
-	private bool selectionMade = false;
+	public bool selectionMade = false;
+	public Text title;
 
 	// Use this for initialization
 	void Start () {
@@ -59,7 +60,22 @@ public class DiscardPanel : MonoBehaviour {
 		selectionMade = false;
 		this.gameObject.SetActive (true);
 	}
+	public void displayPanelMasterMerchant(AssetTuple playerAssets, int delta) {
+		neededDiscards = delta;
+		leftDiscards = neededDiscards;
 
+		foreach (Text text in assetNumTexts) {
+			text.text = "0";
+		}
+		for(int i = 0; i < assetSliders.Length; i++) {
+			assetSliders [i].maxValue = playerAssets.GetValueAtIndex (i);
+			assetSliders [i].minValue = assetSliders [i].value = 0;
+		}
+
+		currentTuple = playerAssets;
+		selectionMade = false;
+		this.gameObject.SetActive (true);
+	}
 	public void submitSelection() {
 		if (leftDiscards == 0) {
 			selectionMade = true;

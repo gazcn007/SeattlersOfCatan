@@ -24,6 +24,7 @@ public class CatanManager : MonoBehaviour {
 	public int currentActiveButton;
 	public bool setupPhase;
 	public bool waitingForPlayer;
+	public int merchantController=-1;
 
 	void Awake() {
 		if (instance == null)
@@ -210,9 +211,11 @@ public class CatanManager : MonoBehaviour {
 		}
 
 		if (!EventTransferManager.instance.setupPhase) {
-			if (!players [currentPlayerTurn].hasAvailableAssets (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
-				handleBuildFailure ("Insufficient Resources to build this edge unit!", uiManager.uiButtons);
-				yield break;
+			if (paid) {
+				if (!players [currentPlayerTurn].hasAvailableAssets (costOfUnit)) { // (Road.ResourceValue);//ResourceCost.getResourceValueOf(Road.ResourceValue);
+					handleBuildFailure ("Insufficient Resources to build this edge unit!", uiManager.uiButtons);
+					yield break;
+				}
 			}
 		}
 
@@ -332,7 +335,171 @@ public class CatanManager : MonoBehaviour {
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.ActivateKnight, currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, -1, true, paid);
 	}
+	public IEnumerator removeKnight(){
+		waitingForPlayer = true;
+		List<Knight> ownedKnights = players [PhotonNetwork.player.ID-1].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().ToList();
 
+
+		boardManager.highlightKnightsWithColor (ownedKnights.Cast<Unit> ().ToList (), true, Color.black);
+		yield return StartCoroutine (players [PhotonNetwork.player.ID-1].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
+
+		EventTransferManager.instance.onDeserterBuild (((Knight)players [PhotonNetwork.player.ID - 1].lastUnitSelection).rank);
+		EventTransferManager.instance.OnKnightActionForUser (MoveType.RemoveKnight, PhotonNetwork.player.ID-1, players [PhotonNetwork.player.ID-1].lastUnitSelection.id, -1, false, false);
+	}
+	public IEnumerator buildDeserter(KnightRank rank){
+		waitingForPlayer = true;
+
+		List<Intersection> validIntersectionsToBuildList = boardManager.getValidIntersectionsForPlayer (players [currentPlayerTurn], true);
+		int[] validIntersectionsToBuild = boardManager.getValidIntersectionIDsForPlayer (players[currentPlayerTurn], true);
+
+		if (validIntersectionsToBuild.Length == 0) {
+			handleBuildFailure ("No intersections to build a new knight!,you forfeit the ability to build a free knight", uiManager.uiButtons);
+			yield break;
+		}
+		uiManager.notificationpanel.SetActive (true);
+		uiManager.notificationtext.text = "You may build a knight of rank " + rank.ToString () + " for free select location";
+
+		//boardManager.highlightIntersectionsWithColor (validIntersectionsToBuild, true, players [currentPlayerTurn].playerColor);
+		EventTransferManager.instance.OnHighlightForUser(0, currentPlayerTurn, true, validIntersectionsToBuild);
+		//build first
+		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (validIntersectionsToBuildList));
+		EventTransferManager.instance.OnBuildUnitForUser (UnitType.Knight, currentPlayerTurn, players [currentPlayerTurn].lastIntersectionSelection.id, false, -1);
+		//NEHIR i am sure this loop is bad but it works if u have a better way go for it i didnt wanna spend 40 mins on it
+		List<Knight> ownedKnights = players [PhotonNetwork.player.ID-1].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().ToList();
+		for (int i = 0; i < ownedKnights.Count; i++) {
+			if(((IntersectionUnit)ownedKnights[i]).locationIntersection.id == players [PhotonNetwork.player.ID - 1].lastIntersectionSelection.id){
+				players [PhotonNetwork.player.ID - 1].lastUnitSelection = ownedKnights[i];
+			}
+		}
+		//promoteKnight up To rank
+		for (int i = 0; i < (int)rank; i++) {
+			EventTransferManager.instance.OnKnightActionForUser (MoveType.PromoteKnight, currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, -1, false, false);
+		}
+	}
+	public IEnumerator playIntrigue(){
+		List<Intersection> allIntersections = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().Intersections.Values.ToList ();
+		List<Unit> temp = players [PhotonNetwork.player.ID - 1].getOwnedUnitsOfType (UnitType.Road);
+		List<Unit> temp2= players [PhotonNetwork.player.ID - 1].getOwnedUnitsOfType (UnitType.Ship);
+		List<Unit> validknights = new List<Unit> ();
+		for (int i = 0; i < temp.Count; i++) {
+			Unit unit1=allIntersections[((EdgeUnit)temp[i]).locationEdge.linkedIntersections[0]].occupier;
+			Unit unit2=allIntersections[((EdgeUnit)temp[i]).locationEdge.linkedIntersections[1]].occupier;
+			if (unit1 != null) {
+				if (unit1.owner.playerNumber - 1 != PhotonNetwork.player.ID - 1 && unit1.GetType () == typeof(Knight)) {
+					validknights.Add (unit1);
+				}
+			}
+			if (unit2 != null) {
+				if (unit2.owner.playerNumber - 1 != PhotonNetwork.player.ID - 1 && unit2.GetType () == typeof(Knight)) {
+					validknights.Add (unit2);
+				}
+			}
+		}
+		for (int i = 0; i < temp2.Count; i++) {
+			Unit unit1=allIntersections[((EdgeUnit)temp2[i]).locationEdge.linkedIntersections[0]].occupier;
+			Unit unit2=allIntersections[((EdgeUnit)temp2[i]).locationEdge.linkedIntersections[1]].occupier;
+			if (unit1 != null) {
+				if (unit1.owner.playerNumber - 1 != PhotonNetwork.player.ID - 1 && unit1.GetType () == typeof(Knight)) {
+					validknights.Add (unit1);
+				}
+			}
+			if (unit2 != null) {
+				if (unit2.owner.playerNumber - 1 != PhotonNetwork.player.ID - 1 && unit2.GetType () == typeof(Knight)) {
+					validknights.Add (unit2);
+				}
+			}
+		}
+		Debug.Log ("possible units: " + validknights.Count);
+		boardManager.highlightKnightsWithColor (validknights, true, Color.black);
+		yield return StartCoroutine (players [PhotonNetwork.player.ID - 1].makeUnitSelection(validknights));
+		int unitid = players [PhotonNetwork.player.ID - 1].lastUnitSelection.id;
+		int owner = players [PhotonNetwork.player.ID - 1].lastUnitSelection.owner.playerNumber - 1;
+		//reset color
+		for (int i = 0; i < validknights.Count; i++) {
+			SpriteRenderer renderer = validknights[i].gameObject.GetComponentsInChildren<SpriteRenderer> ()[1];
+			renderer.color = validknights [i].owner.playerColor;
+		}
+		Debug.Log ("Selection made");
+
+		EventTransferManager.instance.OnDestroyUnit(UnitType.Knight,unitid);
+		EventTransferManager.instance.sendNotification(players[PhotonNetwork.player.ID - 1].playerName+" has played the Intrigue card and destroyed one of your knights",owner);
+
+	}
+	public IEnumerator playInventor(){
+		//first get tiles where a swap can be performed
+		List<GameTile> landTiles= boardManager.getLandTiles(false);
+		List<GameTile> validTiles = new List<GameTile> ();
+		for (int i = 0; i < landTiles.Count; i++) {
+			if (landTiles [i].diceValue != 2 && landTiles [i].diceValue != 12 && landTiles [i].diceValue != 6 && landTiles [i].diceValue != 8) {
+				validTiles.Add (landTiles [i]);
+			}
+		}
+		//get first tile
+
+		boardManager.HighlightTiles (validTiles, true);
+		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection(validTiles));
+		boardManager.HighlightTiles (validTiles, false);
+		Debug.Log ("First tile Selected");
+		GameTile selection1 = players [currentPlayerTurn].lastGameTileSelection;
+		//get second tile
+		validTiles.Remove(players [currentPlayerTurn].lastGameTileSelection);
+		boardManager.HighlightTiles (validTiles, true);
+		yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection(validTiles));
+		boardManager.HighlightTiles (validTiles, false);
+		GameTile selection2 = players [currentPlayerTurn].lastGameTileSelection;
+		EventTransferManager.instance.swapDiceValues (selection1, selection2);
+		uiManager.notificationpanel.gameObject.SetActive (true);
+		uiManager.notificationtext.text = "Tile Dice Values Swapped";
+		EventTransferManager.instance.NotifyProgressCard (ProgressCardType.Inventor,players[PhotonNetwork.player.ID-1].playerName);
+	}
+	public IEnumerator playDiplomat(){
+		List<Intersection> allIntersections = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard>().Intersections.Values.ToList ();
+		List<Unit> possibleRoads = new List<Unit> ();
+		//get all roads in game
+		for(int i=0;i<PhotonNetwork.playerList.Length;i++){
+			List<Unit> temp = players [i].getOwnedUnitsOfType (UnitType.Road);
+			for(int j=0;j<temp.Count;j++){
+				possibleRoads.Add(temp[j]);
+			}
+		}
+		//elinimate those that are occupied at both end
+		List<Edge> validRoads=new List<Edge>();
+		for (int i = 0; i < possibleRoads.Count; i++) {
+			Intersection Intersection1=allIntersections[((EdgeUnit)possibleRoads[i]).locationEdge.linkedIntersections[0]];
+			Intersection intersection2=allIntersections[((EdgeUnit)possibleRoads[i]).locationEdge.linkedIntersections[1]];
+			if (Intersection1.occupier == null || intersection2.occupier == null) {
+				validRoads.Add (((EdgeUnit)possibleRoads [i]).locationEdge);
+			}
+		}
+
+		List<Unit> temp2=new List<Unit>();
+		for(int i=0;i<validRoads.Count;i++){
+			temp2.Add((Unit)validRoads[i].occupier);
+		}
+		Debug.Log("valid roads:" +validRoads.Count);
+		boardManager.highlightUnitsWithColor(temp2, true, Color.black);
+		yield return StartCoroutine(players [PhotonNetwork.player.ID-1].makeOccupiedEdgeSelection (validRoads));
+		EventTransferManager.instance.OnDestroyUnit(UnitType.Road,players [currentPlayerTurn].lastEdgeSelection.occupier.id);
+
+		temp2.Remove (players [currentPlayerTurn].lastEdgeSelection.occupier);
+		//remove highlights
+		for (int i = 0; i < temp2.Count; i++) {
+			Renderer renderer = temp2[i].gameObject.GetComponentInChildren<Renderer> ();
+			renderer.material.color = temp2[i].owner.playerColor;
+		}
+		Debug.Log ("selection done");
+		int owner = players [currentPlayerTurn].lastEdgeSelection.occupier.owner.playerNumber-1;
+
+		Debug.Log ("removal done");
+		if (owner == currentPlayerTurn) {
+			uiManager.notificationpanel.gameObject.SetActive (true);
+			uiManager.notificationtext.text="you selected your own road, please choose where you would like to build a new 1";
+			yield return new WaitForSeconds (1f);
+			yield return StartCoroutine (buildEdgeUnit(UnitType.Road,false));
+		}else{
+			EventTransferManager.instance.sendNotification(players[currentPlayerTurn].playerName+" has played the Diplomat card and destroyed one of your roads",owner);
+		}
+	}
 	public IEnumerator promoteKnight(bool paid) {
 		waitingForPlayer = true;
 		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => knight.rank != KnightRank.Mighty).ToList ();
@@ -364,6 +531,7 @@ public class CatanManager : MonoBehaviour {
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (promotableKnights.Cast<Unit> ().ToList ()));
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.PromoteKnight, currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, -1, true, paid);
+		waitingForPlayer = false;
 	}
 
 	public IEnumerator moveKnight(int knightID, bool forced) {
@@ -519,7 +687,6 @@ public class CatanManager : MonoBehaviour {
 		//EventTransferManager.instance.playerChecks [PhotonNetwork.player.ID - 1] = true;
 		EventTransferManager.instance.OnPlayerReady(PhotonNetwork.player.ID - 1, true);
 	}
-
 	public IEnumerator moveGamePieceForCurrentPlayer(int gamePieceNum, bool remove, bool steal) {
 		GamePiece gamePieceToMove;
 		List<GameTile> eligibleTiles;
@@ -527,7 +694,12 @@ public class CatanManager : MonoBehaviour {
 		if (gamePieceNum == 0) {
 			gamePieceToMove = GameObject.FindObjectOfType<Robber> () as GamePiece;
 			eligibleTiles = boardManager.getLandTiles (true);
-		} else {
+		} else if (gamePieceNum == 2) {
+			gamePieceToMove = GameObject.FindObjectOfType<Merchant> () as GamePiece;
+			eligibleTiles = boardManager.getAdjacentTiles (PhotonNetwork.player.ID - 1);
+			Debug.Log ("eligible: " + eligibleTiles.Count);
+		}
+		else {
 			gamePieceToMove = GameObject.FindObjectOfType<Pirate> () as GamePiece;
 			eligibleTiles = boardManager.getOceanTiles (true);
 		}
@@ -537,8 +709,9 @@ public class CatanManager : MonoBehaviour {
 			}
 		} else {
 			EventTransferManager.instance.waitingForPlayer = true;
-
+			boardManager.HighlightTiles (eligibleTiles, true);
 			yield return StartCoroutine (players [currentPlayerTurn].makeGameTileSelection (eligibleTiles));
+			boardManager.HighlightTiles (eligibleTiles, false);
 			EventTransferManager.instance.OnMoveGamePiece (gamePieceNum, players [currentPlayerTurn].lastGameTileSelection.id, remove);
 
 			if (steal) {

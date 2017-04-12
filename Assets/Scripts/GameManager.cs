@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour {
 	//public static string ASSETSPATH = Application.dataPath;
 
 	// game build
-	private string BUILD = "NehirNew";
+	private string BUILD = "Milosz--2113341344511";
 
 	// static instance of GameManager
 	public static GameManager instance = null;
@@ -50,6 +50,12 @@ public class GameManager : MonoBehaviour {
 	public GameObject levelObject;
 
 	private LevelManager lm;
+
+	public bool LoadGameMode = false ; //false by default
+
+	public Persistence.pe_Player[] playerArray;
+
+	public Persistence.pe_GameBoard gameBoard;
 
 	// Awake is called before Start function
 	void Awake() {
@@ -136,7 +142,11 @@ public class GameManager : MonoBehaviour {
 		// get class instance
 		lm = LevelManager.instance;
 
-		lm.LoadLevelScene(online);
+		if (LoadGameMode) {
+			lm.LoadLevelSceneWithSaveFile (online, playerArray);
+		} else {
+			lm.LoadLevelScene (online);
+		}
 	}
 
 

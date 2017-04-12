@@ -14,6 +14,7 @@ public class GameTile : Tile {
 	public List<int> edges  = new List<int> ();
 	public List<int> intersections = new List<int> ();
 
+	public GameObject HighlightTile;
 	public FishTile fishTile;
 	public GamePiece occupier;
 
