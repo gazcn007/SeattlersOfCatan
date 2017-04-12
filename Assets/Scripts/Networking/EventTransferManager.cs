@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.SceneManagement;
 using UnityEngine;
 
 public class EventTransferManager : Photon.MonoBehaviour {
@@ -861,8 +862,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 
 	IEnumerator CatanSetupPhase() {
-		if (photonView.isMine && startedSetupPhase) {
-			startedSetupPhase = false;
+		if (photonView.isMine) {
 			Debug.Log ("Started setup phase: ");
 			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
 				GetComponent<PhotonView> ().RPC ("SetPlayerTurn", PhotonTargets.Others, new object[] { i });
