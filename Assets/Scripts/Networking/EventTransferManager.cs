@@ -24,7 +24,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	private GameObject diceRoller;
 
 	//----------<Persistence>--------
-	public int barbariansDistance = 1;
+	public int barbariansDistance = 7;
 	public int defendersOfCatanLeft = 6;
 	public bool barbariansAttackedIsland = false;
 	public int vpNeededToWin = 13;
@@ -321,13 +321,6 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 			GetComponent<PhotonView> ().RPC ("DestroyDice", PhotonTargets.All, new object[] {});
 			Debug.Log("Red: "+redDieRoll+" Yellow: "+yellowDieRoll+ " Event: "+eventDieRoll.ToString());
-
-			if (Random.Range (0.0f, 1.0f) < 0.5f) {
-				redDieRoll = 2;
-				yellowDieRoll = 5;
-			} else {
-				eventDieRoll = EventDieFace.Black;
-			}
 
 			if (eventDieRoll == EventDieFace.Black) {
 				GetComponent<PhotonView> ().RPC ("BarbariansEvent", PhotonTargets.All, new object[] {});
@@ -2799,6 +2792,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			GetComponent<PhotonView> ().RPC ("DestroyDice", PhotonTargets.All, new object[] {});
 
 			Debug.Log("Red: "+redDieRoll+" Yellow: "+yellowDieRoll+ " Event: "+eventDieRoll.ToString());
+
+			if (eventDieRoll == EventDieFace.Black) {
+				GetComponent<PhotonView> ().RPC ("BarbariansEvent", PhotonTargets.All, new object[] {});
+			}
 
 			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
 				//StartCoroutine(clientCatanManager.discardResourcesForPlayers());
