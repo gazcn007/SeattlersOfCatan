@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Ship : EdgeUnit {
 
-	public bool movedThisTurn;
+	public bool builtThisTurn = true;
 
 	// Use this for initialization
 	void Start () {
@@ -25,6 +25,10 @@ public class Ship : EdgeUnit {
 	}
 
 	public bool canMove() {
+		if (builtThisTurn) {
+			return false;
+		}
+
 		foreach (var adjacentTile in this.locationEdge.getAdjacentTiles()) {
 			if (adjacentTile.occupier != null && adjacentTile.occupier.GetType () == typeof(Pirate)) {
 				return false;

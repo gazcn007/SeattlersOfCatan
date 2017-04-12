@@ -935,9 +935,13 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			clientCatanManager.players [i].playedRoadBuilding = false;
 
 			List<Knight> playerKnights = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().ToList ();
-
 			for(int j = 0; j < playerKnights.Count; j++) {
 				playerKnights [j].actionPerformedThisTurn = false;
+			}
+
+			List<Ship> playerShips = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Ship).Cast<Ship> ().ToList ();
+			for(int j = 0; j < playerShips.Count; j++) {
+				playerShips [j].builtThisTurn = false;
 			}
 		}
 

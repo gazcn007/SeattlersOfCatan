@@ -256,6 +256,15 @@ public class BoardManager : MonoBehaviour {
 			}
 		}
 
+		if (!roadBuilt) {
+			List<Edge> pirateEdges = getRobberPirateEdges (1);
+			foreach (var edge in pirateEdges) {
+				if (validEdges.Contains (edge)) {
+					validEdges.Remove (edge);
+				}
+			}
+		}
+
 		return validEdges;
 	}
 
@@ -297,8 +306,12 @@ public class BoardManager : MonoBehaviour {
 		if (validEdges.Contains (shipToMove.locationEdge)) {
 			validEdges.Remove (shipToMove.locationEdge);
 		}
-		for (int i = 0; i < validEdges.Count; i++) {
-			Debug.Log ("Valid edge to move ship: validEdge[ " + i + "] = " + validEdges [i].name);
+
+		List<Edge> pirateEdges = getRobberPirateEdges (1);
+		foreach (var edge in pirateEdges) {
+			if (validEdges.Contains (edge)) {
+				validEdges.Remove (edge);
+			}
 		}
 
 		return validEdges;
@@ -470,6 +483,28 @@ public class BoardManager : MonoBehaviour {
 		}
 
 		return neighborIntersections;
+	}
+
+	public List<Edge> getRobberPirateEdges(int gamePieceNum) {
+		GameBoard board = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		List<Edge> neighborEdges = new List<Edge> ();
+
+		if (gamePieceNum == 0 && board.robber != null) {
+			foreach (var edge in board.robber.occupyingTile.getEdges()) {
+				if (!neighborEdges.Contains (edge)) {
+					neighborEdges.Add (edge);
+				}
+			}
+		}
+		if (gamePieceNum == 1 && board.pirate != null) {
+			foreach (var edge in board.pirate.occupyingTile.getEdges()) {
+				if (!neighborEdges.Contains (edge)) {
+					neighborEdges.Add (edge);
+				}
+			}
+		}
+
+		return neighborEdges;
 	}
 
 	public List<GameTile> getLandTiles(bool occupierCheck) {

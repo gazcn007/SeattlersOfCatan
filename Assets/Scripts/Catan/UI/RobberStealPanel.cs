@@ -63,7 +63,7 @@ public class RobberStealPanel : MonoBehaviour {
 		selectionGlow.gameObject.transform.position = button.gameObject.transform.position;
 	}
 	public IEnumerator waitUntilButtonDown() {
-		//yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
+		yield return StartCoroutine (GameEventHandler.WaitForKeyDown (KeyCode.Mouse0));
 	
 		while (!selectionMade) {
 			yield return new WaitForEndOfFrame ();

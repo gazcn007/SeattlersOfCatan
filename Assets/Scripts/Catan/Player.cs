@@ -327,7 +327,7 @@ public class Player : MonoBehaviour {
 
 	public bool hasAvailableAssets(AssetTuple assetsNeeded) {
 		return hasAvailableResources (assetsNeeded.resources) && hasAvailableCommodities (assetsNeeded.commodities)
-			&& hasAvailableFishTokens(assetsNeeded.fishTokens);
+			&& hasAvailableFishTokens(assetsNeeded.fishTokens) && assets.gold >= assetsNeeded.gold;
 	}
 
 	public AssetTuple getCurrentAssets() {
