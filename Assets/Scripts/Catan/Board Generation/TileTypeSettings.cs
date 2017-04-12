@@ -34,6 +34,7 @@ public class TileTypeSettings : MonoBehaviour {
 	public Material woolMaterial;
 	public Material oceanMaterial;
 	public Material desertMaterial;
+	public Material goldMaterial;
 
 	private Dictionary<TileType, int> availableLandPiecesDictionary = new Dictionary<TileType, int>();
 	private Dictionary<TileType, Material> materialsDictionary = new Dictionary<TileType, Material>();
@@ -185,6 +186,7 @@ public class TileTypeSettings : MonoBehaviour {
 		materialsDictionary.Add (TileType.Pastures, woolMaterial);
 		materialsDictionary.Add (TileType.Desert, desertMaterial);
 		materialsDictionary.Add (TileType.Ocean, oceanMaterial);
+		materialsDictionary.Add (TileType.Gold, goldMaterial);
 	}
 
 	private void StoreLandTileTypesInList() {
@@ -194,6 +196,7 @@ public class TileTypeSettings : MonoBehaviour {
 		landTileTypesList.Add (TileType.Mountains);
 		landTileTypesList.Add (TileType.Pastures);
 		landTileTypesList.Add (TileType.Desert);
+		landTileTypesList.Add (TileType.Gold);
 	}
 
 	#endregion

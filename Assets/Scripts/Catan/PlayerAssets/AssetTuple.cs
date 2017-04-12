@@ -10,30 +10,34 @@ public class AssetTuple {
 	public ResourceTuple resources;
 	public CommodityTuple commodities;
 	public FishTuple fishTokens;
-	public int gold = 0;
+	public int gold;
 
 	public AssetTuple() {
 		resources = new ResourceTuple();
 		commodities = new CommodityTuple();
 		fishTokens = new FishTuple ();
+		this.gold = 0;
 	}
 
 	public AssetTuple(int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth) {
 		resources = new ResourceTuple (brick, grain, lumber, ore, wool);
 		commodities = new CommodityTuple (paper, coin, cloth);
 		fishTokens = new FishTuple (0, 0, 0);
+		this.gold = 0;
 	}
 
 	public AssetTuple(int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneTokens, int twoTokens, int threeTokens) {
 		resources = new ResourceTuple (brick, grain, lumber, ore, wool);
 		commodities = new CommodityTuple (paper, coin, cloth);
 		fishTokens = new FishTuple (oneTokens, twoTokens, threeTokens);
+		this.gold = 0;
 	}
 
 	public AssetTuple(int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneTokens, int twoTokens, int threeTokens, int oldBoot) {
 		resources = new ResourceTuple (brick, grain, lumber, ore, wool);
 		commodities = new CommodityTuple (paper, coin, cloth);
 		fishTokens = new FishTuple (oneTokens, twoTokens, threeTokens, oldBoot);
+		this.gold = 0;
 	}
 
 	public AssetTuple(int brick, int grain, int lumber, int ore, int wool, int paper, int coin, int cloth, int oneTokens, int twoTokens, int threeTokens, int oldBoot, int gold) {
@@ -47,6 +51,7 @@ public class AssetTuple {
 		this.resources = resourceTuple;
 		this.commodities = commodityTuple;
 		this.fishTokens = new FishTuple ();
+		this.gold = 0;
 	}
 
 	public AssetTuple(ResourceTuple resourceTuple, CommodityTuple commodityTuple, int gold) {
@@ -60,6 +65,7 @@ public class AssetTuple {
 		this.resources = resourceTuple;
 		this.commodities = commodityTuple;
 		this.fishTokens = fishTuple;
+		this.gold = 0;
 	}
 
 	public AssetTuple(ResourceTuple resourceTuple, CommodityTuple commodityTuple, FishTuple fishTuple, int gold) {

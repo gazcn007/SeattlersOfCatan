@@ -152,7 +152,11 @@ public class BoardDecorator {
 			int islandTilesIndex = 0;
 
 			if (possibleIslandTiles [randomIndex].tileType == TileType.Ocean) {
-				possibleIslandTiles [randomIndex].setTileType(Random.Range(0, 5));
+				if (Random.Range (0.0f, 1.0f) < 0.5f) {
+					possibleIslandTiles [randomIndex].setTileType(Random.Range(0, 5));
+				} else {
+					possibleIslandTiles [randomIndex].setTileType((int)TileType.Gold);
+				}
 
 				int randDiceValue;
 				if (Random.Range (0.0f, 1.0f) < 0.5f) {
@@ -212,7 +216,12 @@ public class BoardDecorator {
 					islandTiles.Contains(neighborTiles[randomIndexChild]));
 
 				currentTile = neighborTiles [randomIndexChild];
-				currentTile.setTileType(Random.Range(0, 5));
+
+				if (Random.Range (0.0f, 1.0f) < 0.5f) {
+					currentTile.setTileType(Random.Range(0, 5));
+				} else {
+					currentTile.setTileType((int)TileType.Gold);
+				}
 				islandTiles.Add (currentTile);
 				islandTilesIndex = islandTiles.Count - 1;
 

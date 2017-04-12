@@ -1024,11 +1024,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						print (clientCatanManager.players [i].playerName + " gets " + "1 " + GameAsset.getResourceOfHex (clientBoard.GameTiles [tileIDs [j]].tileType));
 
 						ResourceTuple resources = clientCatanManager.resourceManager.getResourceForTile (clientBoard.GameTiles [tileIDs [j]], 1);
-						//CommodityTuple commodities = new CommodityTuple (0, 0, 0);
-						clientCatanManager.players [i].receiveResources (resources);
-						collectionCount++;
 
-						//OnTradeWithBank(i, true, new AssetTuple(resources, commodities));
+						int gold = 0;
+						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Gold) {
+							gold = 1;
+						}
+
+						clientCatanManager.players [i].receiveAssets (new AssetTuple(resources, new CommodityTuple(), gold));
+						collectionCount++;
 					}
 
 					if (PhotonNetwork.player.ID - 1 == i) {
@@ -1139,11 +1142,14 @@ public class EventTransferManager : Photon.MonoBehaviour {
 					if (clientBoard.GameTiles [tileIDs [j]].canProduce ()) {
 						print (clientCatanManager.players [i].playerName + " gets " + "1 " + GameAsset.getCommodityOfHex (clientBoard.GameTiles [tileIDs [j]].tileType));
 
-						//ResourceTuple resources = new ResourceTuple (0, 0, 0, 0, 0);
 						CommodityTuple commodities = clientCatanManager.resourceManager.getCommodityForTile (clientBoard.GameTiles [tileIDs [j]], 1);
 
-						clientCatanManager.players [i].receiveCommodities (commodities);
-						//OnTradeWithBank(i, true, new AssetTuple(resources, commodities));
+						int gold = 0;
+						if (clientBoard.GameTiles [tileIDs [j]].tileType == TileType.Gold) {
+							gold = 1;
+						}
+
+						clientCatanManager.players [i].receiveAssets (new AssetTuple(new ResourceTuple(), commodities, gold));
 					}
 
 					if (PhotonNetwork.player.ID - 1 == i) {

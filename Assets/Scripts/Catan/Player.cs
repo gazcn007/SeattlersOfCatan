@@ -16,7 +16,7 @@ public class Player : MonoBehaviour {
 
 	// private Dictionary<System.Type, List<Unit>> ownedUnits -> ownedUnits[typeof(settlement)].add(settlement) -> O(1) access to list of specific type of units
 	public Dictionary<System.Type, List<Unit>> ownedUnits;
-	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 15, 15, 15, 0, 0, 0);
+	public AssetTuple assets = new AssetTuple(20, 20, 20, 20, 20, 15, 15, 15, 0, 0, 0, 0, 5);
 	public List<ProgressCardType> progressCards = new List<ProgressCardType> ();
 	public CityImprovementTuple cityImprovements;
 
@@ -315,12 +315,14 @@ public class Player : MonoBehaviour {
 		this.receiveResources (assetToAdd.resources);
 		this.receiveCommodities (assetToAdd.commodities);
 		this.receiveFishTokens (assetToAdd.fishTokens);
+		this.assets.gold += assetToAdd.gold;
 	}
 
 	public void spendAssets(AssetTuple assetToSpend) {
 		this.spendResources (assetToSpend.resources);
 		this.spendCommodities (assetToSpend.commodities);
 		this.spendFishTokens (assetToSpend.fishTokens);
+		this.assets.gold -= assetToSpend.gold;
 	}
 
 	public bool hasAvailableAssets(AssetTuple assetsNeeded) {

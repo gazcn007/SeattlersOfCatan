@@ -167,5 +167,6 @@ public enum TileType {
 	Mountains,
 	Pastures,
 	Desert,
-	Ocean
+	Ocean,
+	Gold
 }

@@ -24,6 +24,7 @@ public enum ResourceType {
 	Lumber,
 	Ore,
 	Wool,
-	Null
+	Null,
+	Gold
 }
 
