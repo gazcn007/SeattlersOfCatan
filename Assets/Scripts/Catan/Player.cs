@@ -367,8 +367,9 @@ public class Player : MonoBehaviour {
 	public int getNumDiscardsNeeded() {
 		int numAssets = getNumAssets () - getNumFishTokens();
 		int numDiscardsNeeded = 0;
+		int numWalls = ownedUnits [typeof(CityWall)].Count;
 
-		if (numAssets > 7) {
+		if (numAssets > (7 + numWalls * 2)) {
 			numDiscardsNeeded = (numAssets / 2);
 		}
 

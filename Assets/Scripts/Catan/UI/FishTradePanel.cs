@@ -103,18 +103,33 @@ public class FishTradePanel : MonoBehaviour {
 			Robber robber = GameObject.FindObjectOfType<Robber> ();
 			Pirate pirate = GameObject.FindObjectOfType<Pirate> ();
 			if (robber != null && pirate != null) {
-				
+				CatanManager.instance.uiManager.robberPiratePanel.gameObject.SetActive(true);
+				bool selected = false;
+
+				while (!selected) {
+					if (!CatanManager.instance.uiManager.robberPiratePanel.selectionMade) {
+						yield return StartCoroutine (CatanManager.instance.uiManager.robberPiratePanel.waitUntilButtonDown ());
+					}
+
+					if (CatanManager.instance.uiManager.robberPiratePanel.selectionMade) {
+						selected = true;
+					}
+				}
+
+				CatanManager.instance.uiManager.robberPiratePanel.gameObject.SetActive(false);
+				CatanManager.instance.uiManager.robberPiratePanel.selectionMade = false;
+
+				StartCoroutine (CatanManager.instance.moveGamePieceForCurrentPlayer (CatanManager.instance.uiManager.robberPiratePanel.selection, true, false));
 			} else if (robber != null) {
 				StartCoroutine (CatanManager.instance.moveGamePieceForCurrentPlayer (0, true, false));
-
-				for (int i = 0; i < FishTokens.Length; i++) {
-					Debug.Log ("Set index " + (i + 8) + " of assetToRemove to = " + (int)FishTokens [i].value);
-					assetsToRemove.SetValueAtIndex (i + 8, (int)FishTokens [i].value);
-				}
-				success = true;
 			} else if (pirate != null) {
-
+				StartCoroutine (CatanManager.instance.moveGamePieceForCurrentPlayer (1, true, false));
 			}
+			for (int i = 0; i < FishTokens.Length; i++) {
+				Debug.Log ("Set index " + (i + 8) + " of assetToRemove to = " + (int)FishTokens [i].value);
+				assetsToRemove.SetValueAtIndex (i + 8, (int)FishTokens [i].value);
+			}
+			success = true;
 			break;
 		case 1:
 			//steal random resource

@@ -52,7 +52,8 @@ public class CatanManager : MonoBehaviour {
 	void Update () {
 		if (!gameOver) {
 			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
-				if (players [i].getVpPoints () >= EventTransferManager.instance.vpNeededToWin) {
+				int oldBootExtra = players [i].hasOldBoot () ? 1 : 0;
+				if (players [i].getVpPoints () >= (EventTransferManager.instance.vpNeededToWin + oldBootExtra)) {
 					uiManager.notificationtext.text = players [i].playerName + " wins the game!";
 					uiManager.notificationpanel.SetActive (true);
 					uiManager.notificationpanel.GetComponentInChildren<Button>().onClick.RemoveAllListeners();
@@ -755,6 +756,7 @@ public class CatanManager : MonoBehaviour {
 		if (gamePieceNum == 0) {
 			gamePieceToMove = GameObject.FindObjectOfType<Robber> () as GamePiece;
 			eligibleTiles = boardManager.getLandTiles (true);
+			eligibleTiles.Remove (boardManager.getLakeTile ());
 		} else if (gamePieceNum == 2) {
 			gamePieceToMove = GameObject.FindObjectOfType<Merchant> () as GamePiece;
 			eligibleTiles = boardManager.getAdjacentTiles (PhotonNetwork.player.ID - 1);
@@ -776,15 +778,24 @@ public class CatanManager : MonoBehaviour {
 			EventTransferManager.instance.OnMoveGamePiece (gamePieceNum, players [currentPlayerTurn].lastGameTileSelection.id, remove);
 
 			if (steal) {
-				List<IntersectionUnit> opponentUnits = new List<IntersectionUnit> ();
-				foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
-					if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
-						opponentUnits.Add (intersection.occupier);
+				List<Unit> opponentUnits = new List<Unit> ();
+
+				if (gamePieceNum == 0) {
+					foreach (Intersection intersection in players [currentPlayerTurn].lastGameTileSelection.getIntersections()) {
+						if (intersection.occupier != null && intersection.occupier.owner != players [currentPlayerTurn]) {
+							opponentUnits.Add (intersection.occupier as Unit);
+						}
+					}
+				} else if (gamePieceNum == 1) {
+					foreach (Edge edge in players [currentPlayerTurn].lastGameTileSelection.getEdges()) {
+						if (edge.occupier != null && edge.occupier.owner != players [currentPlayerTurn]) {
+							opponentUnits.Add (edge.occupier as Unit);
+						}
 					}
 				}
 
 				List<Player> stealableOpponents = new List<Player> ();
-				foreach (IntersectionUnit opponentUnit in opponentUnits) {
+				foreach (Unit opponentUnit in opponentUnits) {
 					if (!stealableOpponents.Contains (opponentUnit.owner) && !opponentUnit.owner.hasZeroAssets ()) {
 						stealableOpponents.Add (opponentUnit.owner);
 					}

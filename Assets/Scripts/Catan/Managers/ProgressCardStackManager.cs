@@ -593,8 +593,30 @@ public class ProgressCardStackManager : MonoBehaviour {
 		yield return clientCatanManager.playInventor ();
 		returnCardToStack (ProgressCardColor.Green, ProgressCardType.Inventor);
 	}
-	private void playEngineer (){
+	private IEnumerator playEngineer (){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 
+		List<CityWall> cityWalls = clientCatanManager.players [PhotonNetwork.player.ID - 1].getOwnedUnitsOfType (UnitType.CityWalls).Cast<CityWall> ().ToList();
+
+		if (cityWalls.Count >= 3) {
+			clientCatanManager.uiManager.notificationpanel.SetActive (true);
+			clientCatanManager.uiManager.notificationtext.text = "Cannot have more then 3 City walls";
+			yield break;
+		}
+
+		List<City> ownedCities = clientCatanManager.players [PhotonNetwork.player.ID - 1].getOwnedUnitsOfType (UnitType.City).Cast<City> ().Where(city => city.cityWalls == null).ToList();
+		List<Metropolis> ownedMetropolises = clientCatanManager.players [PhotonNetwork.player.ID - 1].getOwnedUnitsOfType (UnitType.Metropolis).Cast<Metropolis> ().Where(m => m.cityWalls == null).ToList();
+
+		List<Unit> allPossibleUnits = ownedCities.Cast<Unit> ().ToList ().Union (ownedMetropolises.Cast<Unit> ().ToList ()).ToList ();
+		if (ownedCities.Count == 0 && ownedMetropolises.Count == 0) {
+			clientCatanManager.uiManager.notificationpanel.SetActive (true);
+			clientCatanManager.uiManager.notificationtext.text = "Nothing to upgrade";
+			yield break;
+		} else {
+			yield return StartCoroutine (clientCatanManager.buildCityWall (false));
+			returnCardToStack (ProgressCardColor.Green, ProgressCardType.Engineer);
+
+		}
 
 	}
 	private IEnumerator playMedicine (){

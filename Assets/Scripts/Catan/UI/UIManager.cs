@@ -32,7 +32,7 @@ public class UIManager : MonoBehaviour {
 	public AlchemistPanel alchemistPanel;
 	public BarbariansPanel barbariansPanel;
 	//no script needed for this
-	public GameObject robberOrPiratePanel;
+	//public GameObject robberOrPiratePanel;
 	public GameObject costspanel;
 	public FlipChartPanel flipchart;
 	public GameObject notificationpanel;
@@ -40,6 +40,7 @@ public class UIManager : MonoBehaviour {
 	public GameObject savePanel;
 	public CardSelectPanel cardSelectPanel;
 	public GenericButton saveButton;
+	public RobberOrPiratePanel robberPiratePanel;
 	public InputField filenameInput;
 	void Awake() {
 		if (instance == null)
@@ -248,7 +249,7 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 	public void robberPirateSelection(int selection){
-		robberOrPiratePanel.SetActive (false);
+		robberPiratePanel.gameObject.SetActive (false);
 		//nehir this will be called by panel 0=robber 1=pirate
 	}
 
