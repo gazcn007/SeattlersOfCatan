@@ -1043,4 +1043,7 @@ public class CatanManager : MonoBehaviour {
 		StopAllCoroutines ();
 	}
 
+	public void EnableSave(){
+		uiManager.saveButton.gameObject.SetActive (true);
+	}
 }

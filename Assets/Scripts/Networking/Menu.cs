@@ -27,8 +27,11 @@ public class Menu : MonoBehaviour {
 		pe_GameState gameState = LoadJson.loadGameState(selection);
 		gm.InitNetwork (gameState.players.total);
 		gm.LoadGameMode = true;
-		gm.playerArray = gameState.players.playerArray;
-		gm.gameBoard = gameState.gameBoard;
+		gm.pe_playerArray = gameState.players.playerArray;
+		gm.pe_gameBoard = gameState.gameBoard;
+		gm.pe_units = gameState.units.unitsInPlay;
+		gm.pe_progressCardStack = gameState.progressCardStack;
+		gm.pe_eventTransferManager = gameState.eventTransferManager;
 		SceneManager.LoadScene((int) Scenes.Loading);	
 	}
 

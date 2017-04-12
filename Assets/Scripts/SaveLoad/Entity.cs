@@ -10,8 +10,23 @@ namespace Persistence
 	}
 
 	public class pe_GameState{
-		public pe_Players players;	
+		public pe_ETM eventTransferManager;
+		public pe_Players players;
 		public pe_GameBoard gameBoard;
+		public pe_Units units;
+		public pe_ProgressCardStack progressCardStack;
+	}
+
+	public class pe_ETM{
+		public int currentPlayerTurn;
+		public int currentActiveButton;
+		public bool setupPhase;
+		public bool waitingForPlayer;
+		public bool diceRolledThisTurn;
+		public bool shipMovedThisTurn;
+		public bool waitingforcards;
+		public bool waitingForPlayers;
+		public bool[] playerChecks;	
 	}
 
 	public class pe_Players{
@@ -25,15 +40,16 @@ namespace Persistence
 		public int playerNumber;
 		public int goldCoins;
 		public int victoryPoints;
-//		public Dictionary<System.Type, List<Unit>> ownedUnits;
+		//		public Dictionary<System.Type, List<Unit>> ownedUnits; -> will be injected by units on the way they were generating
 		public int[] assets;
 		public CityImprovementTuple cityImprovements;
 		public bool collectedThisTurn;// didn't use in class
 		public string avatar;
+		public int[] progressCards;
 	}
 
 	public class pe_GameBoard{
-		
+
 		//Map settings
 		public int mapShape; //= MapShape.Rectangle;
 		public int mapWidth;
@@ -56,7 +72,7 @@ namespace Persistence
 		public pe_FishTile[] pe_fishTiles;
 
 		// ---- Harbors ----
-//		public pe_Harbor[] pe_harbors;
+		//		public pe_Harbor[] pe_harbors;
 	}
 
 	// +++++++++++++++ Game Tiles ++++++++++++++++
@@ -88,14 +104,14 @@ namespace Persistence
 		public int diceValue;
 	}
 
-//	public class pe_Harbor {
-//		public int id;
-//		public int resourceType;
-//		public int commodityType;
-//		public int[] locations;
-//		public int tradeRatio;
-//	}
-//
+	//	public class pe_Harbor {
+	//		public int id;
+	//		public int resourceType;
+	//		public int commodityType;
+	//		public int[] locations;
+	//		public int tradeRatio;
+	//	}
+	//
 	public class pe_GamePiece{
 		public bool isActive;
 		public Vector3 location;
@@ -122,13 +138,36 @@ namespace Persistence
 		public int id;
 	}
 
+	//+++++++++++++++++++ Units+++++++++++++++++++
+	public class pe_Units{
+		public pe_Unit[] unitsInPlay;
+	}
+
+	public class pe_Unit{
+		//		public bool enable;
+		public int id;
+		public string name;
+		public int ownerPlayerNumber;//owner.playerName
+		public string tag;
+		public string type;
+		public int locationId; //Depends on the tag, say 3, when tag is Edge, means on Edge with id 3
+		public int victoryPointsWorth;
+	}
+
+	//+++++++++++++++++++ Progress Card Manager State +++++++++++++++++++
+	public class pe_ProgressCardStack{
+		public int[] yellowCards;
+		public int[] blueCards;
+		public int[] greenCards;
+	}
+
 	public class PE_Robber{
 	}
 	public class PE_Pirate{
-		
+
 	}
 	public class PE_Merchant{
-		
+
 	}
 	public enum MapShape {
 		Rectangle,
@@ -151,4 +190,3 @@ namespace Persistence
 	}
 
 }
-
