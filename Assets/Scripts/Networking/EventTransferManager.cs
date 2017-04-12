@@ -24,9 +24,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	private GameObject diceRoller;
 
 	//----------<Persistence>--------
-	public int barbariansDistance = 1;
+	public int barbariansDistance = 7;
 	public int defendersOfCatanLeft = 6;
 	public bool barbariansAttackedIsland = false;
+	public int vpNeededToWin = 13;
 	//----------</Persistence>--------
 
 	public bool waitingForPlayers = false;
@@ -68,6 +69,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		currentPlayerTurn = (currentPlayerTurn + 1) % PhotonNetwork.playerList.Length;
 		diceRolledThisTurn = false;
 		shipMovedThisTurn = false;
+	}
+
+	public void OnEndGame() {
+		GetComponent<PhotonView> ().RPC ("GameOver", PhotonTargets.All, new object[] { });
+	}
+
+	[PunRPC]
+	void GameOver() {
+		EventTransferManager.instance.waitingForPlayer = true;
+		EventTransferManager.instance.waitingForPlayers = true;
+		EventTransferManager.instance.currentActiveButton = -1;
 	}
 
 	public void OnOperationFailure() {
@@ -478,7 +490,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				}
 			}
 			EventTransferManager.instance.barbariansAttackedIsland = true;
-			EventTransferManager.instance.barbariansDistance = 1;
+			EventTransferManager.instance.barbariansDistance = 7;
 		}
 
 		yield return null;

@@ -26,6 +26,8 @@ public class CatanManager : MonoBehaviour {
 	public bool waitingForPlayer;
 	public int merchantController=-1;
 
+	public bool gameOver = false;
+
 	void Awake() {
 		if (instance == null)
 			instance = this;
@@ -48,7 +50,18 @@ public class CatanManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		if (!gameOver) {
+			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+				if (players [i].getVpPoints () >= EventTransferManager.instance.vpNeededToWin) {
+					uiManager.notificationtext.text = players [i].playerName + " wins the game!";
+					uiManager.notificationpanel.SetActive (true);
+					uiManager.notificationpanel.GetComponentInChildren<Button>().onClick.RemoveAllListeners();
+					EventTransferManager.instance.OnEndGame();
+					gameOver = true;
+				}
+			}
+
+		}
 	}
 
 	#region Initializer Methods
