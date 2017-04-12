@@ -366,6 +366,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			List<int> highestKnightContributingPlayerNums = new List<int>();
 			int highestKnightStrSum = -1;
 
+			List<int> cityIDsDestroyed = new List<int> ();
+
 			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
 				List<City> playerCities = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.City).Cast<City> ().ToList ();
 				List<Metropolis> playerMetropolises = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Metropolis).Cast<Metropolis> ().ToList ();
@@ -418,9 +420,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						Destroy (cityToDestroy.cityWalls.gameObject);
 					} else {
 						// Downgrade to settlement
-						if (lowestKnightContributingPlayerNums [i] == PhotonNetwork.player.ID - 1) {
-							OnDowngradeCity (lowestKnightContributingPlayerNums [i], cityToDestroy.id);
-						}
+						//if (lowestKnightContributingPlayerNums [i] == PhotonNetwork.player.ID - 1) {
+							//OnDowngradeCity (lowestKnightContributingPlayerNums [i], cityToDestroy.id);
+							cityIDsDestroyed.Add(cityToDestroy.id);
+						//}
 					}
 				}
 			} else {
@@ -443,6 +446,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				List<Knight> playerKnights = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().ToList ();
 				for (int j = 0; j < playerKnights.Count; j++) {
 					playerKnights [j].activateKnight (false);
+				}
+			}
+
+			if (PhotonNetwork.isMasterClient) {
+				for (int i = 0; i < cityIDsDestroyed.Count; i++) {
+					OnDowngradeCity (cityIDsDestroyed [i]);
 				}
 			}
 			EventTransferManager.instance.barbariansAttackedIsland = true;
@@ -700,9 +709,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	}
 
-	public void OnDowngradeCity(int playerNum, int unitID) {
+	public void OnDowngradeCity(int unitID) {
 		GetComponent<PhotonView> ().RPC ("DowngradeCity", PhotonTargets.All, new object[] {
-			playerNum,
 			unitID
 		});
 	}
@@ -1996,25 +2004,26 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	[PunRPC]
-	void DowngradeCity(int playerNum, int unitID) {
+	void DowngradeCity(int unitID) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
 
 		City cityToDestroy = (City)clientCatanManager.unitManager.unitsInPlay [unitID];
 
-		if(cityToDestroy != null) {
-			int destroyedCityLocationID = cityToDestroy.locationIntersection.id;
-			int destroyedCityID = cityToDestroy.id;
+		//if(cityToDestroy != null) {
+		int destroyedCityLocationID = cityToDestroy.locationIntersection.id;
+		int destroyedCityID = cityToDestroy.id;
+		int playerNum = cityToDestroy.owner.playerNumber - 1;
 
-			clientCatanManager.unitManager.unitsInPlay.Remove (unitID);
-			clientCatanManager.players [playerNum].removeOwnedUnit (cityToDestroy, typeof(City));
+		//clientCatanManager.unitManager.unitsInPlay.Remove (unitID);
+		clientCatanManager.players [playerNum].removeOwnedUnit (cityToDestroy, typeof(City));
 
-			Destroy (cityToDestroy.gameObject);
-			//Debug.Log ("destroyed city id: " + newSettlement.id);
-			if(playerNum == PhotonNetwork.player.ID - 1) {
-				OnBuildUnitForUser (UnitType.Settlement, playerNum, destroyedCityLocationID, false, -1);
-			}
+		Destroy (cityToDestroy.gameObject);
+		//Debug.Log ("destroyed city id: " + newSettlement.id);
+		if(playerNum == PhotonNetwork.player.ID - 1) {
+			OnBuildUnitForUser (UnitType.Settlement, playerNum, destroyedCityLocationID, false, -1);
 		}
+		//}
 
 
 		clientCatanManager.currentActiveButton = -1;
