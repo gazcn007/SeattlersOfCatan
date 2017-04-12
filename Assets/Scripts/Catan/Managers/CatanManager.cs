@@ -99,9 +99,17 @@ public class CatanManager : MonoBehaviour {
 	#endregion
 
 	public IEnumerator buildIntersectionUnit(UnitType unitType) {
-		Debug.Log ("Current turn is: " + players[currentPlayerTurn].playerName + " and my photon id is: " + PhotonNetwork.player.ID + " note -1 ");
-
 		waitingForPlayer = true;
+
+		if (unitType == UnitType.Settlement && players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Settlement).Count >= 5) {
+			handleBuildFailure ("Can not build more than 5 settlements!", uiManager.uiButtons);
+			yield break;
+		}
+		if (unitType == UnitType.City && (players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.City).Count + players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Metropolis).Count) >= 4) {
+			handleBuildFailure ("Can not own more than 4 cities!", uiManager.uiButtons);
+			yield break;
+		}
+
 		List<Intersection> validIntersectionsToBuildList = boardManager.getValidIntersectionsForPlayer (players [currentPlayerTurn], unitType == UnitType.Knight);
 		int[] validIntersectionsToBuild = boardManager.getValidIntersectionIDsForPlayer (players[currentPlayerTurn], unitType == UnitType.Knight);
 
@@ -237,6 +245,12 @@ public class CatanManager : MonoBehaviour {
 
 	public IEnumerator upgradeSettlement() {
 		waitingForPlayer = true;
+
+		if ((players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.City).Count + players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Metropolis).Count) >= 4) {
+			handleBuildFailure ("Can not own more than 4 cities!", uiManager.uiButtons);
+			yield break;
+		}
+
 		List<Settlement> ownedSettlements = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Settlement).Cast<Settlement> ().ToList ();
 		int[] ownedSettlementIDs = players [currentPlayerTurn].getOwnedUnitIDsOfType (UnitType.Settlement);
 		AssetTuple costOfUnit = resourceManager.getCostOfUnit (UnitType.City);
