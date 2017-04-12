@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine;
+using System.Linq;
 
 public class LevelManager : Photon.MonoBehaviour {
 
@@ -233,6 +234,8 @@ public class LevelManager : Photon.MonoBehaviour {
 										pe_players[0].assets[9], 
 										pe_players[0].assets[10]);
 		player1.avatar = Resources.Load<Sprite> ("avatars/"+pe_players[0].avatar);
+		player1.progressCards = new List<ProgressCardType>(pe_players [0].progressCards.Select(x=>(ProgressCardType)x));
+
 		player1.gameObject.tag = "Player";
 
 		GameObject player2Object = (GameObject) Instantiate (catanPlayerPrefab);
@@ -254,6 +257,7 @@ public class LevelManager : Photon.MonoBehaviour {
 			pe_players[1].assets[9], 
 			pe_players[1].assets[10]);
 		player2.avatar = Resources.Load<Sprite> ("avatars/"+pe_players[1].avatar);
+		player2.progressCards = new List<ProgressCardType>(pe_players [1].progressCards.Select(x=>(ProgressCardType)x));
 		player2.gameObject.tag = "Player";
 
 		GameObject player3Object = (GameObject) Instantiate (catanPlayerPrefab);
@@ -275,6 +279,7 @@ public class LevelManager : Photon.MonoBehaviour {
 			pe_players[2].assets[9], 
 			pe_players[2].assets[10]);
 		player3.avatar = Resources.Load<Sprite> ("avatars/"+pe_players[2].avatar);
+		player3.progressCards = new List<ProgressCardType>(pe_players [2].progressCards.Select(x=>(ProgressCardType)x));
 		player3.gameObject.tag = "Player";
 
 		GameObject player4Object = (GameObject) Instantiate (catanPlayerPrefab);
@@ -296,6 +301,7 @@ public class LevelManager : Photon.MonoBehaviour {
 			pe_players[3].assets[9], 
 			pe_players[3].assets[10]);
 		player4.avatar = Resources.Load<Sprite> ("avatars/"+pe_players[3].avatar);
+		player4.progressCards = new List<ProgressCardType>(pe_players [3].progressCards.Select(x=>(ProgressCardType)x));
 		player4.gameObject.tag = "Player";
 
 		players.Add(player1);

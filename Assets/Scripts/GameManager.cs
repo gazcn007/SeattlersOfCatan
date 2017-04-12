@@ -51,11 +51,19 @@ public class GameManager : MonoBehaviour {
 
 	private LevelManager lm;
 
+	// ------<For Persistence>----------
 	public bool LoadGameMode = false ; //false by default
 
-	public Persistence.pe_Player[] playerArray;
+	public Persistence.pe_Player[] pe_playerArray;
 
-	public Persistence.pe_GameBoard gameBoard;
+	public Persistence.pe_GameBoard pe_gameBoard;
+
+	public Persistence.pe_Unit[] pe_units;
+
+	public Persistence.pe_ProgressCardStack pe_progressCardStack;
+
+	public Persistence.pe_ETM pe_eventTransferManager;
+	// ------</For Persistence>----------
 
 	// Awake is called before Start function
 	void Awake() {
@@ -143,7 +151,7 @@ public class GameManager : MonoBehaviour {
 		lm = LevelManager.instance;
 
 		if (LoadGameMode) {
-			lm.LoadLevelSceneWithSaveFile (online, playerArray);
+			lm.LoadLevelSceneWithSaveFile (online, pe_playerArray);
 		} else {
 			lm.LoadLevelScene (online);
 		}

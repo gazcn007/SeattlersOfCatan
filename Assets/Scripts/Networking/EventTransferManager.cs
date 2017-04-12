@@ -46,23 +46,24 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	}
 
 	public void OnReadyToPlay() {
-		Debug.Log (GameManager.instance.gameBoard);
 		if (GameManager.instance.LoadGameMode == true) {
-			GetComponent<PhotonView> ().RPC ("GenerateBoardForClientFromSavedGame", PhotonTargets.All, new object[] {
-			});
-			GetComponent<PhotonView> ().RPC ("GenerateHarborsForClient", PhotonTargets.All, new object[] { });
-			GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
+			GetComponent<PhotonView> ().RPC ("GenerateBoardForClientFromSavedGame", PhotonTargets.All, new object[] {});
+			GetComponent<PhotonView> ().RPC ("GenerateHarborsForClientFromSavedGame", PhotonTargets.All, new object[] {});
+			GetComponent<PhotonView> ().RPC ("GenerateProgressCardsFromSavedGame", PhotonTargets.All, new object[] {});
+			if (PhotonNetwork.isMasterClient) {
+				StartCoroutine (GenerateUnitsFromSavedGame ());
+			}
+			//			GetComponent<PhotonView> ().RPC ("GenerateUnitsFromSavedGame", PhotonTargets.All, new object[] {});
+			GetComponent<PhotonView>().RPC("GenerateCatanManager", PhotonTargets.All,  new object[] {});
 		} else {
 			GetComponent<PhotonView> ().RPC ("GenerateBoardForClient", PhotonTargets.All, new object[] { });
 			GetComponent<PhotonView> ().RPC ("GenerateHarborsForClient", PhotonTargets.All, new object[] { });
 			GetComponent<PhotonView> ().RPC ("GenerateProgressCards", PhotonTargets.All, new object[] { });
-		}
-		GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
-
-		if (photonView.isMine) {
 			StartCoroutine (CatanSetupPhase ());
 		}
+		//		GetComponent<PhotonView> ().RPC ("CleanExtraInstances", PhotonTargets.All, new object[] { });
 	}
+
 
 	public void OnEndTurn() {
 		GetComponent<PhotonView> ().RPC ("EndTurn", PhotonTargets.All, new object[] { });
@@ -868,6 +869,21 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		waitingForPlayer = false;
 
 		currentPlayerTurn = 0;
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		clientCatanManager.EnableSave ();
+	}
+
+	[PunRPC]
+	IEnumerator GenerateCatanManager(){
+		yield return new WaitForSeconds (3f);
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		Persistence.pe_ETM pe_etm = GameManager.instance.pe_eventTransferManager;
+		GetComponent<PhotonView> ().RPC ("SetPlayerTurn", PhotonTargets.Others, new object[] { pe_etm.currentPlayerTurn });
+		this.diceRolledThisTurn = pe_etm.diceRolledThisTurn;
+		this.waitingForPlayer = pe_etm.waitingForPlayer;
+		this.setupPhase = pe_etm.setupPhase;
+		clientCatanManager.currentPlayerTurn = pe_etm.currentPlayerTurn;
+		clientCatanManager.EnableSave ();
 	}
 
 	[PunRPC]
@@ -1482,11 +1498,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	[PunRPC]
 	void GenerateBoardForClientFromSavedGame() {
-		
+
 		GameObject clientBoardGO = Instantiate (boardPrefab);
 		GameBoard clientBoard = clientBoardGO.GetComponent<GameBoard>();
-		Persistence.pe_GameBoard pe_gameBoard = GameManager.instance.gameBoard;
-			
+		Persistence.pe_GameBoard pe_gameBoard = GameManager.instance.pe_gameBoard;
 		// deseralize the setttings to generate the same shape
 		clientBoard.mapShape = (MapShape)pe_gameBoard.mapShape;
 		clientBoard.mapWidth = pe_gameBoard.mapWidth;
@@ -1501,20 +1516,71 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		clientBoard.GenerateIntersections (clientBoard.transform.GetChild(1));
 		clientBoard.GenerateEdges (clientBoard.transform.GetChild(2));
 
-		if (PhotonNetwork.isMasterClient) {
-			BoardDecorator clientBoardDecorator = new BoardDecorator (clientBoard, pe_gameBoard);
-
-			foreach(GameTile tile in clientBoard.GameTiles.Values) {
-				Material mat = clientSettings.getMaterialsDictionary ()[tile.tileType];
-				GetComponent<PhotonView> ().RPC ("PaintTile", PhotonTargets.All, new object[] {
-					tile.id,
-					tile.diceValue,
-					(int)tile.tileType,
-					tile.atIslandLayer
-				});
-			}
+		//		if (PhotonNetwork.isMasterClient) {
+		//			BoardDecorator clientBoardDecorator = new BoardDecorator (clientBoard, pe_gameBoard);
+		//			// Generate Tile Texture
+		//			foreach(GameTile tile in clientBoard.GameTiles.Values) {
+		//				Material mat = clientSettings.getMaterialsDictionary ()[tile.tileType];
+		//				GetComponent<PhotonView> ().RPC ("PaintTile", PhotonTargets.All, new object[] {
+		//					tile.id,
+		//					tile.diceValue,
+		//					(int)tile.tileType,
+		//					tile.atIslandLayer
+		//				});
+		//			}
+		//		}
+		BoardDecorator clientBoardDecorator = new BoardDecorator (clientBoard, pe_gameBoard);
+		// Generate Tile Texture
+		foreach(GameTile tile in clientBoard.GameTiles.Values) {
+			Material mat = clientSettings.getMaterialsDictionary ()[tile.tileType];
+			PaintTile(
+				tile.id,
+				tile.diceValue,
+				(int)tile.tileType,
+				tile.atIslandLayer
+			);
 		}
 	}
+
+	IEnumerator GenerateUnitsFromSavedGame() {
+
+		Persistence.pe_Unit[] pe_units = GameManager.instance.pe_units;
+		yield return new WaitForSeconds (2f);
+
+		foreach (Persistence.pe_Unit unit in pe_units) {
+			OnBuildUnitForUser (
+				map (unit.type),
+				unit.ownerPlayerNumber,
+				unit.locationId,
+				true,
+				0
+			);
+		}
+
+	}
+
+	private UnitType map (string num) {
+		switch (num) {
+		case "Settlement":
+			return UnitType.Settlement;
+		case "City":
+			return UnitType.City;
+		case "Road":
+			return UnitType.Road;	
+		case "Ship":
+			return UnitType.Ship;
+		case "Metropolis":
+			return UnitType.Metropolis;
+		case "CityWalls":
+			return UnitType.CityWalls;
+		case "Knight":
+			return UnitType.Knight;
+		default : 
+			return UnitType.City;
+		}
+	}
+
+
 	public void swapDiceValues(GameTile tile1, GameTile tile2){
 		int d1 = tile1.diceValue;
 		int d2 = tile2.diceValue;
@@ -1653,6 +1719,37 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 				fishDiceValues.Remove (randomDiceValue);
 			}
+		}
+	}
+
+	[PunRPC]
+	public void GenerateHarborsForClientFromSavedGame() {
+		Harbor[] previousHarbors = GameObject.FindObjectsOfType<Harbor> ();
+		for (int i = 0; i < previousHarbors.Length; i++) {
+			Destroy (previousHarbors [i].gameObject);
+		}
+		Persistence.pe_GameBoard pe_gameBoard = GameManager.instance.pe_gameBoard;
+
+		GameBoard clientBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+		clientBoard.ClearHarbors ();
+		clientBoard.GenerateHarbors (clientBoard.transform.GetChild (3));
+
+		clientBoard.ClearFishTiles ();
+		clientBoard.GenerateFishGroundTiles ();
+
+		//		if (PhotonNetwork.isMasterClient) {
+		//			foreach (var fishtile in clientBoard.FishTiles.Values) {
+		//
+		//				GetComponent<PhotonView> ().RPC ("PaintFishTile", PhotonTargets.All, new object[] {
+		//					fishtile.id,
+		//					pe_gameBoard.pe_fishTiles[fishtile.id].diceValue
+		//				});
+		//
+		//			}
+		//		}
+		foreach (var fishtile in clientBoard.FishTiles.Values) {
+			PaintFishTile(fishtile.id,
+				pe_gameBoard.pe_fishTiles[fishtile.id].diceValue);
 		}
 	}
 
@@ -1915,7 +2012,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	void BuildIntersectionUnit(int userNum, int unitType, int intersectionID, bool paid) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
-
+		if (clientGameBoard.Intersections [intersectionID].occupier != null)
+			return; // directly return, double check for safety
 		print (clientCatanManager.players [userNum].playerName + " builds a " + ((UnitType)unitType).ToString() + " on intersection #" + intersectionID);
 
 		GameObject intersectionUnitGO = null;
@@ -2187,7 +2285,8 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	void BuildEdgeUnit(int userNum, int unitType, int edgeID, bool paid) {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
-
+		if (clientGameBoard.Edges [edgeID].occupier != null)
+			return; // directly return, double check for safety
 		print (clientCatanManager.players [userNum].playerName + " builds a " + ((UnitType)unitType).ToString() + " on edge #" + edgeID);
 
 		GameObject edgeUnitGo = null;
@@ -2277,6 +2376,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 			GetComponent<PhotonView> ().RPC ("GenerateProgressCardQueues", PhotonTargets.All, new object[] { });
 		}
+	}
+	//load progress cards from saved game
+	[PunRPC]
+	void GenerateProgressCardsFromSavedGame(){
+		Destroy (GameObject.FindGameObjectWithTag ("ProgressCardsStackManager"));
+		GameObject clientcardsStackGO = Instantiate (ProgressCardsStackManagerPrefab);
+		ProgressCardStackManager clientcards = clientcardsStackGO.GetComponent<ProgressCardStackManager> ();
+		Persistence.pe_ProgressCardStack pe_progressCardStack = GameManager.instance.pe_progressCardStack;
+
+		//each client ahs the data in their saved file, so just load it
+		clientcards.loadCardState(pe_progressCardStack.yellowCards,pe_progressCardStack.greenCards, pe_progressCardStack.blueCards);
 	}
 	//makes the queues once order has been synced
 	[PunRPC]

@@ -39,7 +39,7 @@ public class UIManager : MonoBehaviour {
 	public Text notificationtext;
 	public GameObject savePanel;
 	public CardSelectPanel cardSelectPanel;
-
+	public GenericButton saveButton;
 	public InputField filenameInput;
 	void Awake() {
 		if (instance == null)

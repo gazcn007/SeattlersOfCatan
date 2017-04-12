@@ -8,7 +8,7 @@ using System.Linq;
 using Persistence;
 
 public static class SaveJson {
-	
+
 
 	static FileStream filestream;
 
@@ -29,11 +29,30 @@ public static class SaveJson {
 		writeToJson (JsonMapper.ToJson(pe_savefileNames), "savefileIndex.json");
 
 		pe_GameState gameState = new pe_GameState();
+		gameState.eventTransferManager = saveEventTransferManager ();
 		gameState.players = savePlayers();
 		gameState.gameBoard = saveGameBoard ();
+		gameState.units = saveUnits ();
+		gameState.progressCardStack = saveProgressCardStack ();
 		string jsonresult = JsonMapper.ToJson(gameState);
 		Debug.Log (jsonresult);
 		writeToJson (jsonresult, fileToWrite+".json");
+
+	}
+
+	public static pe_ETM saveEventTransferManager(){
+		pe_ETM pe_etm = new pe_ETM ();
+		EventTransferManager eventTransferManager = GameObject.FindGameObjectWithTag ("EventTransferManager").GetComponent<EventTransferManager> ();
+		pe_etm.currentPlayerTurn = eventTransferManager.currentPlayerTurn;
+		pe_etm.currentActiveButton = eventTransferManager.currentActiveButton;
+		pe_etm.setupPhase = eventTransferManager.setupPhase;
+		pe_etm.waitingForPlayer = eventTransferManager.waitingForPlayer;
+		pe_etm.diceRolledThisTurn = eventTransferManager.diceRolledThisTurn;
+		pe_etm.shipMovedThisTurn = eventTransferManager.shipMovedThisTurn;
+		pe_etm.waitingforcards = eventTransferManager.waitingforcards;
+		pe_etm.waitingForPlayers = eventTransferManager.waitingForPlayers;
+		pe_etm.playerChecks = eventTransferManager.playerChecks;
+		return pe_etm;
 	}
 
 	public static pe_Players savePlayers(){
@@ -48,7 +67,6 @@ public static class SaveJson {
 			Player player = playerGOs [i].GetComponent<Player> ();
 			p_players.playerArray[i].playerName = player.playerName;
 			p_players.playerArray[i].playerNumber = player.playerNumber;
-			p_players.playerArray[i].goldCoins = player.goldCoins;
 			p_players.playerArray[i].victoryPoints = player.victoryPoints;
 			p_players.playerArray [i].assets = new int[12];
 			p_players.playerArray [i].assets [0] = player.assets.GetValueAtIndex(0);
@@ -65,6 +83,7 @@ public static class SaveJson {
 			p_players.playerArray [i].assets [11] = player.assets.GetValueAtIndex(11);
 			//p_players.playerArray[0].cityImprovements = playerGOs [0].GetComponent<Player> ().CityImprovementTuple;
 			p_players.playerArray [i].avatar = player.avatar.name;
+			p_players.playerArray [i].progressCards= player.progressCards.Select(x=>(int)x).ToArray();
 		}
 		return p_players;
 	}
@@ -129,7 +148,7 @@ public static class SaveJson {
 			pe_gameBoard.pe_edges [entry.Key].linkedIntersections = entry.Value.linkedIntersections.ToArray ();
 			pe_gameBoard.pe_edges [entry.Key].id = entry.Value.id;
 		}
-			
+
 		// ++++++++++ create FileTile array +++++++++++++
 		pe_gameBoard.pe_fishTiles = new pe_FishTile[gameBoard.FishTiles.Count];
 		foreach (KeyValuePair<int, FishTile> entry in gameBoard.FishTiles) {
@@ -138,22 +157,54 @@ public static class SaveJson {
 			pe_gameBoard.pe_fishTiles [entry.Key].locationTileId = entry.Value.locationTile.id;
 			pe_gameBoard.pe_fishTiles [entry.Key].diceValue = (int)entry.Value.diceValue;
 		}
-			
-		// ++++++++++ create Harbor array +++++++++++++
-//		pe_gameBoard.pe_harbors = new pe_Harbor[gameBoard.Harbors.Count];
-//		foreach (KeyValuePair<int, Harbor> entry in gameBoard.Harbors) {
-//			pe_gameBoard.pe_harbors [entry.Key] = new pe_Harbor ();
-//			pe_gameBoard.pe_harbors [entry.Key].id = entry.Value.id;
-//			pe_gameBoard.pe_harbors [entry.Key].resourceType = (int)entry.Value.resourceType;
-//			pe_gameBoard.pe_harbors [entry.Key].commodityType = (int)entry.Value.commodityType;
-//			pe_gameBoard.pe_harbors [entry.Key].locations = entry.Value.locations.Select(x=>x.id).ToArray(); //Intersection Id essentially
-//			pe_gameBoard.pe_harbors [entry.Key].tradeRatio = entry.Value.tradeRatio;
-//			Debug.Log("Harbor KEY :" + entry.Key);
-//		}
+
+		// ++++++++++ create Harbor array +++++++++++++ Nehir Hard Coded
+		//		pe_gameBoard.pe_harbors = new pe_Harbor[gameBoard.Harbors.Count];
+		//		foreach (KeyValuePair<int, Harbor> entry in gameBoard.Harbors) {
+		//			pe_gameBoard.pe_harbors [entry.Key] = new pe_Harbor ();
+		//			pe_gameBoard.pe_harbors [entry.Key].id = entry.Value.id;
+		//			pe_gameBoard.pe_harbors [entry.Key].resourceType = (int)entry.Value.resourceType;
+		//			pe_gameBoard.pe_harbors [entry.Key].commodityType = (int)entry.Value.commodityType;
+		//			pe_gameBoard.pe_harbors [entry.Key].locations = entry.Value.locations.Select(x=>x.id).ToArray(); //Intersection Id essentially
+		//			pe_gameBoard.pe_harbors [entry.Key].tradeRatio = entry.Value.tradeRatio;
+		//			Debug.Log("Harbor KEY :" + entry.Key);
+		//		}
 
 		return pe_gameBoard;
 	}
 
+	public static pe_Units saveUnits(){
+		UnitManager unitManager = GameObject.FindGameObjectWithTag ("UnitManager").GetComponent<UnitManager> ();
+
+		pe_Units pe_units = new pe_Units ();
+		pe_units.unitsInPlay = new pe_Unit[unitManager.unitsInPlay.Count];
+		for (int i = 0; i < unitManager.unitsInPlay.Count; i++) {
+			pe_units.unitsInPlay [i] = new pe_Unit ();
+			pe_units.unitsInPlay [i].id = unitManager.unitsInPlay [i].id;
+			pe_units.unitsInPlay [i].name = unitManager.unitsInPlay [i].name;
+			pe_units.unitsInPlay [i].ownerPlayerNumber = unitManager.unitsInPlay [i].owner.playerNumber-1;
+			pe_units.unitsInPlay [i].tag = unitManager.unitsInPlay [i].tag;
+			pe_units.unitsInPlay [i].type = unitManager.unitsInPlay [i].GetType ().Name;
+			if (unitManager.unitsInPlay [i].GetType ().BaseType.Name == "EdgeUnit") {
+				pe_units.unitsInPlay [i].locationId = ((EdgeUnit)unitManager.unitsInPlay [i]).locationEdge.id;
+			} else {
+				pe_units.unitsInPlay [i].locationId = ((IntersectionUnit)unitManager.unitsInPlay [i]).locationIntersection.id;
+			} 
+			pe_units.unitsInPlay [i].victoryPointsWorth = unitManager.unitsInPlay [i].victoryPointsWorth;
+		}
+		return pe_units;
+	}
+
+	public static pe_ProgressCardStack saveProgressCardStack(){
+		ProgressCardStackManager progressCardStackManager = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+
+		pe_ProgressCardStack pe_progressCardStack = new pe_ProgressCardStack ();
+		pe_progressCardStack.yellowCards = (int[]) progressCardStackManager.yellowCardsQueue.Select(x=>(int)x).ToArray ();
+		pe_progressCardStack.blueCards = (int[]) progressCardStackManager.blueCardsQueue.Select(x=>(int)x).ToArray ();
+		pe_progressCardStack.greenCards = (int[]) progressCardStackManager.greenCardsQueue.Select(x=>(int)x).ToArray ();
+
+		return pe_progressCardStack;
+	}
 
 	public static void writeToJson(string jsonString, string filePath){
 		if (!File.Exists (filePath)) {
@@ -167,5 +218,3 @@ public static class SaveJson {
 		}
 	}
 }
-
-
