@@ -39,6 +39,7 @@ public class KnightPanel : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
 					BoardManager.instance.highlightAllIntersections (false);
@@ -59,6 +60,7 @@ public class KnightPanel : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightAllIntersections (false);
 					EventTransferManager.instance.OnOperationFailure ();
@@ -78,6 +80,7 @@ public class KnightPanel : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
 					EventTransferManager.instance.OnOperationFailure ();
@@ -97,6 +100,7 @@ public class KnightPanel : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
 						BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [i].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [i].playerColor);
@@ -119,6 +123,7 @@ public class KnightPanel : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
 					EventTransferManager.instance.OnOperationFailure ();
@@ -138,6 +143,7 @@ public class KnightPanel : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightKnightsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Knight)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
 					EventTransferManager.instance.OnOperationFailure ();

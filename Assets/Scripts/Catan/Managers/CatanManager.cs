@@ -26,6 +26,8 @@ public class CatanManager : MonoBehaviour {
 	public bool waitingForPlayer;
 	public int merchantController=-1;
 
+	public bool operationCancelled = false;
+
 	public bool gameOver = false;
 
 	void Awake() {
@@ -153,6 +155,13 @@ public class CatanManager : MonoBehaviour {
 		//boardManager.highlightIntersectionsWithColor (validIntersectionsToBuild, true, players [currentPlayerTurn].playerColor);
 		EventTransferManager.instance.OnHighlightForUser(0, currentPlayerTurn, true, validIntersectionsToBuild);
 		yield return StartCoroutine (players [currentPlayerTurn].makeIntersectionSelection (validIntersectionsToBuildList));
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
+
 		EventTransferManager.instance.OnBuildUnitForUser (unitType, currentPlayerTurn, players [currentPlayerTurn].lastIntersectionSelection.id, true, -1);
 	}
 
@@ -258,6 +267,11 @@ public class CatanManager : MonoBehaviour {
 			unitTypeToBuild = UnitType.Ship;
 		}
 
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
 		EventTransferManager.instance.OnBuildUnitForUser(unitTypeToBuild, currentPlayerTurn, players [currentPlayerTurn].lastEdgeSelection.id, paid, -1);
 	}
 
@@ -288,6 +302,13 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightUnitsWithColor (ownedSettlements.Cast<Unit> ().ToList (), true, Color.black);
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedSettlements.Cast<Unit> ().ToList ()));
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
+
 		EventTransferManager.instance.OnBuildUnitForUser(UnitType.City, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, true, -1);
 	}
 
@@ -350,6 +371,13 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightUnitsWithColor (allPossibleUnits, true, Color.black);
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (allPossibleUnits));
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
+
 		EventTransferManager.instance.OnBuildUnitForUser(UnitType.CityWalls, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, paid, -1);
 	}
 
@@ -371,6 +399,12 @@ public class CatanManager : MonoBehaviour {
 		EventTransferManager.instance.OnHighlightForUser(1, currentPlayerTurn, true, validEdgeIDsToMoveShip);
 		yield return StartCoroutine (players [currentPlayerTurn].makeEdgeSelection (validEdgesToMoveShip));
 		boardManager.highlightAllEdges(false);
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
 
 		EventTransferManager.instance.OnMoveShipForUser (currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, players [currentPlayerTurn].lastEdgeSelection.id);
 	}
@@ -395,6 +429,13 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightKnightsWithColor (ownedKnights.Cast<Unit> ().ToList (), true, Color.black);
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
+
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.ActivateKnight, currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, -1, true, paid);
 	}
 	public IEnumerator removeKnight(){
@@ -404,6 +445,12 @@ public class CatanManager : MonoBehaviour {
 
 		boardManager.highlightKnightsWithColor (ownedKnights.Cast<Unit> ().ToList (), true, Color.black);
 		yield return StartCoroutine (players [PhotonNetwork.player.ID-1].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
 
 		EventTransferManager.instance.onDeserterBuild (((Knight)players [PhotonNetwork.player.ID - 1].lastUnitSelection).rank);
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.RemoveKnight, PhotonNetwork.player.ID-1, players [PhotonNetwork.player.ID-1].lastUnitSelection.id, -1, false, false);
@@ -592,6 +639,13 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightKnightsWithColor (promotableKnights.Cast<Unit> ().ToList (), true, Color.black);
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (promotableKnights.Cast<Unit> ().ToList ()));
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
+
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.PromoteKnight, currentPlayerTurn, players [currentPlayerTurn].lastUnitSelection.id, -1, true, paid);
 		waitingForPlayer = false;
 	}
@@ -611,6 +665,12 @@ public class CatanManager : MonoBehaviour {
 
 			boardManager.highlightKnightsWithColor (ownedKnights.Cast<Unit> ().ToList (), true, Color.black);
 			yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedKnights.Cast<Unit> ().ToList ()));
+
+			if (operationCancelled) {
+				handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+				CatanManager.instance.operationCancelled = false;
+				yield break;
+			}
 
 			knightToMoveID = players [currentPlayerTurn].lastUnitSelection.id;
 		} else {
@@ -638,6 +698,12 @@ public class CatanManager : MonoBehaviour {
 		boardManager.highlightIntersectionsWithColor (possibleMovementLocations, true, players [ownerID].playerColor);
 
 		yield return StartCoroutine (players [ownerID].makeIntersectionSelection (possibleMovementLocations));
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
 
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.MoveKnight, ownerID, selectedKnight.id, players [ownerID].lastIntersectionSelection.id, true, false);
 
@@ -672,6 +738,12 @@ public class CatanManager : MonoBehaviour {
 
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (displaceableKnights.Cast<Unit> ().ToList ()));
 
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
+
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.DisplaceKnight, currentPlayerTurn, selectedKnight.id, players [currentPlayerTurn].lastUnitSelection.id, true, false);
 	}
 
@@ -704,6 +776,12 @@ public class CatanManager : MonoBehaviour {
 
 		boardManager.highlightKnightsWithColor (players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight), true, players [currentPlayerTurn].playerColor);
 		selectedKnight.GetComponentsInChildren<SpriteRenderer>()[1].color = Color.black;
+
+		if (operationCancelled) {
+			handleBuildFailureNoPanel ("Cancelled!", uiManager.uiButtons);
+			CatanManager.instance.operationCancelled = false;
+			yield break;
+		}
 
 		EventTransferManager.instance.OnKnightActionForUser (MoveType.ChaseRobber, currentPlayerTurn, selectedKnight.id, 0, true, false);
 	}
@@ -929,6 +1007,13 @@ public class CatanManager : MonoBehaviour {
 		// SEND MESSAGE TO CANCELLED BUTTON TO CANCEL ITS HIGHLIGHT
 		EventTransferManager.instance.OnOperationFailure ();
 		//Destroy (failedUnit.gameObject);
+	}
+
+	void handleBuildFailureNoPanel(string message, Button[] cancelledButton) {
+		Debug.Log (message);
+		waitingForPlayer = false;
+		currentActiveButton = -1;
+		EventTransferManager.instance.OnOperationFailure ();
 	}
 
 	void handleBuildFailure(string errorMessage, Unit failedUnit, Button[] cancelledButton) {

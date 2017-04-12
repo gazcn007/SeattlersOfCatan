@@ -113,6 +113,8 @@ public class UIManager : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].SuspendSelectionCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightAllIntersections (false);
 					EventTransferManager.instance.OnOperationFailure ();
@@ -134,6 +136,8 @@ public class UIManager : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].SuspendSelectionCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightAllEdges (false);
 					EventTransferManager.instance.OnOperationFailure ();
@@ -155,6 +159,8 @@ public class UIManager : MonoBehaviour {
 			}else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].SuspendSelectionCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightAllEdges (false);
 					EventTransferManager.instance.OnOperationFailure ();
@@ -187,6 +193,8 @@ public class UIManager : MonoBehaviour {
 			}else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].SuspendSelectionCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightUnitsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Settlement)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
 					EventTransferManager.instance.OnOperationFailure ();
@@ -208,6 +216,8 @@ public class UIManager : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].SuspendSelectionCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightUnitsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(City)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
 					//BoardManager.instance.highlightUnitsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Metropolis)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
@@ -307,6 +317,7 @@ public class UIManager : MonoBehaviour {
 			} else {
 				if (EventTransferManager.instance.currentActiveButton == buttonId) {
 					StopAllCoroutines ();
+					CatanManager.instance.operationCancelled = true;
 
 					BoardManager.instance.highlightUnitsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Ship)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
 					BoardManager.instance.highlightAllEdges (false);

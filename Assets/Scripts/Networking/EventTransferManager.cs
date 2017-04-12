@@ -30,6 +30,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public int vpNeededToWin = 13;
 	//----------</Persistence>--------
 
+	public bool startedSetupPhase = false;
 	public bool waitingForPlayers = false;
 	public bool[] playerChecks;
 
@@ -860,24 +861,28 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 
 	IEnumerator CatanSetupPhase() {
-		for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
-			GetComponent<PhotonView> ().RPC ("SetPlayerTurn", PhotonTargets.Others, new object[] { i });
-			yield return StartCoroutine(ClientBuildSettlement (i));
-			yield return StartCoroutine(ClientBuildRoad (i));
-			//GetComponent<PhotonView> ().RPC ("EndTurn", PhotonTargets.Others, new object[] { });
-		}
+		if (photonView.isMine && startedSetupPhase) {
+			startedSetupPhase = false;
+			Debug.Log ("Started setup phase: ");
+			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+				GetComponent<PhotonView> ().RPC ("SetPlayerTurn", PhotonTargets.Others, new object[] { i });
+				yield return StartCoroutine(ClientBuildSettlement (i));
+				yield return StartCoroutine(ClientBuildRoad (i));
+				//GetComponent<PhotonView> ().RPC ("EndTurn", PhotonTargets.Others, new object[] { });
+			}
 
-		for (int i = PhotonNetwork.playerList.Length - 1; i >= 0; i--) {
-			GetComponent<PhotonView> ().RPC ("SetPlayerTurn", PhotonTargets.Others, new object[] { i });
-			yield return StartCoroutine(ClientBuildCity (i));
-			// RESOURCE COLLECTION EVENT!!!
+			for (int i = PhotonNetwork.playerList.Length - 1; i >= 0; i--) {
+				GetComponent<PhotonView> ().RPC ("SetPlayerTurn", PhotonTargets.Others, new object[] { i });
+				yield return StartCoroutine(ClientBuildCity (i));
+				// RESOURCE COLLECTION EVENT!!!
 
-			GetComponent<PhotonView> ().RPC ("CollectResources", PhotonTargets.All, new object[] { i });
-			//GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
-			//	0
-			//});
-			yield return StartCoroutine(ClientBuildRoad (i));
-			//GetComponent<PhotonView> ().RPC ("EndTurn", PhotonTargets.Others, new object[] { });
+				GetComponent<PhotonView> ().RPC ("CollectResources", PhotonTargets.All, new object[] { i });
+				//GetComponent<PhotonView> ().RPC ("ResourceCollectionEvent", PhotonTargets.All, new object[] {
+				//	0
+				//});
+				yield return StartCoroutine(ClientBuildRoad (i));
+				//GetComponent<PhotonView> ().RPC ("EndTurn", PhotonTargets.Others, new object[] { });
+			}
 		}
 		setupPhase = false;
 		waitingForPlayer = false;

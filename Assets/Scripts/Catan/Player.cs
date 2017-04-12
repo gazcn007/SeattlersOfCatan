@@ -934,4 +934,12 @@ public class Player : MonoBehaviour {
 			}
 		}
 	}
+
+	public void SuspendSelectionCoroutines() {
+		StopCoroutine("makeEdgeSelection");
+		StopCoroutine("makeOccupiedEdgeSelection");
+		StopCoroutine("makeIntersectionSelection");
+		StopCoroutine("makeUnitSelection");
+		StopCoroutine("makeGameTileSelection");
+	}
 }
