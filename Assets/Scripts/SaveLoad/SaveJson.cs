@@ -68,7 +68,7 @@ public static class SaveJson {
 			p_players.playerArray[i].playerName = player.playerName;
 			p_players.playerArray[i].playerNumber = player.playerNumber;
 			p_players.playerArray[i].victoryPoints = player.victoryPoints;
-			p_players.playerArray [i].assets = new int[12];
+			p_players.playerArray [i].assets = new int[13];
 			p_players.playerArray [i].assets [0] = player.assets.GetValueAtIndex(0);
 			p_players.playerArray [i].assets [1] = player.assets.GetValueAtIndex(1);
 			p_players.playerArray [i].assets [2] = player.assets.GetValueAtIndex(2);
@@ -81,6 +81,7 @@ public static class SaveJson {
 			p_players.playerArray [i].assets [9] = player.assets.GetValueAtIndex(9);
 			p_players.playerArray [i].assets [10] = player.assets.GetValueAtIndex(10);
 			p_players.playerArray [i].assets [11] = player.assets.GetValueAtIndex(11);
+			p_players.playerArray [i].assets [12] = player.assets.GetValueAtIndex(12);
 			//p_players.playerArray[0].cityImprovements = playerGOs [0].GetComponent<Player> ().CityImprovementTuple;
 			p_players.playerArray [i].avatar = player.avatar.name;
 			p_players.playerArray [i].progressCards= player.progressCards.Select(x=>(int)x).ToArray();
