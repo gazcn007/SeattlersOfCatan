@@ -12,10 +12,10 @@ public class BarbariansPanel : MonoBehaviour {
 	void Update () {
 		//nehir set barbarians lvl here
 
-		barbarianDistance=6;
+		barbarianDistance = EventTransferManager.instance.barbariansDistance;
 		for (int i = 0; i < ships.Count; i++) {
 			ships [i].gameObject.SetActive (false);
 		}
-		ships [barbarianDistance - 1].gameObject.SetActive (true);
+		ships [barbarianDistance].gameObject.SetActive (true);
 	}
 }

@@ -26,6 +26,9 @@ public class Player : MonoBehaviour {
 	public Unit lastUnitSelection;
 
 	public int vpAdder;
+	//----------<Persistence>--------
+	public int defenderOfCatans;
+	//----------</Persistence>--------
 	public bool collectedThisTurn;
 
 	public bool playedRoadBuilding;
@@ -131,7 +134,7 @@ public class Player : MonoBehaviour {
 	}
 
 	public int getVpPoints(){
-		return getTotalVictoryPoints () + vpAdder;
+		return getTotalVictoryPoints () + vpAdder + defenderOfCatans;
 	}
 
 	public bool hasMetropolis(int metropolisType) {

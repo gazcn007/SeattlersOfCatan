@@ -23,6 +23,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	public GameObject diceRollerPrefab;
 	private GameObject diceRoller;
 
+	//----------<Persistence>--------
+	public int barbariansDistance = 1;
+	public int defendersOfCatanLeft = 6;
+	public bool barbariansAttackedIsland = false;
+	//----------</Persistence>--------
+
 	public bool waitingForPlayers = false;
 	public bool[] playerChecks;
 
@@ -303,6 +309,15 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 			GetComponent<PhotonView> ().RPC ("DestroyDice", PhotonTargets.All, new object[] {});
 			Debug.Log("Red: "+redDieRoll+" Yellow: "+yellowDieRoll+ " Event: "+eventDieRoll.ToString());
+
+			if (eventDieRoll == EventDieFace.Black) {
+				GetComponent<PhotonView> ().RPC ("BarbariansEvent", PhotonTargets.All, new object[] {});
+			}
+
+			if ((redDieRoll + yellowDieRoll) == 7) {
+				redDieRoll = 1;
+				yellowDieRoll = 5;
+			}
 			//draw progress cards
 			yield return StartCoroutine(CardDrawEvent (eventDieRoll, redDieRoll));
 			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
@@ -335,6 +350,106 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		StartCoroutine(DiceRollSevenEvents());
 	}
 
+	[PunRPC]
+	void BarbariansEvent() {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		EventTransferManager.instance.barbariansDistance--;
+		Debug.Log ("barbarians are now " + EventTransferManager.instance.barbariansDistance + " steps away from Catan!");
+
+		if (EventTransferManager.instance.barbariansDistance <= 0) {
+			int barbariansStrength = 0;
+			int knightsStrength = 0;
+
+			List<int> lowestKnightContributingPlayerNums = new List<int>();
+			int lowestKnightStrSum = int.MaxValue;
+
+			List<int> highestKnightContributingPlayerNums = new List<int>();
+			int highestKnightStrSum = -1;
+
+			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+				List<City> playerCities = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.City).Cast<City> ().ToList ();
+				List<Metropolis> playerMetropolises = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Metropolis).Cast<Metropolis> ().ToList ();
+
+				barbariansStrength += (playerCities.Count + playerMetropolises.Count);
+
+				List<Knight> playerKnights = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().ToList ();
+				int playerKnightsStr = 0;
+
+				for(int j = 0; j < playerKnights.Count; j++) {
+					if (playerKnights [i].isActive) {
+						knightsStrength += (((int)playerKnights [i].rank) + 1);
+						playerKnightsStr += (((int)playerKnights [i].rank) + 1);
+					}
+				}
+
+				if (playerCities.Count == 0) {
+					continue;
+				}
+
+				if (playerKnightsStr < lowestKnightStrSum) {
+					lowestKnightContributingPlayerNums.Clear ();
+					lowestKnightContributingPlayerNums.Add (i);
+					lowestKnightStrSum = playerKnightsStr;
+				} else if (playerKnightsStr == lowestKnightStrSum) {
+					lowestKnightContributingPlayerNums.Add (i);
+				}
+
+				if (playerKnightsStr > highestKnightStrSum) {
+					highestKnightContributingPlayerNums.Clear ();
+					highestKnightContributingPlayerNums.Add (i);
+					highestKnightStrSum = playerKnightsStr;
+				} else if (playerKnightsStr == highestKnightStrSum) {
+					highestKnightContributingPlayerNums.Add (i);
+				}
+			}
+			Debug.Log ("BARBARIANS STRENGTH IS: " + barbariansStrength);
+			Debug.Log ("KNIGHTS STRENGTH IS: " + knightsStrength);
+
+			if (barbariansStrength > knightsStrength) {
+				Debug.Log ("Lowest contribution count is: " + lowestKnightContributingPlayerNums.Count);
+				for (int i = 0; i < lowestKnightContributingPlayerNums.Count; i++) {
+					Debug.Log (clientCatanManager.players [lowestKnightContributingPlayerNums [i]].playerName + " get his city destroyed!");
+					List<City> playerCities = clientCatanManager.players [lowestKnightContributingPlayerNums [i]].getOwnedUnitsOfType (UnitType.City).Cast<City> ().ToList ();
+
+					City cityToDestroy = playerCities [0];
+
+					if (cityToDestroy.cityWalls != null) {
+						clientCatanManager.players [lowestKnightContributingPlayerNums [i]].removeOwnedUnit ((Unit)cityToDestroy.cityWalls, typeof(CityWall));
+						Destroy (cityToDestroy.cityWalls.gameObject);
+					} else {
+						// Downgrade to settlement
+						if (lowestKnightContributingPlayerNums [i] == PhotonNetwork.player.ID - 1) {
+							OnDowngradeCity (lowestKnightContributingPlayerNums [i], cityToDestroy.id);
+						}
+					}
+				}
+			} else {
+				Debug.Log ("Highest contribution count is: " + lowestKnightContributingPlayerNums.Count);
+				if (highestKnightContributingPlayerNums.Count == 1) {
+					EventTransferManager.instance.defendersOfCatanLeft--;
+					clientCatanManager.players [highestKnightContributingPlayerNums [0]].defenderOfCatans++;
+					Debug.Log (clientCatanManager.players [highestKnightContributingPlayerNums [0]].playerName + " is crowned the defender of Catan!");
+				} else {
+					int[] playersToWait = new int[highestKnightContributingPlayerNums.Count];
+					for (int i = 0; i < highestKnightContributingPlayerNums.Count; i++) {
+						playersToWait [i] = highestKnightContributingPlayerNums [i];
+					}
+
+					// EventTransferManager.instance.BeginWaitForPlayers(playersToWait);
+				}
+			}
+
+			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
+				List<Knight> playerKnights = clientCatanManager.players [i].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().ToList ();
+				for (int j = 0; j < playerKnights.Count; j++) {
+					playerKnights [j].activateKnight (false);
+				}
+			}
+			EventTransferManager.instance.barbariansAttackedIsland = true;
+			EventTransferManager.instance.barbariansDistance = 1;
+		}
+	}
+
 	IEnumerator DiceRollSevenEvents() {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		int[] allPlayers = { 0, 1, 2, 3 };
@@ -351,7 +466,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			yield return new WaitForEndOfFrame ();
 		}
 
-		if (PhotonNetwork.player.ID - 1 == clientCatanManager.currentPlayerTurn) {
+		if (PhotonNetwork.player.ID - 1 == clientCatanManager.currentPlayerTurn && EventTransferManager.instance.barbariansAttackedIsland) {
 			yield return StartCoroutine(clientCatanManager.moveGamePieceForCurrentPlayer(0, false, true));
 		}
 	}
@@ -583,6 +698,13 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			});
 		}
 
+	}
+
+	public void OnDowngradeCity(int playerNum, int unitID) {
+		GetComponent<PhotonView> ().RPC ("DowngradeCity", PhotonTargets.All, new object[] {
+			playerNum,
+			unitID
+		});
 	}
 
 	public void OnDestroyUnit(UnitType type, int unitID) {
@@ -1770,32 +1892,37 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		//print ("Selected settlement has id#: " + selection.id + " and is owned by " + selection);
 		print("Found settlement with id#: " + settlementToUpgrade.id + ". Residing on intersection id#: " + settlementToUpgrade.locationIntersection.id);
 
-		GameObject cityGameObject = (GameObject)Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.City));
-		City newCity = cityGameObject.GetComponent<City> ();
-		newCity.id = settlementToUpgrade.id;
+		if (settlementToUpgrade != null) {
+			GameObject cityGameObject = (GameObject)Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.City));
+			City newCity = cityGameObject.GetComponent<City> ();
+			newCity.id = settlementToUpgrade.id;
 
-		clientCatanManager.unitManager.unitsInPlay [settlementToUpgrade.id] = newCity;
+			clientCatanManager.unitManager.unitsInPlay [settlementToUpgrade.id] = newCity;
 
-		settlementToUpgrade.locationIntersection.occupier = newCity;
-		newCity.locationIntersection = settlementToUpgrade.locationIntersection;
+			settlementToUpgrade.locationIntersection.occupier = newCity;
+			newCity.locationIntersection = settlementToUpgrade.locationIntersection;
 
-		clientCatanManager.players [playerNum].removeOwnedUnit (settlementToUpgrade, typeof(Settlement));
-		clientCatanManager.players [playerNum].addOwnedUnit (newCity, typeof(City));
-		newCity.owner = clientCatanManager.players [playerNum];
+			clientCatanManager.players [playerNum].removeOwnedUnit (settlementToUpgrade, typeof(Settlement));
+			clientCatanManager.players [playerNum].addOwnedUnit (newCity, typeof(City));
+			newCity.owner = clientCatanManager.players [playerNum];
 
-		newCity.transform.position = settlementToUpgrade.transform.position;
-		newCity.transform.parent = settlementToUpgrade.transform.parent;
-		newCity.transform.localScale = settlementToUpgrade.transform.localScale;
+			if (cityGameObject != null) {
+				cityGameObject.transform.position = settlementToUpgrade.transform.position;
+				cityGameObject.transform.parent = settlementToUpgrade.transform.parent;
+				cityGameObject.transform.localScale = settlementToUpgrade.transform.localScale;
 
-		newCity.name = "City " + newCity.id;
+				newCity.name = "City " + newCity.id;
 
-		newCity.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [playerNum].playerColor;
+				cityGameObject.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [playerNum].playerColor;
+			}
 
-		Destroy (settlementToUpgrade.gameObject);
+			Destroy (settlementToUpgrade.gameObject);
 
-		clientCatanManager.players [playerNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit (UnitType.City));
-		clientCatanManager.boardManager.highlightUnitsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Settlement), true, clientCatanManager.players [playerNum].playerColor);
-		//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+			clientCatanManager.players [playerNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit (UnitType.City));
+			clientCatanManager.boardManager.highlightUnitsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Settlement), true, clientCatanManager.players [playerNum].playerColor);
+			//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
+		}
+
 
 		clientCatanManager.currentActiveButton = -1;
 		clientCatanManager.waitingForPlayer = false;
@@ -1862,6 +1989,33 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		clientCatanManager.boardManager.highlightUnitsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.City), true, clientCatanManager.players [playerNum].playerColor);
 		//uiButtons [4].GetComponentInChildren<Text> ().text = "Upgrade Settlement";
 		clientCatanManager.metropolisOwners.metropolisOwners [metropolisType] = clientCatanManager.players [playerNum];
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
+	}
+
+	[PunRPC]
+	void DowngradeCity(int playerNum, int unitID) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		City cityToDestroy = (City)clientCatanManager.unitManager.unitsInPlay [unitID];
+
+		if(cityToDestroy != null) {
+			int destroyedCityLocationID = cityToDestroy.locationIntersection.id;
+			int destroyedCityID = cityToDestroy.id;
+
+			clientCatanManager.unitManager.unitsInPlay.Remove (unitID);
+			clientCatanManager.players [playerNum].removeOwnedUnit (cityToDestroy, typeof(City));
+
+			Destroy (cityToDestroy.gameObject);
+			//Debug.Log ("destroyed city id: " + newSettlement.id);
+			if(playerNum == PhotonNetwork.player.ID - 1) {
+				OnBuildUnitForUser (UnitType.Settlement, playerNum, destroyedCityLocationID, false, -1);
+			}
+		}
+
 
 		clientCatanManager.currentActiveButton = -1;
 		clientCatanManager.waitingForPlayer = false;

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class City : Settlement {
 
-	public bool hasCityWalls;
+	public CityWall cityWalls;
 
 	void Start() {
 		victoryPointsWorth = 2;

@@ -96,7 +96,7 @@ public class PlayerHUD : MonoBehaviour {
 			knightsText.text = displayingPlayer.getOwnedUnitsOfType (typeof(Knight)).Count.ToString();
 			cardsText.text =""+ displayingPlayer.progressCards.Count;
 			goldText.text =""+ displayingPlayer.assets.gold;
-			VpText.text= displayingPlayer.victoryPoints.ToString();
+			VpText.text= displayingPlayer.getVpPoints().ToString();
 		}
 
 	}

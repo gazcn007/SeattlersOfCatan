@@ -50,7 +50,7 @@ public class OpponentHUD : MonoBehaviour {
 			//roadsText.text = (displayingPlayer.getOwnedUnitsOfType(typeof(Road)).Count
 			//	+ displayingPlayer.getOwnedUnitsOfType(typeof(Ship)).Count).ToString();
 			knightsText.text = displayingPlayer.getOwnedUnitsOfType (typeof(Knight)).Count.ToString();
-			VpText.text= displayingPlayer.victoryPoints.ToString();
+			VpText.text = displayingPlayer.getVpPoints ().ToString ();;
 			cardsText.text =""+ displayingPlayer.progressCards.Count;
 		}
 		
