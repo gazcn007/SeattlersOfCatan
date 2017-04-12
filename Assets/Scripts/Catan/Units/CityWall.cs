@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class CityWall : IntersectionUnit {
 
+	public City city;
+
 	// Use this for initialization
 	void Start () {
 		

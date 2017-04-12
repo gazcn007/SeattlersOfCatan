@@ -109,6 +109,10 @@ public class CatanManager : MonoBehaviour {
 			handleBuildFailure ("Can not own more than 4 cities!", uiManager.uiButtons);
 			yield break;
 		}
+		if (unitType == UnitType.Knight && !players [currentPlayerTurn].canBuildMoreKnights (KnightRank.Basic)) {
+			handleBuildFailure ("Can not own more than 2 types of the same knight!", uiManager.uiButtons);
+			yield break;
+		}
 
 		List<Intersection> validIntersectionsToBuildList = boardManager.getValidIntersectionsForPlayer (players [currentPlayerTurn], unitType == UnitType.Knight);
 		int[] validIntersectionsToBuild = boardManager.getValidIntersectionIDsForPlayer (players[currentPlayerTurn], unitType == UnitType.Knight);
@@ -303,6 +307,36 @@ public class CatanManager : MonoBehaviour {
 		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
 		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (ownedCities.Cast<Unit> ().ToList ()));
 		EventTransferManager.instance.OnBuildUnitForUser(UnitType.Metropolis, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, true, metropolisType);
+	}
+
+	public IEnumerator buildCityWall(bool paid) {
+		waitingForPlayer = true;
+		List<CityWall> cityWalls = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.CityWalls).Cast<CityWall> ().ToList();
+
+		if (cityWalls.Count >= 3) {
+			handleBuildFailure("Can not own moe than 3 city walls at a time!", uiManager.uiButtons);
+			yield break;
+		}
+
+		List<City> ownedCities = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.City).Cast<City> ().Where(city => city.cityWalls == null).ToList();
+		List<Metropolis> ownedMetropolises = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Metropolis).Cast<Metropolis> ().Where(m => m.cityWalls == null).ToList();
+
+		List<Unit> allPossibleUnits = ownedCities.Cast<Unit> ().ToList ().Union (ownedMetropolises.Cast<Unit> ().ToList ()).ToList ();
+		if (ownedCities.Count == 0 && ownedMetropolises.Count == 0) {
+			handleBuildFailure("No eligible city or metropolis owned!", uiManager.uiButtons);
+			yield break;
+		}
+
+		AssetTuple costOfUnit = resourceManager.getCostOfUnit (UnitType.CityWalls);
+		if (paid && !players [currentPlayerTurn].hasAvailableAssets (costOfUnit)) { 
+			handleBuildFailure("Insufficient Resources to build city walls!", uiManager.uiButtons);
+			yield break;
+		}
+			
+		boardManager.highlightUnitsWithColor (allPossibleUnits, true, Color.black);
+		//EventTransferManager.instance.OnHighlightForUser(2, currentPlayerTurn, true, ownedSettlementIDs);
+		yield return StartCoroutine (players [currentPlayerTurn].makeUnitSelection (allPossibleUnits));
+		EventTransferManager.instance.OnBuildUnitForUser(UnitType.CityWalls, currentPlayerTurn, players[currentPlayerTurn].lastUnitSelection.id, paid, -1);
 	}
 
 
@@ -516,7 +550,7 @@ public class CatanManager : MonoBehaviour {
 	}
 	public IEnumerator promoteKnight(bool paid) {
 		waitingForPlayer = true;
-		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => knight.rank != KnightRank.Mighty).ToList ();
+		List<Knight> ownedKnights = players [currentPlayerTurn].getOwnedUnitsOfType (UnitType.Knight).Cast<Knight> ().Where (knight => knight.rank != KnightRank.Mighty && players[currentPlayerTurn].canBuildMoreKnights((KnightRank)(((int)knight.rank)+1))).ToList ();
 		AssetTuple costOfActivation = resourceManager.getCostOfUnit (UnitType.Knight);
 
 		if (ownedKnights.Count == 0) {

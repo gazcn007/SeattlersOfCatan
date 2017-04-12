@@ -196,8 +196,26 @@ public class UIManager : MonoBehaviour {
 		}
 	}
 	public void buildCityWallEvent(){
-		progressCardHolder.SpawnCard (ProgressCardColor.Yellow,ProgressCardType.Merchant);
+		//progressCardHolder.SpawnCard (ProgressCardColor.Yellow,ProgressCardType.Merchant);
+		int buttonId = 21;
+		if (CatanManager.instance.currentPlayerTurn == PhotonNetwork.player.ID - 1 && !EventTransferManager.instance.setupPhase) {
+			if (!EventTransferManager.instance.waitingForPlayer && EventTransferManager.instance.diceRolledThisTurn) {
+				// SOME WAY TO MAKE THE BUTTON HIGHLIGHTED
+				EventTransferManager.instance.currentActiveButton = buttonId;
 
+				StartCoroutine (EventTransferManager.instance.ClientBuildWallForAll(PhotonNetwork.player.ID - 1));
+			} else {
+				if (EventTransferManager.instance.currentActiveButton == buttonId) {
+					StopAllCoroutines ();
+
+					BoardManager.instance.highlightUnitsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(City)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
+					//BoardManager.instance.highlightUnitsWithColor (CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].getOwnedUnitsOfType (typeof(Metropolis)), true, CatanManager.instance.players [CatanManager.instance.currentPlayerTurn].playerColor);
+					EventTransferManager.instance.OnOperationFailure ();
+					//uiButtons [2].GetComponentInChildren<Text> ().text = "Build Road";
+					// SOME WAY TO UNHIGHLIGHT BUTTON
+				}
+			}
+		}
 
 	}
 	public void toggleFlipChartPanel (){

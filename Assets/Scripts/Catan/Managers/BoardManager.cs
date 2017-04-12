@@ -587,6 +587,26 @@ public class BoardManager : MonoBehaviour {
 		}
 	}
 
+	public void highlightMetropolisWithOwnColor(List<Unit> metropolisList) {
+		for (int i = 0; i < metropolisList.Count; i++) {
+			Metropolis metropolis = metropolisList [i] as Metropolis;
+
+			if (metropolis != null) {
+				switch (metropolis.metropolisType) {
+				case MetropolisType.Science:
+					metropolis.GetComponentInChildren<Renderer> ().material.color = Color.green;
+					break;
+				case MetropolisType.Politics:
+					metropolis.GetComponentInChildren<Renderer> ().material.color = Color.blue;
+					break;
+				case MetropolisType.Trade:
+					metropolis.GetComponentInChildren<Renderer> ().material.color = Color.yellow;
+					break;
+				}
+			}
+		}
+	}
+
 	public void highlightUnitsWithColor(List<Unit> units, bool highlight, Color colorToHighlight) {
 		for (int i = 0; i < units.Count; i++) {
 			Renderer renderer = units [i].gameObject.GetComponentInChildren<Renderer> ();

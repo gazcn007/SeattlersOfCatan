@@ -147,6 +147,10 @@ public class UnitManager : MonoBehaviour {
 	public IEnumerator chaseRobber() {
 		yield return StartCoroutine (CatanManager.instance.chaseRobber());
 	}
+
+	public IEnumerator buildCityWall() {
+		yield return StartCoroutine (CatanManager.instance.buildCityWall(true));
+	}
 }
 
 public enum UnitType {

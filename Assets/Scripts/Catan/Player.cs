@@ -165,6 +165,25 @@ public class Player : MonoBehaviour {
 		return ownedUnits [typeof(City)].Count == 0 && ownedUnits [typeof(Metropolis)].Count == 0;
 	}
 
+	public int getNumKnights(KnightRank rank) {
+		int rankCount = 0;
+
+		List<Knight> knights = ownedUnits [typeof(Knight)].Cast<Knight> ().ToList ();
+
+		for (int i = 0; i < knights.Count; i++) {
+			if (knights [i].rank == rank) {
+				rankCount++;
+			}
+		}
+		return rankCount;
+	}
+
+	public bool canBuildMoreKnights(KnightRank rank) {
+		int rankCount = getNumKnights (rank);
+
+		return rankCount < 2;
+	}
+
 	public void addOwnedUnit(Unit unit, System.Type type) {
 		bool defaultCase = false;
 

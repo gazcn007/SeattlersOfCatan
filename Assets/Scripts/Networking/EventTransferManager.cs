@@ -352,6 +352,10 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 	[PunRPC]
 	void BarbariansEvent() {
+		StartCoroutine (BarbarianEventCoroutine ());
+	}
+
+	IEnumerator BarbarianEventCoroutine() {
 		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
 		EventTransferManager.instance.barbariansDistance--;
 		Debug.Log ("barbarians are now " + EventTransferManager.instance.barbariansDistance + " steps away from Catan!");
@@ -378,9 +382,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				int playerKnightsStr = 0;
 
 				for(int j = 0; j < playerKnights.Count; j++) {
-					if (playerKnights [i].isActive) {
-						knightsStrength += (((int)playerKnights [i].rank) + 1);
-						playerKnightsStr += (((int)playerKnights [i].rank) + 1);
+					if (playerKnights [j].isActive) {
+						knightsStrength += (((int)playerKnights [j].rank) + 1);
+						playerKnightsStr += (((int)playerKnights [j].rank) + 1);
 					}
 				}
 
@@ -418,11 +422,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 					if (cityToDestroy.cityWalls != null) {
 						clientCatanManager.players [lowestKnightContributingPlayerNums [i]].removeOwnedUnit ((Unit)cityToDestroy.cityWalls, typeof(CityWall));
 						Destroy (cityToDestroy.cityWalls.gameObject);
+						cityToDestroy.cityWalls = null;
 					} else {
 						// Downgrade to settlement
 						//if (lowestKnightContributingPlayerNums [i] == PhotonNetwork.player.ID - 1) {
-							//OnDowngradeCity (lowestKnightContributingPlayerNums [i], cityToDestroy.id);
-							cityIDsDestroyed.Add(cityToDestroy.id);
+						//OnDowngradeCity (lowestKnightContributingPlayerNums [i], cityToDestroy.id);
+						cityIDsDestroyed.Add(cityToDestroy.id);
 						//}
 					}
 				}
@@ -438,7 +443,25 @@ public class EventTransferManager : Photon.MonoBehaviour {
 						playersToWait [i] = highestKnightContributingPlayerNums [i];
 					}
 
-					// EventTransferManager.instance.BeginWaitForPlayers(playersToWait);
+					EventTransferManager.instance.BeginWaitForPlayers (playersToWait);
+
+					if (playersToWait.Contains(PhotonNetwork.player.ID - 1)) {
+						clientCatanManager.uiManager.cardSelectPanel.gameObject.SetActive (true);
+
+						while(!clientCatanManager.uiManager.cardSelectPanel.selectionMade){
+							Debug.Log ("Waiting for card choice");
+							yield return new WaitForEndOfFrame ();
+						}
+
+						clientCatanManager.uiManager.cardSelectPanel.selectionMade=false;
+					}
+
+					Debug.Log ("Waiting for players started");
+					while (EventTransferManager.instance.waitingForPlayers) {
+						EventTransferManager.instance.CheckIfPlayersReady ();
+						Debug.Log ("Waiting...");
+						yield return new WaitForEndOfFrame ();
+					}
 				}
 			}
 
@@ -456,6 +479,43 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			}
 			EventTransferManager.instance.barbariansAttackedIsland = true;
 			EventTransferManager.instance.barbariansDistance = 1;
+		}
+
+		yield return null;
+	}
+
+	public void OnDrawWithChoice(List<Player> players){
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		ProgressCardStackManager clientcards = GameObject.FindGameObjectWithTag ("ProgressCardsStackManager").GetComponent<ProgressCardStackManager> ();
+		EventTransferManager.instance.WaitOnDraw = false;
+		for (int i = 0; i < players.Count; i++) {
+			EventTransferManager.instance.WaitOnDraw = true;
+
+			GetComponent<PhotonView> ().RPC ("drawWithChoiceRPC", PhotonTargets.All, new object[] {
+				players[i].playerNumber-1
+			});
+
+		}
+	}
+
+	[PunRPC]
+	void drawWithChoiceRPC(int receiverNum) {
+		StartCoroutine (drawWithChoiceCoroutine (receiverNum));
+	}
+
+	IEnumerator drawWithChoiceCoroutine(int receiverNum){
+		if(PhotonNetwork.player.ID-1== receiverNum) {
+			CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+
+			clientCatanManager.uiManager.cardSelectPanel.gameObject.SetActive (true);
+			while(!clientCatanManager.uiManager.cardSelectPanel.selectionMade){
+				Debug.Log ("Waiting for card choice");
+				yield return new WaitForEndOfFrame ();
+
+			}
+			clientCatanManager.uiManager.cardSelectPanel.selectionMade=false;
+			GetComponent<PhotonView> ().RPC ("OnDrawCompleted", PhotonTargets.All, new object[] {
+			});
 		}
 	}
 
@@ -650,6 +710,12 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				id,
 				metropolisType
 			});
+		} else if (unitType == UnitType.CityWalls) {
+			GetComponent<PhotonView> ().RPC ("BuildCityWalls", PhotonTargets.All, new object[] {
+				playerNumber,
+				id,
+				paid
+			});
 		} else {
 			GetComponent<PhotonView> ().RPC ("BuildIntersectionUnit", PhotonTargets.All, new object[] {
 				playerNumber,
@@ -838,6 +904,9 @@ public class EventTransferManager : Photon.MonoBehaviour {
 				break;
 			case MoveType.ChaseRobber:
 				StartCoroutine(clientCatanManager.unitManager.chaseRobber ());
+				break;
+			case MoveType.BuildCityWall:
+				StartCoroutine(clientCatanManager.unitManager.buildCityWall ());
 				break;
 			default:
 				break;
@@ -1037,6 +1106,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 	}
 
+	public IEnumerator ClientBuildWallForAll(int playerNumber) {
+		EventTransferManager.instance.waitingForPlayer = true;
+		GetComponent<PhotonView> ().RPC ("PlayMove", PhotonTargets.All, new object[] {
+			playerNumber,
+			(int)MoveType.BuildCityWall
+		});
+		while (EventTransferManager.instance.waitingForPlayer) {
+			yield return new WaitForEndOfFrame ();
+		}
+	}
+
 	[PunRPC]
 	void BuildMetropolis(int playerNumber, int metropolisType) {
 		if (playerNumber == PhotonNetwork.player.ID - 1) {
@@ -1079,7 +1159,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			Player maxVPPlayer = clientCatanManager.players [clientCatanManager.currentPlayerTurn];
 
 			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
-				if (clientCatanManager.players [i].victoryPoints > maxVPPlayer.victoryPoints) {
+				if (clientCatanManager.players [i].getVpPoints() > maxVPPlayer.getVpPoints()) {
 					maxVPPlayer = clientCatanManager.players [i];
 				}
 			}
@@ -2020,7 +2100,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 
 		Destroy (cityToDestroy.gameObject);
 		//Debug.Log ("destroyed city id: " + newSettlement.id);
-		if(playerNum == PhotonNetwork.player.ID - 1) {
+		if(PhotonNetwork.isMasterClient) {
 			OnBuildUnitForUser (UnitType.Settlement, playerNum, destroyedCityLocationID, false, -1);
 		}
 		//}
@@ -2053,6 +2133,42 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		clientCatanManager.waitingForPlayer = false;
 		EventTransferManager.instance.waitingForPlayer = false;
 		EventTransferManager.instance.shipMovedThisTurn = true;
+	}
+
+	[PunRPC]
+	void BuildCityWalls(int playerNum, int unitID, bool paid) {
+		CatanManager clientCatanManager = GameObject.FindGameObjectWithTag ("CatanManager").GetComponent<CatanManager> ();
+		GameBoard clientGameBoard = GameObject.FindGameObjectWithTag ("Board").GetComponent<GameBoard> ();
+
+		City city = clientCatanManager.unitManager.Units [unitID] as City;
+
+		GameObject cityWallGO = Instantiate (clientCatanManager.unitManager.GetPrefabOfType (UnitType.CityWalls));
+		CityWall cityWall = cityWallGO.GetComponent<CityWall> ();
+		cityWall.id = clientCatanManager.unitManager.unitID++;
+		cityWall.name = "City Walls " + cityWall.id;
+
+		city.cityWalls = cityWall;
+		cityWall.owner = city.owner;
+		clientCatanManager.players [playerNum].addOwnedUnit (cityWall, UnitType.CityWalls);
+
+		cityWall.transform.rotation = city.transform.rotation;
+		cityWall.transform.parent = city.transform;
+		cityWall.transform.localScale = city.transform.localScale / 3.33f;
+		cityWall.transform.position = city.transform.position + new Vector3 (0.25f, 0.5f, 0.25f);
+
+		cityWall.GetComponentInChildren<Renderer> ().material.color = clientCatanManager.players [playerNum].playerColor;
+		cityWall.gameObject.SetActive (true);
+
+		if (!EventTransferManager.instance.setupPhase && paid) {
+			clientCatanManager.players [playerNum].spendAssets (clientCatanManager.resourceManager.getCostOfUnit (UnitType.CityWalls));
+		}
+
+		clientCatanManager.boardManager.highlightUnitsWithColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.City), true, clientCatanManager.players [playerNum].playerColor);
+		clientCatanManager.boardManager.highlightMetropolisWithOwnColor (clientCatanManager.players [playerNum].getOwnedUnitsOfType (UnitType.Metropolis));
+
+		clientCatanManager.currentActiveButton = -1;
+		clientCatanManager.waitingForPlayer = false;
+		EventTransferManager.instance.waitingForPlayer = false;
 	}
 
 	[PunRPC]
@@ -2698,6 +2814,7 @@ public enum MoveType {
 	MoveKnight,
 	DisplaceKnight,
 	ChaseRobber,
-	RemoveKnight
+	RemoveKnight,
+	BuildCityWall
 }
 
