@@ -24,7 +24,7 @@ public class EventTransferManager : Photon.MonoBehaviour {
 	private GameObject diceRoller;
 
 	//----------<Persistence>--------
-	public int barbariansDistance = 7;
+	public int barbariansDistance = 1;
 	public int defendersOfCatanLeft = 6;
 	public bool barbariansAttackedIsland = false;
 	public int vpNeededToWin = 13;
@@ -322,14 +322,17 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			GetComponent<PhotonView> ().RPC ("DestroyDice", PhotonTargets.All, new object[] {});
 			Debug.Log("Red: "+redDieRoll+" Yellow: "+yellowDieRoll+ " Event: "+eventDieRoll.ToString());
 
+			if (Random.Range (0.0f, 1.0f) < 0.5f) {
+				redDieRoll = 2;
+				yellowDieRoll = 5;
+			} else {
+				eventDieRoll = EventDieFace.Black;
+			}
+
 			if (eventDieRoll == EventDieFace.Black) {
 				GetComponent<PhotonView> ().RPC ("BarbariansEvent", PhotonTargets.All, new object[] {});
 			}
 
-			if ((redDieRoll + yellowDieRoll) == 7) {
-				redDieRoll = 1;
-				yellowDieRoll = 5;
-			}
 			//draw progress cards
 			yield return StartCoroutine(CardDrawEvent (eventDieRoll, redDieRoll));
 			if (!setupPhase && redDieRoll + yellowDieRoll == 7) {
@@ -446,9 +449,11 @@ public class EventTransferManager : Photon.MonoBehaviour {
 			} else {
 				Debug.Log ("Highest contribution count is: " + lowestKnightContributingPlayerNums.Count);
 				if (highestKnightContributingPlayerNums.Count == 1) {
-					EventTransferManager.instance.defendersOfCatanLeft--;
-					clientCatanManager.players [highestKnightContributingPlayerNums [0]].defenderOfCatans++;
-					Debug.Log (clientCatanManager.players [highestKnightContributingPlayerNums [0]].playerName + " is crowned the defender of Catan!");
+					if (EventTransferManager.instance.defendersOfCatanLeft > 0) {
+						EventTransferManager.instance.defendersOfCatanLeft--;
+						clientCatanManager.players [highestKnightContributingPlayerNums [0]].defenderOfCatans++;
+						Debug.Log (clientCatanManager.players [highestKnightContributingPlayerNums [0]].playerName + " is crowned the defender of Catan!");
+					}
 				} else {
 					int[] playersToWait = new int[highestKnightContributingPlayerNums.Count];
 					for (int i = 0; i < highestKnightContributingPlayerNums.Count; i++) {
@@ -548,7 +553,24 @@ public class EventTransferManager : Photon.MonoBehaviour {
 		}
 
 		if (PhotonNetwork.player.ID - 1 == clientCatanManager.currentPlayerTurn && EventTransferManager.instance.barbariansAttackedIsland) {
-			yield return StartCoroutine(clientCatanManager.moveGamePieceForCurrentPlayer(0, false, true));
+			clientCatanManager.uiManager.robberPiratePanel.gameObject.SetActive(true);
+			bool selectionMade = false;
+
+			while (!selectionMade) {
+				if (!clientCatanManager.uiManager.robberPiratePanel.selectionMade) {
+					yield return StartCoroutine (clientCatanManager.uiManager.robberPiratePanel.waitUntilButtonDown ());
+				}
+
+				if (clientCatanManager.uiManager.robberPiratePanel.selectionMade) {
+					selectionMade = true;
+				}
+			}
+
+			clientCatanManager.uiManager.robberPiratePanel.gameObject.SetActive(false);
+			clientCatanManager.uiManager.robberPiratePanel.selectionMade = false;
+
+			yield return StartCoroutine(clientCatanManager.moveGamePieceForCurrentPlayer(clientCatanManager.uiManager.robberPiratePanel.selection, false, true));
+			clientCatanManager.uiManager.robberPiratePanel.selectionMade = false;
 		}
 	}
 

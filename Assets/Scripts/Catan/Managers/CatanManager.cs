@@ -52,7 +52,8 @@ public class CatanManager : MonoBehaviour {
 	void Update () {
 		if (!gameOver) {
 			for (int i = 0; i < PhotonNetwork.playerList.Length; i++) {
-				if (players [i].getVpPoints () >= EventTransferManager.instance.vpNeededToWin) {
+				int oldBootExtra = players [i].hasOldBoot () ? 1 : 0;
+				if (players [i].getVpPoints () >= (EventTransferManager.instance.vpNeededToWin + oldBootExtra)) {
 					uiManager.notificationtext.text = players [i].playerName + " wins the game!";
 					uiManager.notificationpanel.SetActive (true);
 					uiManager.notificationpanel.GetComponentInChildren<Button>().onClick.RemoveAllListeners();
